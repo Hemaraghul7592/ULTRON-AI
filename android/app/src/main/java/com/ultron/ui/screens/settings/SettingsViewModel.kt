@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class SettingsUiState(
-    val serverUrl: String = "http://10.0.2.2:8000",
+    val serverUrl: String = "http://127.0.0.1:8000",
     val defaultProvider: String = "groq",
     val defaultModel: String = "llama-3.3-70b-versatile",
     val ttsEnabled: Boolean = true,

@@ -30,7 +30,7 @@ class SettingsDataStore @Inject constructor(
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
     }
 
-    val serverUrl: Flow<String> = context.dataStore.data.map { it[Keys.SERVER_URL] ?: "http://10.0.2.2:8000" }
+    val serverUrl: Flow<String> = context.dataStore.data.map { it[Keys.SERVER_URL] ?: "http://127.0.0.1:8000" }
     val theme: Flow<String> = context.dataStore.data.map { it[Keys.THEME] ?: "system" }
     val darkMode: Flow<Boolean> = context.dataStore.data.map { it[Keys.DARK_MODE] ?: true }
     val ttsEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.TTS_ENABLED] ?: true }
