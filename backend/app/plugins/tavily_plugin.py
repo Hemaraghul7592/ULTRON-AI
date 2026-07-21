@@ -4,7 +4,8 @@ from typing import Any
 
 import httpx
 
-from app.tools.base import BasePlugin, BaseTool
+from app.plugins.base import PluginInterface, PluginStatus
+from app.tools.base import BaseTool
 
 TAVILY_API_URL = "https://api.tavily.com"
 
@@ -203,21 +204,26 @@ class TavilyAnswerTool(BaseTool):
             await self._client.aclose()
 
 
-class Plugin(BasePlugin):
+class Plugin(PluginInterface):
     @property
     def name(self) -> str:
         return "tavily"
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "2.0.0"
 
     @property
     def description(self) -> str:
         return "Web search and Q&A using Tavily API"
 
+    @property
+    def required_credentials(self) -> list[str]:
+        return ["TAVILY_API_KEY"]
+
     def __init__(self) -> None:
         self._tools: list[BaseTool] = []
+        self._api_key: str = ""
 
     def get_tools(self) -> list[BaseTool]:
         return self._tools
@@ -225,11 +231,33 @@ class Plugin(BasePlugin):
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
         settings = get_settings()
-        if settings.TAVILY_API_KEY:
+        self._api_key = settings.TAVILY_API_KEY
+        if self._api_key:
             self._tools = [
-                TavilySearchTool(settings.TAVILY_API_KEY),
-                TavilyAnswerTool(settings.TAVILY_API_KEY),
+                TavilySearchTool(self._api_key),
+                TavilyAnswerTool(self._api_key),
             ]
+
+    async def health_check(self) -> dict:
+        import time
+        if not self._api_key:
+            return {"status": PluginStatus.AUTH_FAILED, "message": "TAVILY_API_KEY not configured", "last_check": time.time()}
+        if not self._tools:
+            return {"status": PluginStatus.DISABLED, "message": "No tools initialized", "last_check": time.time()}
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.post(
+                    f"{TAVILY_API_URL}/search",
+                    json={"api_key": self._api_key, "query": "health", "max_results": 1},
+                )
+                if resp.status_code == 200:
+                    return {"status": PluginStatus.AVAILABLE, "message": "Tavily API reachable", "last_check": time.time()}
+                return {"status": PluginStatus.AUTH_FAILED, "message": f"Tavily API returned {resp.status_code}", "last_check": time.time()}
+        except Exception as e:
+            return {"status": PluginStatus.UNAVAILABLE, "message": str(e), "last_check": time.time()}
+
+    async def validate(self) -> bool:
+        return bool(self._api_key)
 
     async def cleanup(self) -> None:
         for tool in self._tools:

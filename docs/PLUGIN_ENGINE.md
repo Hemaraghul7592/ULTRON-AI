@@ -1,126 +1,123 @@
-# Plugin Engine — ULTRON AI Platform
+# Plugin Engine — ULTRON AI
 
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  Plugin Engine                        │
-│                                                      │
-│  ┌────────────┐  ┌────────────┐  ┌──────────────┐   │
-│  │  Registry  │  │  Loader    │  │  Executor    │   │
-│  │  - Built-in│  │  - Dynamic │  │  - Sandbox   │   │
-│  │  - User    │  │  - Verify  │  │  - Timeout   │   │
-│  │  - System  │  │  - Version │  │  - Rate limit│   │
-│  └────────────┘  └────────────┘  └──────────────┘   │
-│                                                      │
-│  ┌──────────────────────────────────────────────┐    │
-│  │           Plugin Manifest                     │    │
-│  │  name, version, author, permissions, hooks   │    │
-│  └──────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────┘
+AI Engine → ToolExecutor → PluginManager → PluginInterface → Plugin
+                                                   │
+                                           ┌───────┴───────┐
+                                           │               │
+                                      GitHub/Drive    Calendar/Gmail
+                                      Tavily          (5 updated)
 ```
 
-## Plugin Manifest Schema
+## Core Files
 
-```json
-{
-  "name": "github",
-  "version": "1.0.0",
-  "author": "ULTRON",
-  "description": "GitHub repository management",
-  "icon": "github-icon",
-  "permissions": ["http:github.com", "user:read"],
-  "tools": [
-    {
-      "name": "search_repos",
-      "description": "Search GitHub repositories",
-      "parameters": {
-        "type": "object",
-        "properties": {
-          "query": {"type": "string"},
-          "limit": {"type": "integer", "default": 5}
-        }
-      }
-    }
-  ],
-  "hooks": {
-    "on_install": "setup_oauth",
-    "on_uninstall": "revoke_oauth",
-    "on_sync": "sync_data"
-  },
-  "oauth_scopes": ["repo", "user"],
-  "config_schema": {
-    "type": "object",
-    "properties": {
-      "github_token": {"type": "string", "format": "password"}
-    }
-  }
-}
-```
+| File | Purpose |
+|------|---------|
+| `app/plugins/base.py` | `PluginInterface` ABC — extends `BasePlugin` with health, permissions, metadata |
+| `app/plugins/errors.py` | `PluginError` hierarchy + `normalize_error()` + `error_response()` |
+| `app/plugins/manager.py` | `PluginManager` — central entry point |
+| `app/ai/tool_executor.py` | `ToolExecutor.sync_from_plugin_manager()` — wires AI to plugins |
+| `app/plugins/*.py` | Individual plugin implementations |
 
-## Plugin Categories
+## PluginInterface Methods
 
-| Category | Example | Auto-installed |
-|----------|---------|----------------|
-| **Built-in** | Weather, Search, Calculator | Yes |
-| **First-party** | GitHub, Google Drive, Gmail, Calendar | On OAuth connect |
-| **Community** | Third-party plugins | Marketplace install |
-| **User** | Custom user scripts | Manual |
+| Method | Description |
+|--------|-------------|
+| `name` | Plugin name (property) |
+| `version` | Semver string (property) |
+| `description` | Human-readable description (property) |
+| `required_credentials` | List of required env vars (property, abstract) |
+| `get_tools()` | List of `BaseTool` instances |
+| `initialize(config)` | Startup hook |
+| `cleanup()` | Shutdown hook |
+| `health_check()` | Returns `PluginHealth` dict |
+| `validate()` | Returns `True` if credentials present |
+| `execute_tool(name, **kwargs)` | Execute a specific tool |
+| `get_metadata()` | Plugin metadata dict |
+| `get_permission_scope()` | Permission declarations |
 
-## Plugin Lifecycle
+## Plugin Statuses
 
-```
-Discovered ──► Verified ──► Installed ──► Configured ──► Active
-                  │                            │
-                  ▼                            ▼
-              Rejected                    Disabled / Uninstalled
-```
+| Status | Meaning |
+|--------|---------|
+| `loaded` | Module imported |
+| `initialized` | `initialize()` called |
+| `available` | Healthy and ready |
+| `disabled` | User-disabled |
+| `auth_failed` | Credentials missing/invalid |
+| `rate_limited` | API rate-limited |
+| `unavailable` | External API down |
+| `error` | Unexpected error |
 
-## Execution Sandbox
+## PluginManager API
 
-```python
-class PluginSandbox:
-    """Security sandbox for plugin execution."""
+| Method | Description |
+|--------|-------------|
+| `initialize()` | Load all built-in plugins |
+| `shutdown()` | Cleanup all plugins, clear state |
+| `get_plugin(name)` | Get plugin by name |
+| `get_all_plugins()` | Get all loaded plugins |
+| `get_tool_definitions()` | OpenAI-compatible tool definitions |
+| `get_all_tools()` | Tool list with plugin name |
+| `get_status(name)` | Get plugin status |
+| `set_status(name, status)` | Set plugin status |
+| `get_all_statuses()` | Dict of all statuses |
+| `health_check(name)` | Single plugin health |
+| `health_check()` | All plugins health summary |
+| `execute_tool(name, **kwargs)` | Execute (raises `PluginError`) |
+| `execute_tool_safe(name, **kwargs)` | Execute (returns error dict) |
+| `get_stats()` | Counts and per-plugin details |
+| `get_plugin_metadata(name)` | Get cached metadata |
+| `get_all_plugin_metadata()` | All cached metadata |
 
-    MAX_EXECUTION_TIME = 30  # seconds
-    MAX_MEMORY_MB = 100
-    ALLOWED_DOMAINS: set[str]  # from permissions
-    RATE_LIMIT = "10/minute"
-```
+## API Endpoints
 
-## Marketplace API
+All under `/api/v1/tools`, requires Bearer auth.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/plugins/marketplace` | List available plugins |
-| GET | `/plugins/marketplace/{name}` | Plugin details |
-| POST | `/plugins/install` | Install from marketplace |
-| POST | `/plugins/{name}/uninstall` | Remove plugin |
-| POST | `/plugins/{name}/configure` | Update config |
-| GET | `/plugins/{name}/status` | Check status |
+| GET | `/tools` | List all tools |
+| GET | `/tools/definitions` | OpenAI function definitions |
+| POST | `/tools/execute` | Execute a tool |
+| GET | `/tools/plugins` | Plugin stats |
+| GET | `/tools/health` | Health check all plugins |
+| GET | `/tools/health/{name}` | Health check single plugin |
+| GET | `/tools/status` | All plugin statuses |
 
-## Dynamic UI
+## Error Hierarchy
 
-Plugins define their UI via JSON Schema. Clients render native forms:
-
-```json
-{
-  "settings_ui": {
-    "type": "form",
-    "fields": [
-      {"key": "github_token", "type": "password", "label": "Personal Access Token"},
-      {"key": "default_repo", "type": "text", "label": "Default Repository"}
-    ]
-  }
-}
+```
+PluginError
+├── PluginNotFoundError
+├── PluginAuthError
+├── PluginRateLimitError
+├── PluginTimeoutError
+├── PluginExecutionError
+├── PluginUnavailableError
+└── PluginConfigError
 ```
 
-## Current Plugins (Phase 1)
+`normalize_error()` maps common HTTP errors to the correct type. `execute_tool_safe()` catches all and returns a dict with `success`, `error`, `error_type`, `plugin`, `tool`.
 
-All existing plugins (`weather`, `tavily`, `google_drive`, `gmail`, `calendar`, `github`, `notion`, `google_maps`, `people`, `ocr`) continue to work. Phase 2 adds:
+## Updated Plugins (v2.0.0)
 
-- Dynamic loading from `plugins/` directory
-- Plugin marketplace API
-- Per-user enable/disable
-- Configuration UI
-- Permission scoping
+| Plugin | Credentials | Tools |
+|--------|------------|-------|
+| GitHub | `GITHUB_TOKEN` | `github_list_repos`, `github_search`, `github_list_issues` |
+| Google Drive | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `search_google_drive`, `read_google_drive_file` |
+| Google Calendar | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `list_calendar_events`, `create_calendar_event` |
+| Gmail | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | `search_gmail`, `read_gmail_message` |
+| Tavily | `TAVILY_API_KEY` | `tavily_search`, `tavily_answer` |
+
+Other plugins (weather, notion, ocr, google_maps, people) remain unchanged with `BasePlugin`.
+
+## Tests
+
+`tests/test_plugins.py` — 41 tests covering:
+- PluginInterface (abstract credentials, metadata, permissions, health, validate, execute)
+- PluginError hierarchy and normalization
+- PluginManager (registration, query, health, execution, status, shutdown)
+- ToolExecutor sync from PluginManager
+- PluginStatus labels

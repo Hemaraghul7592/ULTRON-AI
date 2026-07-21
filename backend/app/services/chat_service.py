@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import time
 import uuid
-from typing import Any, AsyncIterator
+from typing import TYPE_CHECKING, Any, AsyncIterator
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,11 +19,14 @@ from app.repositories.token_repo import TokenRepository
 from app.schemas.ai import ChatRequest, ChatResponse, StreamChunk, ToolCall, ToolResult
 from app.schemas.conversation import ConversationCreate, MessageCreate
 
+if TYPE_CHECKING:
+    from app.plugins.manager import PluginManager
+
 logger = get_logger(__name__)
 
 
 class ChatService:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, session: AsyncSession, plugin_manager: PluginManager | None = None) -> None:
         self.session = session
         self.ai_service = AIService()
         self.prompt_builder = PromptBuilder()
@@ -32,6 +35,8 @@ class ChatService:
         self.conversation_repo = ConversationRepository(session)
         self.token_repo = TokenRepository(session)
         self.memory_service = MemoryService(session)
+        if plugin_manager is not None:
+            self.tool_executor.sync_from_plugin_manager(plugin_manager)
 
     def set_tool_executor(self, executor: ToolExecutor) -> None:
         self.tool_executor = executor

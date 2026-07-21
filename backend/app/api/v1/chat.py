@@ -11,43 +11,51 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import get_settings
 from app.core.database import get_session
 from app.memory.service import MemoryService
+from app.plugins.manager import PluginManager
 from app.schemas.ai import ChatRequest, ChatResponse
 from app.services.chat_service import ChatService
 
 router = APIRouter(prefix="/chat", tags=["chat"], dependencies=[Depends(verify_token)])
 
 
-async def _get_chat_service(user_id: str) -> ChatService:
-    session_factory = get_session()
-    session = session_factory()
-    await session.__aenter__()
-    chat_service = ChatService(session)
-    return chat_service
+def _get_pm_from_request(http_request: Request) -> PluginManager | None:
+    if hasattr(http_request.app.state, "plugin_manager"):
+        return http_request.app.state.plugin_manager
+    return None
 
 
 @router.post("", response_model=ChatResponse)
-async def chat(request: ChatRequest, user: dict = Depends(verify_token)) -> ChatResponse:
+async def chat(
+    body: ChatRequest,
+    user: dict = Depends(verify_token),
+    http_request: Request = Depends(lambda r: r),
+) -> ChatResponse:
     user_id = user["user_id"]
-    settings = get_settings()
     session_factory = get_session()
     async with session_factory() as session:
-        chat_service = ChatService(session)
+        pm = _get_pm_from_request(http_request)
+        chat_service = ChatService(session, plugin_manager=pm)
 
-        result = await chat_service.chat(request, user_id=user_id)
+        result = await chat_service.chat(body, user_id=user_id)
         await session.commit()
         return result
 
 
 @router.post("/stream")
-async def chat_stream(request: ChatRequest, user: dict = Depends(verify_token)) -> StreamingResponse:
+async def chat_stream(
+    body: ChatRequest,
+    user: dict = Depends(verify_token),
+    http_request: Request = Depends(lambda r: r),
+) -> StreamingResponse:
     user_id = user["user_id"]
     session_factory = get_session()
 
     async def event_generator():
         async with session_factory() as session:
-            chat_service = ChatService(session)
+            pm = _get_pm_from_request(http_request)
+            chat_service = ChatService(session, plugin_manager=pm)
 
-            async for chunk in chat_service.chat_stream(request, user_id=user_id):
+            async for chunk in chat_service.chat_stream(body, user_id=user_id):
                 data = json.dumps({
                     "content": chunk.content,
                     "done": chunk.done,

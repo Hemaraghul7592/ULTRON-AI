@@ -51,24 +51,23 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     from app.automation.reminders import ReminderEngine
     from app.automation.scheduler import SchedulerService
+    from app.plugins.manager import PluginManager
     from app.tools.plugin_loader import PluginLoader
     from app.tools.router import ToolRouter
     from app.voice.pipeline import VoicePipeline
     from app.voice.session import VoiceSessionManager
 
-    tool_router = ToolRouter()
-    plugin_loader = PluginLoader(tool_router)
-    await plugin_loader.load_builtin_plugins()
+    plugin_manager = PluginManager()
+    await plugin_manager.initialize()
 
     scheduler = SchedulerService()
     reminders = ReminderEngine()
     voice_session_manager = VoiceSessionManager()
     voice_pipeline = VoicePipeline()
 
+    application.state.plugin_manager = plugin_manager
     application.state.scheduler = scheduler
     application.state.reminders = reminders
-    application.state.tool_router = tool_router
-    application.state.plugin_loader = plugin_loader
     application.state.voice_session_manager = voice_session_manager
     application.state.voice_pipeline = voice_pipeline
 
@@ -78,8 +77,8 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     if hasattr(application.state, "scheduler"):
         await application.state.scheduler.stop()
-    if hasattr(application.state, "tool_router"):
-        await application.state.tool_router.cleanup_all()
+    if hasattr(application.state, "plugin_manager"):
+        await application.state.plugin_manager.shutdown()
 
     await close_db()
     _logger.info("ultron_stopped")

@@ -2,10 +2,13 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from app.core.exceptions import ToolExecutionException
 from app.core.logging import get_logger
+
+if TYPE_CHECKING:
+    from app.plugins.manager import PluginManager
 
 logger = get_logger(__name__)
 
@@ -13,6 +16,7 @@ logger = get_logger(__name__)
 class ToolExecutor:
     def __init__(self) -> None:
         self._tools: dict[str, Any] = {}
+        self._plugin_manager: PluginManager | None = None
 
     def register_tool(
         self,
@@ -27,6 +31,29 @@ class ToolExecutor:
             "parameters": parameters or {},
         }
         logger.info("tool_registered", name=name)
+
+    def sync_from_plugin_manager(self, plugin_manager: PluginManager) -> None:
+        self._plugin_manager = plugin_manager
+        self._tools.clear()
+        for tool_def in plugin_manager.get_all_tools():
+            name = tool_def["name"]
+            self._tools[name] = {
+                "handler": self._create_plugin_handler(name),
+                "description": tool_def["description"],
+                "parameters": tool_def["parameters"],
+            }
+        logger.info("tools_synced_from_plugin_manager", count=len(self._tools))
+
+    def _create_plugin_handler(self, tool_name: str) -> Any:
+        async def handler(**kwargs: Any) -> str:
+            pm = self._plugin_manager
+            if pm is None:
+                raise ToolExecutionException(tool_name=tool_name, message="PluginManager not available")
+            result = await pm.execute_tool_safe(tool_name, **kwargs)
+            if result.get("success"):
+                return result.get("result", "")
+            raise ToolExecutionException(tool_name=tool_name, message=result.get("error", "Unknown error"))
+        return handler
 
     def get_tool_definitions(self) -> list[dict[str, Any]]:
         definitions = []

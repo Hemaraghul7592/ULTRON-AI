@@ -4,7 +4,8 @@ from typing import Any
 
 import httpx
 
-from app.tools.base import BasePlugin, BaseTool
+from app.plugins.base import PluginInterface, PluginStatus
+from app.tools.base import BaseTool
 
 
 class GitHubRepoTool(BaseTool):
@@ -188,21 +189,26 @@ class GitHubIssuesTool(BaseTool):
             return f"GitHub issues error: {e}"
 
 
-class Plugin(BasePlugin):
+class Plugin(PluginInterface):
     @property
     def name(self) -> str:
         return "github"
 
     @property
     def version(self) -> str:
-        return "1.0.0"
+        return "2.0.0"
 
     @property
     def description(self) -> str:
         return "GitHub repository and issue management"
 
+    @property
+    def required_credentials(self) -> list[str]:
+        return ["GITHUB_TOKEN"]
+
     def __init__(self) -> None:
         self._tools: list[BaseTool] = []
+        self._token: str = ""
 
     def get_tools(self) -> list[BaseTool]:
         return self._tools
@@ -210,13 +216,34 @@ class Plugin(BasePlugin):
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
         settings = get_settings()
-        token = settings.GITHUB_TOKEN
-        if token:
+        self._token = settings.GITHUB_TOKEN
+        if self._token:
             self._tools = [
-                GitHubRepoTool(token),
-                GitHubSearchTool(token),
-                GitHubIssuesTool(token),
+                GitHubRepoTool(self._token),
+                GitHubSearchTool(self._token),
+                GitHubIssuesTool(self._token),
             ]
+
+    async def health_check(self) -> dict:
+        import time
+        if not self._token:
+            return {"status": PluginStatus.AUTH_FAILED, "message": "GITHUB_TOKEN not configured", "last_check": time.time()}
+        if not self._tools:
+            return {"status": PluginStatus.DISABLED, "message": "No tools initialized", "last_check": time.time()}
+        try:
+            async with httpx.AsyncClient(timeout=10.0) as client:
+                resp = await client.get(
+                    "https://api.github.com/",
+                    headers={"Authorization": f"token {self._token}"},
+                )
+                if resp.status_code == 200:
+                    return {"status": PluginStatus.AVAILABLE, "message": "GitHub API reachable", "last_check": time.time()}
+                return {"status": PluginStatus.AUTH_FAILED, "message": f"GitHub API returned {resp.status_code}", "last_check": time.time()}
+        except Exception as e:
+            return {"status": PluginStatus.UNAVAILABLE, "message": str(e), "last_check": time.time()}
+
+    async def validate(self) -> bool:
+        return bool(self._token)
 
     async def cleanup(self) -> None:
         for tool in self._tools:
