@@ -58,6 +58,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     from app.search.cache import SearchCache
     from app.search.providers import TavilyProvider
     from app.search.service import SearchService
+    from app.sync.service import SyncService
     from app.tools.plugin_loader import PluginLoader
     from app.tools.router import ToolRouter
     from app.voice.providers.groq import GroqSTTProvider, GroqTTSProvider
@@ -88,6 +89,8 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     voice_service = VoiceService(stt_provider=stt_provider, tts_provider=tts_provider)
     voice_service.set_chat_handler(None)
 
+    sync_service = SyncService()
+
     plugin_manager = PluginManager()
     await plugin_manager.initialize()
 
@@ -97,6 +100,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     application.state.search_service = search_service
     application.state.file_service = file_service
     application.state.voice_service = voice_service
+    application.state.sync_service = sync_service
     application.state.plugin_manager = plugin_manager
     application.state.scheduler = scheduler
     application.state.reminders = reminders

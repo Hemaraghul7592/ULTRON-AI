@@ -1,171 +1,134 @@
-# Sync Engine — ULTRON AI Platform
+# Sync Engine — ULTRON AI
 
 ## Architecture
 
 ```
-┌──────────┐         ┌──────────┐         ┌──────────┐
-│  Android  │         │   iOS    │         │  Desktop │
-│  (offline)│         │ (offline)│         │ (offline)│
-└─────┬────┘         └────┬─────┘         └────┬─────┘
-      │                   │                    │
-      ▼                   ▼                    ▼
-┌─────────────────────────────────────────────────────┐
-│              Sync API (Backend)                      │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌────────┐ │
-│  │Pull      │ │Push      │ │Conflict  │ │Status  │ │
-│  │Changes   │ │Changes   │ │Resolve   │ │Check   │ │
-│  └──────────┘ └──────────┘ └──────────┘ └────────┘ │
-│                                                      │
-│  ┌──────────────────────────────────────────────┐   │
-│  │           Sync Log (source of truth)          │   │
-│  └──────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────┘
+SyncService (single entry point)
+        │
+        ├── SyncManager
+        │       │
+        │       ├── SyncProvider interface
+        │       │       └── MockSyncProvider (testing)
+        │       │
+        │       ├── ConflictResolver (4 strategies)
+        │       │
+        │       └── SyncQueue (in-memory, retry, backoff)
+        │
+        └── Change Tracking (created/updated/deleted/moved)
 ```
 
-## Sync Strategy: Last-Write-Wins with Version Vector
+## Core Files
+
+| File | Purpose |
+|------|---------|
+| `app/sync/interface.py` | `SyncProvider` ABC + types (`SyncChange`, `SyncResult`, `SyncState`, `SyncAction`, `SyncStatus`) |
+| `app/sync/errors.py` | `SyncError` hierarchy (6 types) |
+| `app/sync/models.py` | Model helpers (`make_change`, `change_key`, `is_older`, `merge_changes`, `compute_checksum`) |
+| `app/sync/resolver.py` | `ConflictResolver` with 4 built-in strategies |
+| `app/sync/queue.py` | `SyncQueue` — in-memory with exponential backoff retry |
+| `app/sync/manager.py` | `SyncManager` — coordinates providers, queue, conflict resolver |
+| `app/sync/service.py` | `SyncService` — single public API entry point |
+| `app/sync/providers/mock.py` | `MockSyncProvider` for testing |
+
+## SyncProvider Interface
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `push(changes)` | `SyncResult` | Send local changes to provider |
+| `pull(since)` | `list[SyncChange]` | Get remote changes since timestamp |
+| `list_changes(since)` | `list[SyncChange]` | List available remote changes |
+| `health_check()` | `dict` | Provider health |
+| `validate()` | `bool` | Credentials/configuration check |
+| `metadata()` | `dict` | Provider name, version, supported actions |
+
+## SyncAction Enum
+
+| Value | Description |
+|-------|-------------|
+| `create` | New entity created |
+| `update` | Entity modified |
+| `delete` | Entity removed |
+| `move` | Entity relocated |
+
+## SyncService API
+
+| Method | Description |
+|--------|-------------|
+| `register_provider(provider)` | Register a sync provider |
+| `unregister_provider(name)` | Remove a provider |
+| `list_providers()` | List registered provider names |
+| `get_provider(name)` | Get provider by name |
+| `push(provider, changes)` | Push local changes to provider |
+| `pull(provider, since)` | Pull remote changes |
+| `sync(provider)` | Full sync: pull → resolve conflicts → push |
+| `track_change(provider, change)` | Record local change for later sync |
+| `get_tracked_changes(provider)` | Get all pending local changes |
+| `get_sync_state(provider)` | Get provider sync state |
+| `health_check(provider?)` | Health check specific or all providers |
+
+## ConflictResolver Strategies
+
+| Strategy | Logic |
+|----------|-------|
+| `last_write_wins` | Higher version number wins |
+| `timestamp` | Newer timestamp wins |
+| `provider_priority` | Remote (provider) always wins |
+| `manual` | Local wins, marked for user resolution |
+
+## SyncQueue
+
+- In-memory operation queue with UUIDs
+- Exponential backoff: `delay = base_delay × 2^(attempt-1)` (capped at max_delay)
+- Configurable retry count per item
+- `process_all()` — drain queue
+- `process_one(id)` — process single item
+- `cancel(id)` / `cancel_all()` — abort operations
+- Status tracking: pending, in_progress, completed, failed
+
+## Change Tracking
+
+`SyncChange` tracks:
+- `entity_type` — e.g. "memories", "conversations", "files"
+- `entity_id` — UUID string
+- `action` — create/update/delete/move
+- `data` — entity payload as dict
+- `version` — monotonically increasing
+- `checksum` — SHA-256 of data for integrity
+- `timestamp` — ISO 8601
+- `source` — "local" or provider name
+
+## Error Hierarchy
 
 ```
-Each entity has:
-  - sync_version (integer, incremented on each change)
-  - updated_at (timestamp)
-  - checksum (SHA-256 of serialized entity)
-
-Conflict resolution:
-  - Higher sync_version wins
-  - If same version → higher checksum wins (deterministic)
-  - Client always accepts server version on conflict
-  - Server logs conflict for auditing
+SyncError
+├── ProviderUnavailableError
+├── ConflictError (carries conflict details)
+├── RetryExceededError
+├── AuthenticationError
+├── QueueError
 ```
 
-## Push Flow
+## Integration Points
 
-```
-Client:
-  1. Collect all entities where isDirty = true
-  2. Send batch to POST /sync/push
-  3. Server:
-     a. For each entity, check sync_version
-     b. If client version < server version → conflict
-     c. If client version >= server version → accept and increment
-     d. Return updated entities with new versions
+- **FileService**: Sync files through `SyncProvider` push/pull (no direct filesystem access)
+- **MemoryService**: Track memory changes via `track_change()`
+- **PluginManager**: Google Drive provider implementation uses existing Google OAuth
 
-Server Response:
-{
-  "accepted": [{"type": "conversation", "id": "uuid", "new_version": 5}],
-  "conflicts": [{"type": "memory", "id": "uuid", "server_version": 3, "client_version": 2}],
-  "rejected": [] // version too old, deleted entity, etc.
-}
-```
+## Future Extensibility
 
-## Pull Flow
+- Persist queue to DB for crash recovery
+- Add WebSocket push notifications for real-time sync
+- Implement `GoogleDriveSyncProvider` wrapping existing Google Drive plugin
+- Add `DropboxSyncProvider`, `OneDriveSyncProvider`, `iCloudSyncProvider`
+- Client-server sync API endpoints at `/api/v1/sync/`
 
-```
-Client:
-  1. Send last_synced_at timestamp
-  2. POST /sync/pull
+## Tests
 
-Server:
-  1. Query sync_log for changes since timestamp
-  2. Return all changed entities for this user
-
-Server Response:
-{
-  "changes": [
-    {"type": "conversation", "action": "update", "data": {...}, "version": 5},
-    {"type": "memory", "action": "delete", "id": "uuid"},
-  ],
-  "server_time": "2026-07-21T12:00:00Z",
-  "has_more": false
-}
-```
-
-## Offline Queue (Client-Side)
-
-```
-┌──────────────────────┐
-│    SyncManager        │
-│                       │
-│  ┌─────────────────┐  │
-│  │  Outbox Queue    │  │
-│  │  (PendingOps DB) │  │
-│  │  - create conv   │  │
-│  │  - update mem    │  │
-│  │  - delete msg    │  │
-│  └────────┬────────┘  │
-│           │           │
-│           ▼           │
-│  ┌─────────────────┐  │
-│  │  Sync Scheduler  │  │
-│  │  - On network    │  │
-│  │  - Periodic      │  │
-│  │  - Manual        │  │
-│  └─────────────────┘  │
-└──────────────────────┘
-```
-
-## Synced Entity Types
-
-| Entity | Sync Direction | Conflict | Priority |
-|--------|---------------|----------|----------|
-| Conversations | Bidirectional | LWW | High |
-| Messages | Client → Server (append-only) | None | High |
-| Memories | Bidirectional | LWW | Medium |
-| Settings | Bidirectional | LWW | Medium |
-| Files | Client → Server | None | Low |
-| Plugin configs | Bidirectional | LWW | Low |
-| Search history | Client → Server | None | Low |
-
-## Initial Sync
-
-On first login after a period of being offline:
-
-```
-1. Client sends all local data as "push"
-2. Server accepts and returns server-state
-3. Client overwrites local with server state
-4. Client resubmits any local-only data
-```
-
-## Android Implementation
-
-```kotlin
-class SyncManager @Inject constructor(
-    private val api: SyncApi,
-    private val db: AppDatabase,
-) {
-    private val outbox = OutboxQueue(db)
-
-    suspend fun pushChanges() {
-        val pending = outbox.getAll()
-        if (pending.isEmpty()) return
-
-        val response = api.push(SyncPushRequest(changes = pending))
-        response.accepted.forEach { markSynced(it.id, it.newVersion) }
-        response.conflicts.forEach { resolveConflict(it) }
-    }
-
-    suspend fun pullChanges() {
-        val lastSync = prefs.lastSyncTime
-        val response = api.pull(SyncPullRequest(since = lastSync))
-
-        response.changes.forEach { change ->
-            when (change.action) {
-                "create" -> upsertLocal(change)
-                "update" -> upsertLocal(change)
-                "delete" -> deleteLocal(change)
-            }
-        }
-        prefs.lastSyncTime = response.serverTime
-    }
-}
-```
-
-## Error Handling
-
-| Error | Client Action |
-|-------|---------------|
-| Network unavailable | Queue, retry with exponential backoff |
-| Server 401 | Logout, re-authenticate, retry |
-| Server 409 (conflict) | Accept server version, notify user |
-| Server 5xx | Retry with backoff (max 3 attempts) |
-| Payload too large | Batch split |
+`tests/test_sync.py` — 60 tests covering:
+- Models (checksum, make_change, change_key, is_older, merge_changes)
+- ConflictResolver (all 4 strategies, clear, switch, conflict info)
+- SyncQueue (enqueue, process, retry, max retries, cancel, stats, clear)
+- SyncManager (register, unregister, list, push, pull, sync, track, state, health)
+- SyncService (register, push, pull, sync, health, list, unregister, track, state)
+- Error hierarchy + conflict error payload
+- MockSyncProvider (push, pull, fail, pushed tracking, health, validate, metadata)
