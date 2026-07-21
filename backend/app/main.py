@@ -49,6 +49,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
             "Set them in .env to enable the corresponding features.",
         )
 
+    from app.agent.service import AgentService
     from app.automation.reminders import ReminderEngine
     from app.automation.scheduler import SchedulerService as SchedService
     from app.file_engine.service import FileService
@@ -91,6 +92,8 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     sync_service = SyncService()
 
+    agent_service = AgentService()
+
     plugin_manager = PluginManager()
     await plugin_manager.initialize()
 
@@ -101,6 +104,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     application.state.file_service = file_service
     application.state.voice_service = voice_service
     application.state.sync_service = sync_service
+    application.state.agent_service = agent_service
     application.state.plugin_manager = plugin_manager
     application.state.scheduler = scheduler
     application.state.reminders = reminders
