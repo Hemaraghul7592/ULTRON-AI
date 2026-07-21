@@ -91,3 +91,15 @@ async def test_invalid_jwt_rejected(client: AsyncClient):
 async def test_missing_jwt_rejected(client: AsyncClient):
     r = await client.get("/api/v1/conversations")
     assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_duplicate_registration_returns_409(client: AsyncClient):
+    payload = {"username": "duptest", "password": "TestPass123!"}
+    r = await client.post("/api/v1/auth/register", json=payload)
+    assert r.status_code == 200
+
+    r = await client.post("/api/v1/auth/register", json=payload)
+    assert r.status_code == 409
+    data = r.json()
+    assert "Username already exists" in data.get("detail", "")

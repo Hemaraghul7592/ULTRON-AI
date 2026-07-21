@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.security import create_access_token, hash_password, verify_password
@@ -15,7 +16,10 @@ class AuthService:
     async def register(self, data: UserCreate) -> TokenResponse:
         existing = await self.user_repo.get_by_username(data.username)
         if existing:
-            raise ValueError("Username already exists")
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already exists",
+            )
         hashed = hash_password(data.password)
         user = await self.user_repo.create(data, hashed)
         await self.session.commit()
@@ -25,7 +29,6 @@ class AuthService:
     async def login(self, data: UserLogin) -> TokenResponse:
         user = await self.user_repo.get_by_username(data.username)
         if not user or not verify_password(data.password, user.hashed_password):
-            from fastapi import HTTPException, status
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",
