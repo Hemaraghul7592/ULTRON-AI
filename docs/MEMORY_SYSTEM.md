@@ -3,154 +3,214 @@
 ## Architecture
 
 ```
-User Input
-    │
-    ▼
-┌─────────────────────────────────────────────────┐
-│              Memory Engine                        │
-│                                                   │
-│  ┌──────────────┐    ┌───────────────────────┐    │
-│  │  Incoming     │    │   Memory Classifier    │    │
-│  │  Processor    │───►│  - Extract entities   │    │
-│  │  - Embed text │    │  - Determine type     │    │
-│  │  - Extract    │    │  - Score importance   │    │
-│  │    keywords   │    │  - Tag extraction     │    │
-│  └──────────────┘    └───────────┬───────────┘    │
-│                                  │                │
-│                                  ▼                │
-│  ┌──────────────────────────────────────────┐     │
-│  │         Memory Store                      │     │
-│  │  ┌──────────┐ ┌──────────┐ ┌──────────┐  │     │
-│  │  │short_term│ │long_term │ │ semantic │  │     │
-│  │  │ (volatile)│ │ (stable) │ │ (indexed) │  │     │
-│  │  └──────────┘ └──────────┘ └──────────┘  │     │
-│  └──────────────────────────────────────────┘     │
-│                                                   │
-│  ┌──────────────┐    ┌───────────────────────┐    │
-│  │  Retrieval    │    │  Consolidation        │    │
-│  │  - Semantic  │    │  - Summarize          │    │
-│  │  - Keyword   │    │  - Merge duplicates   │    │
-│  │  - Temporal  │    │  - Promote→long_term  │    │
-│  │  - Ranked    │    │  - Expire old         │    │
-│  └──────────────┘    └───────────────────────┘    │
-└─────────────────────────────────────────────────┘
-    │
-    ▼
-  Context Builder → AI Prompt
+            ┌─────────────────────────┐
+            │   ChatService / AI      │
+            │   (uses MemoryService)  │
+            └───────────┬─────────────┘
+                        │
+                        ▼
+            ┌─────────────────────────┐
+            │     MemoryService       │ ← SINGLE entry point for ALL modules
+            │                         │
+            │  - create_memory()       │
+            │  - get_memory()          │
+            │  - update_memory()       │
+            │  - delete_memory()       │
+            │  - list_memories()       │
+            │  - search_memories()     │
+            │  - archive/restore()     │
+            │  - get_context_for_query()│
+            │  - get_stats()           │
+            └───────────┬─────────────┘
+                        │
+                        ▼
+            ┌─────────────────────────┐
+            │   MemoryRepository      │
+            │  (data access layer)    │
+            └───────────┬─────────────┘
+                        │
+                        ▼
+            ┌─────────────────────────┐
+            │      Database           │
+            │  (memories + tags)      │
+            └─────────────────────────┘
 ```
 
-## Memory Types
+**Design principle:** No module other than `MemoryService` accesses the memory database directly. The AI Engine, Chat, and all future modules communicate through `MemoryService` only.
 
-| Type | Storage | TTL | Description |
-|------|---------|-----|-------------|
-| `short_term` | In-memory + DB | Session or 24h | Recent conversation context. Ephemeral. Automatically consolidated. |
-| `long_term` | DB (indexed) | Indefinite | Important facts, preferences, learned patterns. Promoted from short-term. |
-| `episodic` | DB (indexed) | Indefinite | Specific events, interactions, experiences. Timestamped. |
-| `semantic` | DB (vector) | Indefinite | General knowledge, concepts, facts extracted from interactions. |
-| `procedural` | DB | Indefinite | How-to knowledge, user preferences for task execution. |
+## Database Schema
+
+### `memories` table
+
+| Column | Type | Default | Description |
+|--------|------|---------|-------------|
+| `id` | String(36) PK | uuid4 | Unique identifier |
+| `user_id` | String(36) | — | Owner (indexed) |
+| `content` | Text | — | Memory content (JSON or plain text) |
+| `summary` | Text | None | Optional summary |
+| `memory_type` | String(20) | `short_term` | `short_term`, `long_term`, `episodic`, `semantic` |
+| `category` | String(50) | `general` | **New:** `general`, `user_profile`, `preference`, `project`, `conversation` (indexed) |
+| `is_archived` | Boolean | `false` | **New:** Soft-delete flag |
+| `importance` | Float | 0.5 | 0.0–1.0 importance score (indexed) |
+| `access_count` | Integer | 0 | Number of retrievals |
+| `embedding_vector` | Text | None | JSON-serialized embedding (future) |
+| `source` | String(255) | None | Origin (chat, api, system) |
+| `context` | Text | None | Extra context |
+| `created_at` | DateTime | utcnow | (indexed) |
+| `updated_at` | DateTime | utcnow | Auto-updated |
+| `last_accessed` | DateTime | utcnow | LRU tracking |
+
+### `tags` table
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | String(36) PK | Unique identifier |
+| `name` | String(100) | Unique tag name |
+| `created_at` | DateTime | |
+
+### `memory_tags` (associative)
+
+| Column | Type |
+|--------|------|
+| `memory_id` | FK → memories.id ON DELETE CASCADE |
+| `tag_id` | FK → tags.id ON DELETE CASCADE |
+
+## Memory Categories
+
+| Category | Purpose | Example content |
+|----------|---------|-----------------|
+| `general` | Default, uncategorized | Any general fact |
+| `user_profile` | User identity & settings | `{"name":"Alice","timezone":"UTC","language":"en"}` |
+| `preference` | User preferences | `"Dark mode"`, `"Concise responses"` |
+| `project` | Project tracking | `"Build AI Engine — status: in progress"` |
+| `conversation` | Conversation summaries | `"Discussed Q3 roadmap, decided on Python"` |
 
 ## Memory Lifecycle
 
 ```
-Creation → Short-Term ──→ Consolidation ──→ Long-Term
-              │                                  │
-              │ (expired/                         │ (accessed)
-              │  low importance)                  │
-              ▼                                  ▼
-           Deleted                           Renewed (new TTL)
+Create → Active (is_archived=false)
               │
-              ▼
-         Archived (optional)
+         ┌────┴────┐
+         ▼         ▼
+     Archived    Deleted
+  (is_archived   (hard delete)
+   = true)
 ```
-
-## Memory Scoring (Importance)
-
-Importance score (0.0 – 1.0) determines memory retention:
-
-| Signal | Weight | Example |
-|--------|--------|---------|
-| Explicit user instruction | 0.35 | "Remember that my birthday is Jan 15." |
-| Repetition | 0.25 | User mentions the same fact across sessions |
-| Emotional content | 0.20 | "I really hate that." / "I love this." |
-| Recency | 0.10 | Latest interactions score higher |
-| Entity density | 0.10 | More named entities = more important |
-
-Formula:
-```
-importance = Σ(signal_i × weight_i), clipped to [0.0, 1.0]
-```
-
-## Memory Retrieval
-
-### Retrieval Strategies
-
-```
-┌─────────────────────┐
-│   Query             │
-└─────────┬───────────┘
-          │
-    ┌─────┴─────┐
-    ▼           ▼
-Semantic     Keyword
-Search       Search
-(embeddings) (full-text)
-    │           │
-    └─────┬─────┘
-          ▼
-    ┌─────────────┐
-    │  Fusion     │ ← Reciprocal Rank Fusion
-    └──────┬──────┘
-           ▼
-    ┌─────────────┐
-    │  Re-ranking │ ← Apply importance boost
-    └──────┬──────┘
-           ▼
-    ┌─────────────┐
-    │  Context    │ ← Trim to token budget
-    │  Assembly   │
-    └─────────────┘
-```
-
-### Context Budget
-
-```
-Total prompt tokens: 4096 (default)
-Budget allocation:
-  ├── System prompt:      500
-  ├── Conversation:      2000
-  ├── Memory context:    1000  ← memories compete for this
-  ├── Tool results:       500
-  └── Response reserve:    96
-```
-
-Memories are ranked by `importance × recency_decay` and included until the budget is exhausted.
-
-## Consolidation Pipeline
-
-Runs every 30 minutes (configurable) via background scheduler:
-
-1. **Scan short-term memories** older than threshold
-2. **Cluster similar** by embedding cosine similarity > 0.85
-3. **Summarize clusters** into single long-term memory
-4. **Check importance** — only promote if > 0.4
-5. **Expire** short-term memories < 0.2 importance
-6. **Update access count** on promoted memories
-
-## Future: Vector Search
-
-```
-Embedding dimension: 384 (all-MiniLM-L6-v2)
-Index type: IVFFlat (pgvector)
-Distance: cosine
-
-Query embedding → IVFFlat index → Approximate nearest neighbors → Re-rank
-```
-
-When switching to Qdrant:
-- Dual-write to pgvector + Qdrant during migration
-- Cutover when Qdrant is fully caught up
-- pgvector becomes fallback read-only
 
 ## API Endpoints
 
-See [API_SPECIFICATION.md](./API_SPECIFICATION.md#memory) for endpoint details.
+### CRUD (authenticated)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/memory` | List memories (paginated, filterable) |
+| POST | `/api/v1/memory` | Create a memory |
+| GET | `/api/v1/memory/{id}` | Get memory by ID |
+| PATCH | `/api/v1/memory/{id}` | Update memory |
+| DELETE | `/api/v1/memory/{id}` | Delete memory |
+| POST | `/api/v1/memory/search` | Search by content (ILIKE filter) |
+
+### Category-specific
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/memory/profile` | Get user profile memory |
+| GET | `/api/v1/memory/preferences` | List preference memories |
+| GET | `/api/v1/memory/projects` | List project memories |
+
+### Maintenance
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/v1/memory/stats` | Memory statistics |
+| PATCH | `/api/v1/memory/{id}/archive` | Archive (soft-delete) |
+| PATCH | `/api/v1/memory/{id}/restore` | Restore from archive |
+| PATCH | `/api/v1/memory/{id}/promote` | Promote to long-term |
+
+### Query Parameters (for list)
+
+- `page` (int, default 1)
+- `page_size` (int, default 20, max 100)
+- `memory_type` (str, optional)
+- `category` (str, optional)
+- `min_importance` (float, default 0.0)
+- `include_archived` (bool, default false)
+
+## AI Integration Flow
+
+```
+User Request
+    │
+    ▼
+ChatService
+    │
+    ├── MemoryService.get_context_for_query() → relevant memories
+    ├── AIService.chat() → AI response
+    └── MemoryService.record_conversation_memory() → save summary
+```
+
+The AI Engine (`AIService` / `ChatService`) does **not** query memory storage directly. It calls `MemoryService` methods exclusively.
+
+## Configuration
+
+```python
+# app/core/config.py
+MEMORY_SHORT_TERM_MAX: int = 50       # Max short-term before summarization
+MEMORY_LONG_TERM_THRESHOLD: float = 0.7  # Importance to auto-promote
+MEMORY_SUMMARIZATION_THRESHOLD: int = 10  # Count trigger for compression
+```
+
+## Error Handling
+
+| HTTP Status | Case |
+|-------------|------|
+| 200/201 | Success |
+| 204 | Delete success (no body) |
+| 401 | Missing/invalid auth token |
+| 404 | Memory not found |
+| 422 | Validation error |
+
+## Class Diagram
+
+```
+MemoryService
+├── create_memory(MemoryCreate, user_id) → MemoryResponse
+├── get_memory(id, user_id) → MemoryResponse | None
+├── update_memory(id, MemoryUpdate, user_id) → MemoryResponse | None
+├── delete_memory(id, user_id) → bool
+├── list_memories(user_id, **filters) → MemoryListResponse
+├── search_memories(query, user_id, **filters) → list[dict]
+├── archive_memory(id, user_id) → MemoryResponse | None
+├── restore_memory(id, user_id) → MemoryResponse | None
+├── get_profile_memory(user_id) → MemoryResponse | None
+├── get_preferences(user_id) → list[MemoryResponse]
+├── get_project_memories(user_id) → list[MemoryResponse]
+├── get_context_for_query(query, user_id, limit, categories) → str
+├── record_conversation_memory(summary, user_id, importance) → MemoryResponse
+└── get_stats(user_id) → dict
+
+MemoryRepository
+├── create(MemoryCreate, user_id, embedding) → Memory
+├── get(id, user_id) → Memory | None
+├── list_all(user_id, page, page_size, memory_type, category, min_importance, include_archived) → (list[Memory], int)
+├── update(id, dict, user_id) → Memory | None
+├── delete(id, user_id) → bool
+├── search_by_content(query, user_id, limit, memory_type, category, min_importance) → list[Memory]
+├── get_by_category(category, user_id, limit) → list[Memory]
+├── get_by_type(memory_type, user_id, limit) → list[Memory]
+├── increment_access(id, user_id) → None
+└── promote_to_long_term(user_id, threshold) → int
+```
+
+## Future Roadmap
+
+| Milestone | Feature | Status |
+|-----------|---------|--------|
+| M2 | Structured categories (profile, preference, project) | ✅ Done |
+| M2 | Archive/restore | ✅ Done |
+| M2 | Category-specific API endpoints | ✅ Done |
+| Future | Vector embeddings & semantic search | ⏳ Planned |
+| Future | Automatic memory consolidation | ⏳ Planned |
+| Future | Memory ranking & reflection | ⏳ Planned |
+| Future | Knowledge graph integration | ⏳ Planned |
+| Future | Cross-user memory sharing | ⏳ Planned |

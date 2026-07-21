@@ -20,6 +20,7 @@ class MemoryRepository:
             user_id=user_id,
             content=data.content,
             memory_type=data.memory_type,
+            category=data.category,
             importance=data.importance,
             source=data.source,
             context=data.context,
@@ -28,13 +29,19 @@ class MemoryRepository:
         self.session.add(memory)
         await self.session.flush()
 
-        for tag_name in data.tags:
-            tag = await self._get_or_create_tag(tag_name)
-            memory.tags.append(tag)
+        if data.tags:
+            for tag_name in data.tags:
+                tag = await self._get_or_create_tag(tag_name)
+                # Insert into association table directly to avoid lazy-load
+                await self.session.execute(
+                    memory_tags.insert().values(memory_id=memory.id, tag_id=tag.id)
+                )
 
-        await self.session.flush()
-        await self.session.refresh(memory, attribute_names=["tags"])
-        return memory
+        # Re-query to get memory with tags loaded eagerly
+        result = await self.session.execute(
+            select(Memory).options(selectinload(Memory.tags)).where(Memory.id == memory.id)
+        )
+        return result.scalar_one()
 
     async def get(self, memory_id: str, user_id: str) -> Memory | None:
         result = await self.session.execute(
@@ -48,11 +55,19 @@ class MemoryRepository:
         page: int = 1,
         page_size: int = 20,
         memory_type: str | None = None,
+        category: str | None = None,
         min_importance: float = 0.0,
+        include_archived: bool = False,
     ) -> tuple[list[Memory], int]:
-        query = select(Memory).where(Memory.user_id == user_id, Memory.importance >= min_importance)
+        conditions = [Memory.user_id == user_id, Memory.importance >= min_importance]
         if memory_type:
-            query = query.where(Memory.memory_type == memory_type)
+            conditions.append(Memory.memory_type == memory_type)
+        if category:
+            conditions.append(Memory.category == category)
+        if not include_archived:
+            conditions.append(Memory.is_archived == False)  # noqa: E712
+
+        query = select(Memory).where(*conditions)
 
         count_result = await self.session.execute(
             select(func.count()).select_from(query.subquery())
@@ -74,15 +89,24 @@ class MemoryRepository:
             return None
         for key, value in data.items():
             if key == "tags" and isinstance(value, list):
-                memory.tags.clear()
+                # Delete existing associations and re-insert
+                await self.session.execute(
+                    memory_tags.delete().where(memory_tags.c.memory_id == memory.id)
+                )
                 for tag_name in value:
                     tag = await self._get_or_create_tag(tag_name)
-                    memory.tags.append(tag)
+                    await self.session.execute(
+                        memory_tags.insert().values(memory_id=memory.id, tag_id=tag.id)
+                    )
             elif value is not None:
                 setattr(memory, key, value)
         memory.updated_at = datetime.now(timezone.utc)
         await self.session.flush()
-        return memory
+        # Re-query to get fresh state with tags
+        result = await self.session.execute(
+            select(Memory).options(selectinload(Memory.tags)).where(Memory.id == memory.id)
+        )
+        return result.scalar_one()
 
     async def delete(self, memory_id: str, user_id: str) -> bool:
         memory = await self.get(memory_id, user_id)
@@ -93,15 +117,31 @@ class MemoryRepository:
         return True
 
     async def search_by_content(
-        self, query: str, user_id: str, limit: int = 10, memory_type: str | None = None
+        self,
+        query: str,
+        user_id: str,
+        limit: int = 10,
+        memory_type: str | None = None,
+        category: str | None = None,
+        min_importance: float = 0.0,
     ) -> list[Memory]:
-        q = select(Memory).options(selectinload(Memory.tags)).where(
+        conditions = [
             Memory.user_id == user_id,
             Memory.content.ilike(f"%{escape_like(query)}%"),
-        )
+            Memory.importance >= min_importance,
+        ]
         if memory_type:
-            q = q.where(Memory.memory_type == memory_type)
-        q = q.order_by(Memory.importance.desc()).limit(limit)
+            conditions.append(Memory.memory_type == memory_type)
+        if category:
+            conditions.append(Memory.category == category)
+
+        q = (
+            select(Memory)
+            .options(selectinload(Memory.tags))
+            .where(*conditions)
+            .order_by(Memory.importance.desc())
+            .limit(limit)
+        )
         result = await self.session.execute(q)
         return list(result.scalars().all())
 
@@ -109,6 +149,16 @@ class MemoryRepository:
         result = await self.session.execute(
             select(Memory)
             .where(Memory.memory_type == memory_type, Memory.user_id == user_id)
+            .order_by(Memory.importance.desc())
+            .limit(limit)
+        )
+        return list(result.scalars().all())
+
+    async def get_by_category(self, category: str, user_id: str, limit: int = 50) -> list[Memory]:
+        result = await self.session.execute(
+            select(Memory)
+            .options(selectinload(Memory.tags))
+            .where(Memory.category == category, Memory.user_id == user_id, Memory.is_archived == False)  # noqa: E712
             .order_by(Memory.importance.desc())
             .limit(limit)
         )

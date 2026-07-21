@@ -4,6 +4,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
+CATEGORY_PATTERN = "^(general|user_profile|preference|project|conversation)$"
+
 
 class TagCreate(BaseModel):
     name: str = Field(..., min_length=1, max_length=100)
@@ -20,6 +22,7 @@ class TagResponse(BaseModel):
 class MemoryCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=50000)
     memory_type: str = Field(default="short_term", pattern="^(short_term|long_term|episodic|semantic)$")
+    category: str = Field(default="general", pattern=CATEGORY_PATTERN)
     importance: float = Field(default=0.5, ge=0.0, le=1.0)
     source: str | None = None
     context: str | None = None
@@ -30,7 +33,9 @@ class MemoryUpdate(BaseModel):
     content: str | None = None
     summary: str | None = None
     memory_type: str | None = None
+    category: str | None = Field(default=None, pattern=CATEGORY_PATTERN)
     importance: float | None = Field(default=None, ge=0.0, le=1.0)
+    is_archived: bool | None = None
     tags: list[str] | None = None
 
 
@@ -39,6 +44,8 @@ class MemoryResponse(BaseModel):
     content: str
     summary: str | None = None
     memory_type: str
+    category: str = "general"
+    is_archived: bool = False
     importance: float
     access_count: int
     source: str | None = None
@@ -61,6 +68,7 @@ class MemoryListResponse(BaseModel):
 class MemorySearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000)
     memory_type: str | None = None
+    category: str | None = None
     limit: int = Field(default=10, ge=1, le=50)
     min_importance: float = Field(default=0.0, ge=0.0, le=1.0)
 

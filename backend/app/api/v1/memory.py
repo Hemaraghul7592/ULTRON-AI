@@ -1,12 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.auth import verify_token
 from app.core.database import get_session
-from app.memory.engine import MemoryEngine
-from app.repositories.memory_repo import MemoryRepository
+from app.memory.service import MemoryService
 from app.schemas.memory import (
     MemoryCreate,
     MemoryListResponse,
@@ -14,10 +12,18 @@ from app.schemas.memory import (
     MemorySearchRequest,
     MemorySearchResponse,
     MemoryUpdate,
-    TagResponse,
 )
 
 router = APIRouter(prefix="/memory", tags=["memory"], dependencies=[Depends(verify_token)])
+
+
+def _get_service():
+    session_factory = get_session()
+    session = session_factory()
+    return MemoryService(session), session
+
+
+# ── List / Create (static paths before parameterized) ──────────
 
 
 @router.get("", response_model=MemoryListResponse)
@@ -25,97 +31,50 @@ async def list_memories(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     memory_type: str | None = None,
+    category: str | None = None,
     min_importance: float = Query(0.0, ge=0.0, le=1.0),
+    include_archived: bool = Query(False),
     user: dict = Depends(verify_token),
 ) -> MemoryListResponse:
     user_id = user["user_id"]
-    session_factory = get_session()
-    async with session_factory() as session:
-        repo = MemoryRepository(session)
-        memories, total = await repo.list_all(
-            user_id=user_id, page=page, page_size=page_size, memory_type=memory_type, min_importance=min_importance
-        )
-        return MemoryListResponse(
-            memories=[
-                MemoryResponse(
-                    id=m.id,
-                    content=m.content,
-                    summary=m.summary,
-                    memory_type=m.memory_type,
-                    importance=m.importance,
-                    access_count=m.access_count,
-                    source=m.source,
-                    context=m.context,
-                    tags=[TagResponse(id=t.id, name=t.name, created_at=t.created_at) for t in m.tags],
-                    created_at=m.created_at,
-                    updated_at=m.updated_at,
-                    last_accessed=m.last_accessed,
-                )
-                for m in memories
-            ],
-            total=total,
+    service, session = _get_service()
+    async with session:
+        return await service.list_memories(
+            user_id=user_id,
             page=page,
             page_size=page_size,
+            memory_type=memory_type,
+            category=category,
+            min_importance=min_importance,
+            include_archived=include_archived,
         )
 
 
 @router.post("", response_model=MemoryResponse, status_code=201)
 async def create_memory(data: MemoryCreate, user: dict = Depends(verify_token)) -> MemoryResponse:
     user_id = user["user_id"]
-    session_factory = get_session()
-    async with session_factory() as session:
-        engine = MemoryEngine(session)
-        await engine.initialize()
-        memory = await engine.store(data, user_id=user_id)
+    service, session = _get_service()
+    async with session:
+        result = await service.create_memory(data, user_id=user_id)
         await session.commit()
-        return MemoryResponse(
-            id=memory.id,
-            content=memory.content,
-            summary=memory.summary,
-            memory_type=memory.memory_type,
-            importance=memory.importance,
-            access_count=memory.access_count,
-            source=memory.source,
-            context=memory.context,
-            tags=[TagResponse(id=t.id, name=t.name, created_at=t.created_at) for t in memory.tags],
-            created_at=memory.created_at,
-            updated_at=memory.updated_at,
-            last_accessed=memory.last_accessed,
-        )
+        return result
 
 
 @router.post("/search", response_model=MemorySearchResponse)
 async def search_memories(data: MemorySearchRequest, user: dict = Depends(verify_token)) -> MemorySearchResponse:
     user_id = user["user_id"]
-    session_factory = get_session()
-    async with session_factory() as session:
-        engine = MemoryEngine(session)
-        await engine.initialize()
-        results = await engine.search(
+    service, session = _get_service()
+    async with session:
+        results = await service.search_memories(
             query=data.query,
             user_id=user_id,
             limit=data.limit,
             memory_type=data.memory_type,
+            category=data.category,
             min_importance=data.min_importance,
         )
         return MemorySearchResponse(
-            memories=[
-                MemoryResponse(
-                    id=r["memory"].id,
-                    content=r["memory"].content,
-                    summary=r["memory"].summary,
-                    memory_type=r["memory"].memory_type,
-                    importance=r["memory"].importance,
-                    access_count=r["memory"].access_count,
-                    source=r["memory"].source,
-                    context=r["memory"].context,
-                    tags=[TagResponse(id=t.id, name=t.name, created_at=t.created_at) for t in r["memory"].tags],
-                    created_at=r["memory"].created_at,
-                    updated_at=r["memory"].updated_at,
-                    last_accessed=r["memory"].last_accessed,
-                )
-                for r in results
-            ],
+            memories=[r["memory"] for r in results],
             scores=[r["score"] for r in results],
             query=data.query,
         )
@@ -124,21 +83,112 @@ async def search_memories(data: MemorySearchRequest, user: dict = Depends(verify
 @router.get("/stats")
 async def memory_stats(user: dict = Depends(verify_token)) -> dict:
     user_id = user["user_id"]
-    session_factory = get_session()
-    async with session_factory() as session:
-        engine = MemoryEngine(session)
-        await engine.initialize()
-        return await engine.get_stats(user_id=user_id)
+    service, session = _get_service()
+    async with session:
+        return await service.get_stats(user_id=user_id)
+
+
+# ── Category-specific convenience endpoints ──────────────────
+
+
+@router.get("/profile", response_model=MemoryResponse | None)
+async def get_profile_memory(user: dict = Depends(verify_token)) -> MemoryResponse | None:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        return await service.get_profile_memory(user_id)
+
+
+@router.get("/preferences", response_model=list[MemoryResponse])
+async def get_preferences(user: dict = Depends(verify_token)) -> list[MemoryResponse]:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        return await service.get_preferences(user_id)
+
+
+@router.get("/projects", response_model=list[MemoryResponse])
+async def get_project_memories(user: dict = Depends(verify_token)) -> list[MemoryResponse]:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        return await service.get_project_memories(user_id)
+
+
+# ── Individual memory CRUD (parameterized paths last) ────────
+
+
+@router.get("/{memory_id}", response_model=MemoryResponse)
+async def get_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        memory = await service.get_memory(memory_id, user_id)
+        if memory is None:
+            from app.core.exceptions import NotFoundExceptionHTTP
+            raise NotFoundExceptionHTTP("Memory", memory_id)
+        return memory
+
+
+@router.patch("/{memory_id}", response_model=MemoryResponse)
+async def update_memory(memory_id: str, data: MemoryUpdate, user: dict = Depends(verify_token)) -> MemoryResponse:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        memory = await service.update_memory(memory_id, data, user_id=user_id)
+        if memory is None:
+            from app.core.exceptions import NotFoundExceptionHTTP
+            raise NotFoundExceptionHTTP("Memory", memory_id)
+        await session.commit()
+        return memory
+
+
+@router.delete("/{memory_id}", status_code=204)
+async def delete_memory(memory_id: str, user: dict = Depends(verify_token)) -> None:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        deleted = await service.delete_memory(memory_id, user_id=user_id)
+        if not deleted:
+            from app.core.exceptions import NotFoundExceptionHTTP
+            raise NotFoundExceptionHTTP("Memory", memory_id)
+        await session.commit()
+
+
+@router.patch("/{memory_id}/archive", response_model=MemoryResponse)
+async def archive_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        memory = await service.archive_memory(memory_id, user_id)
+        if memory is None:
+            from app.core.exceptions import NotFoundExceptionHTTP
+            raise NotFoundExceptionHTTP("Memory", memory_id)
+        await session.commit()
+        return memory
+
+
+@router.patch("/{memory_id}/restore", response_model=MemoryResponse)
+async def restore_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:
+    user_id = user["user_id"]
+    service, session = _get_service()
+    async with session:
+        memory = await service.restore_memory(memory_id, user_id)
+        if memory is None:
+            from app.core.exceptions import NotFoundExceptionHTTP
+            raise NotFoundExceptionHTTP("Memory", memory_id)
+        await session.commit()
+        return memory
 
 
 @router.patch("/{memory_id}/promote")
 async def promote_memory(memory_id: str, user: dict = Depends(verify_token)) -> dict:
     user_id = user["user_id"]
-    session_factory = get_session()
-    async with session_factory() as session:
-        repo = MemoryRepository(session)
-        memory = await repo.update(memory_id, {"memory_type": "long_term"}, user_id=user_id)
-        if not memory:
+    service, session = _get_service()
+    async with session:
+        from app.schemas.memory import MemoryUpdate as MU
+        memory = await service.update_memory(memory_id, MU(memory_type="long_term"), user_id=user_id)
+        if memory is None:
             from app.core.exceptions import NotFoundExceptionHTTP
             raise NotFoundExceptionHTTP("Memory", memory_id)
         await session.commit()

@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Index, Integer, String, Table, Text
+from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Table, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -32,6 +32,8 @@ class Memory(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
     summary: Mapped[str | None] = mapped_column(Text, nullable=True)
     memory_type: Mapped[str] = mapped_column(String(20), nullable=False, default="short_term")
+    category: Mapped[str] = mapped_column(String(50), nullable=False, default="general", index=True)
+    is_archived: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     importance: Mapped[float] = mapped_column(Float, nullable=False, default=0.5)
     access_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     embedding_vector: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -41,7 +43,7 @@ class Memory(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     last_accessed: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    tags: Mapped[list[Tag]] = relationship(secondary=memory_tags, back_populates="memories")
+    tags: Mapped[list[Tag]] = relationship(secondary=memory_tags, back_populates="memories", lazy="selectin")
 
     __table_args__ = (
         Index("ix_memories_type", "memory_type"),
@@ -57,7 +59,7 @@ class Tag(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    memories: Mapped[list[Memory]] = relationship(secondary=memory_tags, back_populates="tags")
+    memories: Mapped[list[Memory]] = relationship(secondary=memory_tags, back_populates="tags", lazy="selectin")
 
 
 

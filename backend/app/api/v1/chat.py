@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
 from app.core.database import get_session
-from app.memory.engine import MemoryEngine
+from app.memory.service import MemoryService
 from app.schemas.ai import ChatRequest, ChatResponse
 from app.services.chat_service import ChatService
 
@@ -22,9 +22,6 @@ async def _get_chat_service(user_id: str) -> ChatService:
     session = session_factory()
     await session.__aenter__()
     chat_service = ChatService(session)
-    memory_engine = MemoryEngine(session)
-    await memory_engine.initialize()
-    chat_service.set_memory_engine(memory_engine)
     return chat_service
 
 
@@ -35,9 +32,6 @@ async def chat(request: ChatRequest, user: dict = Depends(verify_token)) -> Chat
     session_factory = get_session()
     async with session_factory() as session:
         chat_service = ChatService(session)
-        memory_engine = MemoryEngine(session)
-        await memory_engine.initialize()
-        chat_service.set_memory_engine(memory_engine)
 
         result = await chat_service.chat(request, user_id=user_id)
         await session.commit()
@@ -52,9 +46,6 @@ async def chat_stream(request: ChatRequest, user: dict = Depends(verify_token)) 
     async def event_generator():
         async with session_factory() as session:
             chat_service = ChatService(session)
-            memory_engine = MemoryEngine(session)
-            await memory_engine.initialize()
-            chat_service.set_memory_engine(memory_engine)
 
             async for chunk in chat_service.chat_stream(request, user_id=user_id):
                 data = json.dumps({

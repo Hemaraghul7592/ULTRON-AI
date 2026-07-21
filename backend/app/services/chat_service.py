@@ -13,7 +13,7 @@ from app.ai.service import AIService
 from app.ai.tool_executor import ToolExecutor
 from app.core.config import get_settings
 from app.core.logging import get_logger
-from app.memory.engine import MemoryEngine
+from app.memory.service import MemoryService
 from app.repositories.conversation_repo import ConversationRepository
 from app.repositories.token_repo import TokenRepository
 from app.schemas.ai import ChatRequest, ChatResponse, StreamChunk, ToolCall, ToolResult
@@ -31,10 +31,7 @@ class ChatService:
         self.tool_executor = ToolExecutor()
         self.conversation_repo = ConversationRepository(session)
         self.token_repo = TokenRepository(session)
-        self.memory_engine: MemoryEngine | None = None
-
-    def set_memory_engine(self, engine: MemoryEngine) -> None:
-        self.memory_engine = engine
+        self.memory_service = MemoryService(session)
 
     def set_tool_executor(self, executor: ToolExecutor) -> None:
         self.tool_executor = executor
@@ -54,8 +51,8 @@ class ChatService:
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
-        if request.use_memory and self.memory_engine:
-            memory_context = await self.memory_engine.get_context_for_query(request.message, user_id=user_id)
+        if request.use_memory:
+            memory_context = await self.memory_service.get_context_for_query(request.message, user_id=user_id)
 
         tools = None
         if request.use_tools and self.tool_executor.has_tools():
@@ -179,8 +176,8 @@ class ChatService:
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
-        if request.use_memory and self.memory_engine:
-            memory_context = await self.memory_engine.get_context_for_query(request.message, user_id=user_id)
+        if request.use_memory:
+            memory_context = await self.memory_service.get_context_for_query(request.message, user_id=user_id)
 
         messages = self.prompt_builder.build_messages(
             user_message=request.message,
