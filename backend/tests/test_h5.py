@@ -207,3 +207,51 @@ async def test_root_public_no_auth(client: AsyncClient):
     r = await client.get("/")
     assert r.status_code == 200
     assert r.json()["name"] == "ULTRON"
+
+
+@pytest.mark.asyncio
+async def test_google_oauth_callback_persists_refresh_token(client: AsyncClient, auth_headers: dict):
+    from app.core.security import decode_access_token
+    from app.main import app
+    from app.services.google_oauth import GoogleOAuthService
+
+    token = auth_headers["Authorization"].replace("Bearer ", "")
+    payload = decode_access_token(token)
+    user_id = payload["user_id"]
+
+    test_state = "test-state-value-min-32-bytes-long!!!"
+    app.state.google_oauth_state = test_state
+    app.state.google_oauth_user_id = user_id
+
+    original = GoogleOAuthService.exchange_code
+
+    async def mock_exchange(self, code, redirect_uri):
+        return {
+            "access_token": "fake-access-token",
+            "refresh_token": "fake-refresh-token-value!!!!!",
+            "expires_in": 3600,
+            "scope": "openid email profile",
+            "token_type": "Bearer",
+        }
+
+    GoogleOAuthService.exchange_code = mock_exchange
+
+    try:
+        r = await client.get(
+            "/api/v1/google/auth/callback",
+            params={"code": "auth_code", "state": test_state},
+        )
+        assert r.status_code == 200
+        assert r.json()["status"] == "success"
+
+        r = await client.get("/api/v1/google/auth/status", headers=auth_headers)
+        assert r.status_code == 200
+        data = r.json()
+        assert data["connected"] is True
+        assert "openid" in data["scopes"]
+    finally:
+        GoogleOAuthService.exchange_code = original
+        if hasattr(app.state, "google_oauth_state"):
+            del app.state.google_oauth_state
+        if hasattr(app.state, "google_oauth_user_id"):
+            del app.state.google_oauth_user_id

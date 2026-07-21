@@ -112,6 +112,7 @@ async def google_auth_callback(
     async with session_factory() as session:
         repo = GoogleTokenRepository(session)
         await repo.upsert(user_id, encrypted, scopes_str)
+        await session.commit()
 
     del request.app.state.google_oauth_state
     del request.app.state.google_oauth_user_id
