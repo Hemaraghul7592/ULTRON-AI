@@ -60,6 +60,10 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     from app.search.service import SearchService
     from app.tools.plugin_loader import PluginLoader
     from app.tools.router import ToolRouter
+    from app.voice.providers.groq import GroqSTTProvider, GroqTTSProvider
+    from app.voice.providers.gemini import GeminiSTTProvider, GeminiTTSProvider
+    from app.voice.providers.mock import MockSTTProvider, MockTTSProvider
+    from app.voice.service import VoiceService
     from app.voice.pipeline import VoicePipeline
     from app.voice.session import VoiceSessionManager
 
@@ -71,21 +75,31 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     file_storage = LocalStorage()
     file_service = FileService(storage=file_storage, max_size=50 * 1024 * 1024, deduplicate=True)
 
+    if settings.GROQ_API_KEY:
+        stt_provider = GroqSTTProvider()
+        tts_provider = GroqTTSProvider()
+    elif settings.GEMINI_API_KEY:
+        stt_provider = GeminiSTTProvider()
+        tts_provider = GeminiTTSProvider()
+    else:
+        stt_provider = MockSTTProvider()
+        tts_provider = MockTTSProvider()
+
+    voice_service = VoiceService(stt_provider=stt_provider, tts_provider=tts_provider)
+    voice_service.set_chat_handler(None)
+
     plugin_manager = PluginManager()
     await plugin_manager.initialize()
 
     scheduler = SchedService()
     reminders = ReminderEngine()
-    voice_session_manager = VoiceSessionManager()
-    voice_pipeline = VoicePipeline()
 
     application.state.search_service = search_service
     application.state.file_service = file_service
+    application.state.voice_service = voice_service
     application.state.plugin_manager = plugin_manager
     application.state.scheduler = scheduler
     application.state.reminders = reminders
-    application.state.voice_session_manager = voice_session_manager
-    application.state.voice_pipeline = voice_pipeline
 
     _logger.info("ultron_started", version=settings.APP_VERSION)
 

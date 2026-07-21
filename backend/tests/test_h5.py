@@ -49,7 +49,7 @@ async def test_voice_session_create_and_list(client: AsyncClient, auth_headers: 
     assert r.status_code == 200
     data = r.json()
     assert "session_id" in data
-    assert "config" in data
+    assert data["session_id"] != "not_initialized"
 
     r = await client.get("/api/v1/voice/sessions", headers=auth_headers)
     assert r.status_code == 200
@@ -61,7 +61,9 @@ async def test_voice_session_create_and_list(client: AsyncClient, auth_headers: 
 @pytest.mark.asyncio
 async def test_voice_session_close(client: AsyncClient, auth_headers: dict):
     r = await client.post("/api/v1/voice/session/create", json={}, headers=auth_headers)
+    assert r.status_code == 200
     session_id = r.json()["session_id"]
+    assert session_id != "not_initialized"
 
     r = await client.delete(f"/api/v1/voice/session/{session_id}", headers=auth_headers)
     assert r.status_code == 200
