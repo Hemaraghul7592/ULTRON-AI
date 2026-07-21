@@ -211,17 +211,19 @@ async def test_root_public_no_auth(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_google_oauth_callback_persists_refresh_token(client: AsyncClient, auth_headers: dict):
-    from app.core.security import decode_access_token
-    from app.main import app
+    from datetime import timedelta
+
+    from app.core.security import create_access_token, decode_access_token
     from app.services.google_oauth import GoogleOAuthService
 
     token = auth_headers["Authorization"].replace("Bearer ", "")
     payload = decode_access_token(token)
     user_id = payload["user_id"]
 
-    test_state = "test-state-value-min-32-bytes-long!!!"
-    app.state.google_oauth_state = test_state
-    app.state.google_oauth_user_id = user_id
+    test_state = create_access_token(
+        data={"sub": user_id, "purpose": "oauth_state"},
+        expires_delta=timedelta(minutes=10),
+    )
 
     original = GoogleOAuthService.exchange_code
 
@@ -251,7 +253,3 @@ async def test_google_oauth_callback_persists_refresh_token(client: AsyncClient,
         assert "openid" in data["scopes"]
     finally:
         GoogleOAuthService.exchange_code = original
-        if hasattr(app.state, "google_oauth_state"):
-            del app.state.google_oauth_state
-        if hasattr(app.state, "google_oauth_user_id"):
-            del app.state.google_oauth_user_id

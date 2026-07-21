@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import secrets
+from datetime import timedelta
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel
@@ -9,7 +9,9 @@ from app.api.v1.auth import verify_token
 from app.core.config import get_settings
 from app.core.database import get_session
 from app.core.encryption import encrypt_value
+from app.core.exceptions import AuthenticationException
 from app.core.logging import get_logger
+from app.core.security import create_access_token, decode_access_token
 from app.repositories.google_token_repo import GoogleTokenRepository
 from app.services.google_oauth import ALL_SCOPES, GoogleOAuthService
 
@@ -50,9 +52,10 @@ async def google_auth_login(
                 detail="Google account already connected. Disconnect first to reconnect.",
             )
 
-    state = secrets.token_urlsafe(32)
-    request.app.state.google_oauth_state = state
-    request.app.state.google_oauth_user_id = user["user_id"]
+    state = create_access_token(
+        data={"sub": user["user_id"], "purpose": "oauth_state"},
+        expires_delta=timedelta(minutes=10),
+    )
 
     redirect_uri = str(request.base_url).rstrip("/") + "/api/v1/google/auth/callback"
     oauth = GoogleOAuthService()
@@ -79,19 +82,25 @@ async def google_auth_callback(
             detail="Missing authorization code or state parameter",
         )
 
-    stored_state = getattr(request.app.state, "google_oauth_state", None)
-    user_id = getattr(request.app.state, "google_oauth_user_id", None)
-
-    if not stored_state or not user_id:
+    try:
+        payload = decode_access_token(state)
+    except AuthenticationException:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="OAuth session expired. Please start again from /api/v1/google/auth/login",
+            detail="Invalid or expired state parameter. Please start again from /api/v1/google/auth/login",
         )
 
-    if state != stored_state:
+    if payload.get("purpose") != "oauth_state":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid state parameter. Possible CSRF attack.",
+            detail="Invalid state parameter.",
+        )
+
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid state parameter.",
         )
 
     redirect_uri = str(request.base_url).rstrip("/") + "/api/v1/google/auth/callback"
@@ -113,9 +122,6 @@ async def google_auth_callback(
         repo = GoogleTokenRepository(session)
         await repo.upsert(user_id, encrypted, scopes_str)
         await session.commit()
-
-    del request.app.state.google_oauth_state
-    del request.app.state.google_oauth_user_id
 
     logger.info("google_oauth_connected", user_id=user_id)
 
