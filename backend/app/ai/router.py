@@ -18,22 +18,21 @@ class AIProviderRouter:
         self._initialize_providers()
 
     def _initialize_providers(self) -> None:
-        settings = get_settings()
-        if settings.GROQ_API_KEY:
-            try:
-                provider = AIProviderFactory.create("groq", settings.GROQ_API_KEY)
-                self._providers["groq"] = provider
-                self._fallback_order.append("groq")
-            except Exception as e:
-                logger.error("failed_to_init_groq", error=str(e))
-
-        if settings.GEMINI_API_KEY:
-            try:
-                provider = AIProviderFactory.create("gemini", settings.GEMINI_API_KEY)
-                self._providers["gemini"] = provider
-                self._fallback_order.append("gemini")
-            except Exception as e:
-                logger.error("failed_to_init_gemini", error=str(e))
+        settings_obj = get_settings()
+        provider_configs = [
+            ("groq", settings_obj.GROQ_API_KEY),
+            ("gemini", settings_obj.GEMINI_API_KEY),
+            ("openai", settings_obj.OPENAI_API_KEY.get_secret_value() if settings_obj.OPENAI_API_KEY else ""),
+            ("grok", settings_obj.GROK_API_KEY.get_secret_value() if settings_obj.GROK_API_KEY else ""),
+        ]
+        for name, api_key in provider_configs:
+            if api_key:
+                try:
+                    provider = AIProviderFactory.create(name, api_key)
+                    self._providers[name] = provider
+                    self._fallback_order.append(name)
+                except Exception as e:
+                    logger.error(f"failed_to_init_{name}", error=str(e))
 
         logger.info(
             "ai_router_initialized",
@@ -47,8 +46,8 @@ class AIProviderRouter:
         if name:
             raise ProviderUnavailableException(provider=name, reason="Provider not configured")
 
-        settings = get_settings()
-        default = settings.DEFAULT_AI_PROVIDER
+        settings_obj = get_settings()
+        default = settings_obj.DEFAULT_AI_PROVIDER
         if default in self._providers:
             return self._providers[default]
 

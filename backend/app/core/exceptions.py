@@ -51,6 +51,30 @@ class ProviderUnavailableException(AIServiceException):
         self.code = "PROVIDER_UNAVAILABLE"
 
 
+class ProviderRateLimitException(AIServiceException):
+    def __init__(self, provider: str, message: str = "Rate limited") -> None:
+        super().__init__(provider=provider, message=message)
+        self.code = "PROVIDER_RATE_LIMIT"
+
+
+class AIAuthenticationException(AIServiceException):
+    def __init__(self, provider: str, message: str = "Authentication failed") -> None:
+        super().__init__(provider=provider, message=message)
+        self.code = "AI_AUTHENTICATION_ERROR"
+
+
+class AIRateLimitException(AIServiceException):
+    def __init__(self, provider: str, message: str = "Rate limited") -> None:
+        super().__init__(provider=provider, message=message)
+        self.code = "AI_RATE_LIMIT"
+
+
+class AIContextLengthException(AIServiceException):
+    def __init__(self, provider: str, message: str = "Context length exceeded") -> None:
+        super().__init__(provider=provider, message=message)
+        self.code = "AI_CONTEXT_LENGTH"
+
+
 class ToolExecutionException(UltronException):
     def __init__(self, tool_name: str, message: str, details: Any = None) -> None:
         super().__init__(

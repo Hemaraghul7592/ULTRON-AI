@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.context_builder import ContextBuilder
 from app.ai.prompt_builder import PromptBuilder
-from app.ai.router import AIProviderRouter
+from app.ai.service import AIService
 from app.ai.tool_executor import ToolExecutor
 from app.core.config import get_settings
 from app.core.logging import get_logger
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 class ChatService:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
-        self.ai_router = AIProviderRouter()
+        self.ai_service = AIService()
         self.prompt_builder = PromptBuilder()
         self.context_builder = ContextBuilder()
         self.tool_executor = ToolExecutor()
@@ -71,7 +71,7 @@ class ChatService:
         messages = self.context_builder.truncate_to_fit(messages)
 
         provider = request.provider or settings.DEFAULT_AI_PROVIDER
-        result = await self.ai_router.chat(
+        result = await self.ai_service.chat(
             messages=messages,
             provider=provider,
             temperature=request.temperature,
@@ -113,7 +113,7 @@ class ChatService:
                     "tool_call_id": tr.tool_call_id,
                 })
 
-            result = await self.ai_router.chat(
+            result = await self.ai_service.chat(
                 messages=messages,
                 provider=provider,
                 temperature=request.temperature,
@@ -194,7 +194,7 @@ class ChatService:
         full_content = ""
 
         try:
-            async for chunk in self.ai_router.chat_stream(
+            async for chunk in self.ai_service.chat_stream(
                 messages=messages,
                 provider=provider,
                 temperature=request.temperature,
@@ -226,4 +226,4 @@ class ChatService:
             )
 
     async def close(self) -> None:
-        await self.ai_router.close()
+        await self.ai_service.close()

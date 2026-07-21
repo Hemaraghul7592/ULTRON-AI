@@ -5,7 +5,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
-from pydantic import field_validator, model_validator
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -37,6 +37,10 @@ class Settings(BaseSettings):
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-2.0-flash"
+    OPENAI_API_KEY: SecretStr = SecretStr("")
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    GROK_API_KEY: SecretStr = SecretStr("")
+    GROK_MODEL: str = "grok-2-latest"
     DEFAULT_AI_PROVIDER: str = "groq"
     AI_TEMPERATURE: float = 0.7
     AI_MAX_TOKENS: int = 4096
@@ -106,6 +110,8 @@ class Settings(BaseSettings):
         return {
             "GROQ_API_KEY": bool(self.GROQ_API_KEY),
             "GEMINI_API_KEY": bool(self.GEMINI_API_KEY),
+            "OPENAI_API_KEY": bool(self.OPENAI_API_KEY.get_secret_value()),
+            "GROK_API_KEY": bool(self.GROK_API_KEY.get_secret_value()),
             "OPEN_WEATHER_API_KEY": bool(self.OPEN_WEATHER_API_KEY),
             "OCR_API_KEY": bool(self.OCR_API_KEY),
             "TAVILY_API_KEY": bool(self.TAVILY_API_KEY),

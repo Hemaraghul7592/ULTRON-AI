@@ -7,6 +7,10 @@ from typing import Any, AsyncIterator
 
 import httpx
 
+from app.ai.providers import GeminiProvider as _NewGeminiProvider
+from app.ai.providers import GrokProvider as _NewGrokProvider
+from app.ai.providers import GroqProvider as _NewGroqProvider
+from app.ai.providers import OpenAIProvider as _NewOpenAIProvider
 from app.core.config import get_settings
 from app.core.exceptions import (
     AIServiceException,
@@ -424,6 +428,8 @@ class AIProviderFactory:
     _providers: dict[str, type[AIProvider]] = {
         "groq": GroqProvider,
         "gemini": GeminiProvider,
+        "openai": _NewOpenAIProvider,
+        "grok": _NewGrokProvider,
     }
 
     @classmethod
@@ -434,12 +440,15 @@ class AIProviderFactory:
                 provider=provider_name,
                 message=f"Unknown provider: {provider_name}",
             )
-        settings = get_settings()
+        settings_obj = get_settings()
         if not model:
-            if provider_name == "groq":
-                model = settings.GROQ_MODEL
-            elif provider_name == "gemini":
-                model = settings.GEMINI_MODEL
+            model_map = {
+                "groq": settings_obj.GROQ_MODEL,
+                "gemini": settings_obj.GEMINI_MODEL,
+                "openai": settings_obj.OPENAI_MODEL,
+                "grok": settings_obj.GROK_MODEL,
+            }
+            model = model_map.get(provider_name, model)
         return provider_cls(api_key=api_key, model=model)
 
     @classmethod
