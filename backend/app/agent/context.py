@@ -21,18 +21,22 @@ class AgentContext:
         self.execution_log: list[dict[str, Any]] = []
         self.created_at = time.time()
 
-    def log(self, task: Task, result: Any = None, error: str = "", duration_ms: float = 0.0) -> None:
-        self.execution_log.append({
-            "task_id": task.id,
-            "task_name": task.name,
-            "service": task.service,
-            "action": task.action,
-            "status": task.status,
-            "result": str(result)[:500] if result else "",
-            "error": error,
-            "duration_ms": round(duration_ms, 2),
-            "attempts": task.attempts,
-        })
+    def log(
+        self, task: Task, result: Any = None, error: str = "", duration_ms: float = 0.0,
+    ) -> None:
+        self.execution_log.append(
+            {
+                "task_id": task.id,
+                "task_name": task.name,
+                "service": task.service,
+                "action": task.action,
+                "status": task.status,
+                "result": str(result)[:500] if result else "",
+                "error": error,
+                "duration_ms": round(duration_ms, 2),
+                "attempts": task.attempts,
+            },
+        )
 
     def get_execution_summary(self) -> dict[str, Any]:
         completed = sum(1 for e in self.execution_log if e["status"] == "completed")

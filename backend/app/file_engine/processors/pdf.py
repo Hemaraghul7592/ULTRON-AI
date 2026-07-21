@@ -50,10 +50,15 @@ class PDFProcessor(Processor):
                 if stream_start == -1:
                     i = stream_end + 9
                     continue
-                stream_start += len(b"stream\n") if data[stream_start:stream_start + 7] == b"stream\n" else len(b"stream ")
+                stream_start += (
+                    len(b"stream\n")
+                    if data[stream_start : stream_start + 7] == b"stream\n"
+                    else len(b"stream ")
+                )
                 raw = data[stream_start:stream_end]
                 try:
                     import zlib
+
                     decompressed = zlib.decompress(raw)
                     text_parts.append(self._extract_text_ops(decompressed))
                 except Exception:

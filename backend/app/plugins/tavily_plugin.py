@@ -15,7 +15,9 @@ class TavilySearchTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Search the web using Tavily. Returns relevant results with titles, URLs, and content."
+        return (
+            "Search the web using Tavily. Returns relevant results with titles, URLs, and content."
+        )
 
     @property
     def parameters(self) -> dict:
@@ -23,7 +25,11 @@ class TavilySearchTool(BaseTool):
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Search query"},
-                "max_results": {"type": "integer", "default": 5, "description": "Max results (1-10)"},
+                "max_results": {
+                    "type": "integer",
+                    "default": 5,
+                    "description": "Max results (1-10)",
+                },
                 "search_depth": {
                     "type": "string",
                     "enum": ["basic", "advanced"],
@@ -87,7 +93,9 @@ class TavilyAnswerTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Get a concise answer to a question using Tavily. Returns a direct answer with sources."
+        return (
+            "Get a concise answer to a question using Tavily. Returns a direct answer with sources."
+        )
 
     @property
     def parameters(self) -> dict:
@@ -95,7 +103,11 @@ class TavilyAnswerTool(BaseTool):
             "type": "object",
             "properties": {
                 "query": {"type": "string", "description": "Question to answer"},
-                "max_results": {"type": "integer", "default": 3, "description": "Max sources (1-5)"},
+                "max_results": {
+                    "type": "integer",
+                    "default": 3,
+                    "description": "Max sources (1-5)",
+                },
                 "search_depth": {
                     "type": "string",
                     "enum": ["basic", "advanced"],
@@ -182,6 +194,7 @@ class Plugin(PluginInterface):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         if settings.TAVILY_API_KEY:
             self._tools = [
@@ -191,23 +204,42 @@ class Plugin(PluginInterface):
 
     async def health_check(self) -> dict:
         import time
+
         from app.core.config import get_settings
+
         settings = get_settings()
         if not settings.TAVILY_API_KEY:
-            return {"status": PluginStatus.AUTH_FAILED, "message": "TAVILY_API_KEY not configured", "last_check": time.time()}
+            return {
+                "status": PluginStatus.AUTH_FAILED,
+                "message": "TAVILY_API_KEY not configured",
+                "last_check": time.time(),
+            }
         if not self._tools:
-            return {"status": PluginStatus.DISABLED, "message": "No tools initialized", "last_check": time.time()}
+            return {
+                "status": PluginStatus.DISABLED,
+                "message": "No tools initialized",
+                "last_check": time.time(),
+            }
         try:
             service = get_search_service()
             health = await service.health_check()
             provider_health = health.get("provider", {})
             status = provider_health.get("status", PluginStatus.UNAVAILABLE)
-            return {"status": status, "message": provider_health.get("message", ""), "last_check": time.time()}
+            return {
+                "status": status,
+                "message": provider_health.get("message", ""),
+                "last_check": time.time(),
+            }
         except Exception as e:
-            return {"status": PluginStatus.UNAVAILABLE, "message": str(e), "last_check": time.time()}
+            return {
+                "status": PluginStatus.UNAVAILABLE,
+                "message": str(e),
+                "last_check": time.time(),
+            }
 
     async def validate(self) -> bool:
         from app.core.config import get_settings
+
         return bool(get_settings().TAVILY_API_KEY)
 
     async def cleanup(self) -> None:

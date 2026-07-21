@@ -1,7 +1,5 @@
-import pytest
-
-from app.ai.prompt_builder import PromptBuilder
 from app.ai.context_builder import ContextBuilder
+from app.ai.prompt_builder import PromptBuilder
 
 
 class TestPromptBuilder:

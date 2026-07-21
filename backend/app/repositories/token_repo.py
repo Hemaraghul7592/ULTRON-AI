@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -39,13 +39,13 @@ class TokenRepository:
         return usage
 
     async def get_totals(self, hours: int = 24) -> dict:
-        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        since = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
             select(
                 func.sum(TokenUsage.total_tokens),
                 func.sum(TokenUsage.cost_usd),
                 func.count(TokenUsage.id),
-            ).where(TokenUsage.created_at >= since)
+            ).where(TokenUsage.created_at >= since),
         )
         row = result.one()
         return {
@@ -55,7 +55,7 @@ class TokenRepository:
         }
 
     async def get_by_provider(self, hours: int = 24) -> dict[str, dict]:
-        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        since = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
             select(
                 TokenUsage.provider,
@@ -64,7 +64,7 @@ class TokenRepository:
                 func.count(TokenUsage.id),
             )
             .where(TokenUsage.created_at >= since)
-            .group_by(TokenUsage.provider)
+            .group_by(TokenUsage.provider),
         )
         providers = {}
         for row in result.all():
@@ -76,7 +76,7 @@ class TokenRepository:
         return providers
 
     async def get_by_model(self, hours: int = 24) -> dict[str, dict]:
-        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        since = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
             select(
                 TokenUsage.model,
@@ -84,7 +84,7 @@ class TokenRepository:
                 func.count(TokenUsage.id),
             )
             .where(TokenUsage.created_at >= since)
-            .group_by(TokenUsage.model)
+            .group_by(TokenUsage.model),
         )
         models = {}
         for row in result.all():
@@ -95,9 +95,11 @@ class TokenRepository:
         return models
 
     async def get_hourly_usage(self, hours: int = 24) -> list[dict]:
-        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        since = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
-            select(TokenUsage).where(TokenUsage.created_at >= since).order_by(TokenUsage.created_at)
+            select(TokenUsage)
+            .where(TokenUsage.created_at >= since)
+            .order_by(TokenUsage.created_at),
         )
         return [
             {

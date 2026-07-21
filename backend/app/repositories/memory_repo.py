@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,7 +15,9 @@ class MemoryRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, data: MemoryCreate, user_id: str, embedding: str | None = None) -> Memory:
+    async def create(
+        self, data: MemoryCreate, user_id: str, embedding: str | None = None
+    ) -> Memory:
         memory = Memory(
             user_id=user_id,
             content=data.content,
@@ -34,18 +36,20 @@ class MemoryRepository:
                 tag = await self._get_or_create_tag(tag_name)
                 # Insert into association table directly to avoid lazy-load
                 await self.session.execute(
-                    memory_tags.insert().values(memory_id=memory.id, tag_id=tag.id)
+                    memory_tags.insert().values(memory_id=memory.id, tag_id=tag.id),
                 )
 
         # Re-query to get memory with tags loaded eagerly
         result = await self.session.execute(
-            select(Memory).options(selectinload(Memory.tags)).where(Memory.id == memory.id)
+            select(Memory).options(selectinload(Memory.tags)).where(Memory.id == memory.id),
         )
         return result.scalar_one()
 
     async def get(self, memory_id: str, user_id: str) -> Memory | None:
         result = await self.session.execute(
-            select(Memory).options(selectinload(Memory.tags)).where(Memory.id == memory_id, Memory.user_id == user_id)
+            select(Memory)
+            .options(selectinload(Memory.tags))
+            .where(Memory.id == memory_id, Memory.user_id == user_id),
         )
         return result.scalar_one_or_none()
 
@@ -70,7 +74,7 @@ class MemoryRepository:
         query = select(Memory).where(*conditions)
 
         count_result = await self.session.execute(
-            select(func.count()).select_from(query.subquery())
+            select(func.count()).select_from(query.subquery()),
         )
         total = count_result.scalar_one()
 
@@ -79,7 +83,7 @@ class MemoryRepository:
             query.options(selectinload(Memory.tags))
             .order_by(Memory.importance.desc())
             .offset(offset)
-            .limit(page_size)
+            .limit(page_size),
         )
         return list(result.scalars().all()), total
 
@@ -91,20 +95,20 @@ class MemoryRepository:
             if key == "tags" and isinstance(value, list):
                 # Delete existing associations and re-insert
                 await self.session.execute(
-                    memory_tags.delete().where(memory_tags.c.memory_id == memory.id)
+                    memory_tags.delete().where(memory_tags.c.memory_id == memory.id),
                 )
                 for tag_name in value:
                     tag = await self._get_or_create_tag(tag_name)
                     await self.session.execute(
-                        memory_tags.insert().values(memory_id=memory.id, tag_id=tag.id)
+                        memory_tags.insert().values(memory_id=memory.id, tag_id=tag.id),
                     )
             elif value is not None:
                 setattr(memory, key, value)
-        memory.updated_at = datetime.now(timezone.utc)
+        memory.updated_at = datetime.now(UTC)
         await self.session.flush()
         # Re-query to get fresh state with tags
         result = await self.session.execute(
-            select(Memory).options(selectinload(Memory.tags)).where(Memory.id == memory.id)
+            select(Memory).options(selectinload(Memory.tags)).where(Memory.id == memory.id),
         )
         return result.scalar_one()
 
@@ -150,7 +154,7 @@ class MemoryRepository:
             select(Memory)
             .where(Memory.memory_type == memory_type, Memory.user_id == user_id)
             .order_by(Memory.importance.desc())
-            .limit(limit)
+            .limit(limit),
         )
         return list(result.scalars().all())
 
@@ -158,9 +162,11 @@ class MemoryRepository:
         result = await self.session.execute(
             select(Memory)
             .options(selectinload(Memory.tags))
-            .where(Memory.category == category, Memory.user_id == user_id, Memory.is_archived == False)  # noqa: E712
+            .where(
+                Memory.category == category, Memory.user_id == user_id, Memory.is_archived == False
+            )  # noqa: E712
             .order_by(Memory.importance.desc())
-            .limit(limit)
+            .limit(limit),
         )
         return list(result.scalars().all())
 
@@ -168,7 +174,7 @@ class MemoryRepository:
         memory = await self.get(memory_id, user_id)
         if memory:
             memory.access_count += 1
-            memory.last_accessed = datetime.now(timezone.utc)
+            memory.last_accessed = datetime.now(UTC)
             await self.session.flush()
 
     async def promote_to_long_term(self, user_id: str, threshold: float = 0.7) -> int:
@@ -177,12 +183,12 @@ class MemoryRepository:
                 Memory.user_id == user_id,
                 Memory.memory_type == "short_term",
                 Memory.importance >= threshold,
-            )
+            ),
         )
         memories = list(result.scalars().all())
         for memory in memories:
             memory.memory_type = "long_term"
-            memory.updated_at = datetime.now(timezone.utc)
+            memory.updated_at = datetime.now(UTC)
         await self.session.flush()
         return len(memories)
 

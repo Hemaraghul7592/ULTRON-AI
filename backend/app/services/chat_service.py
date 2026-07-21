@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import json
 import time
-import uuid
-from typing import TYPE_CHECKING, Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import TYPE_CHECKING
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -47,17 +46,23 @@ class ChatService:
 
         conversation_id = request.conversation_id
         if not conversation_id:
-            conv = await self.conversation_repo.create(ConversationCreate(title=None), user_id=user_id)
+            conv = await self.conversation_repo.create(
+                ConversationCreate(title=None), user_id=user_id
+            )
             conversation_id = conv.id
 
         history = []
         if request.conversation_id:
-            messages = await self.conversation_repo.get_recent_messages(conversation_id, user_id, limit=20)
+            messages = await self.conversation_repo.get_recent_messages(
+                conversation_id, user_id, limit=20
+            )
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
         if request.use_memory:
-            memory_context = await self.memory_service.get_context_for_query(request.message, user_id=user_id)
+            memory_context = await self.memory_service.get_context_for_query(
+                request.message, user_id=user_id
+            )
 
         tools = None
         if request.use_tools and self.tool_executor.has_tools():
@@ -89,31 +94,39 @@ class ChatService:
         while result.get("tool_calls") and round_count < max_tool_rounds:
             round_count += 1
             for tc in result["tool_calls"]:
-                tool_calls.append(ToolCall(
-                    id=tc["id"],
-                    name=tc["name"],
-                    arguments=tc["arguments"],
-                ))
+                tool_calls.append(
+                    ToolCall(
+                        id=tc["id"],
+                        name=tc["name"],
+                        arguments=tc["arguments"],
+                    )
+                )
                 exec_result = await self.tool_executor.execute(tc)
-                tool_results.append(ToolResult(
-                    tool_call_id=exec_result["tool_call_id"],
-                    name=exec_result["name"],
-                    result=exec_result["result"],
-                    success=exec_result["success"],
-                    error=exec_result.get("error"),
-                ))
+                tool_results.append(
+                    ToolResult(
+                        tool_call_id=exec_result["tool_call_id"],
+                        name=exec_result["name"],
+                        result=exec_result["result"],
+                        success=exec_result["success"],
+                        error=exec_result.get("error"),
+                    )
+                )
 
-            messages.append({
-                "role": "assistant",
-                "content": result.get("content", ""),
-                "tool_calls": result["tool_calls"],
-            })
+            messages.append(
+                {
+                    "role": "assistant",
+                    "content": result.get("content", ""),
+                    "tool_calls": result["tool_calls"],
+                }
+            )
             for tr in tool_results:
-                messages.append({
-                    "role": "tool",
-                    "content": tr.result,
-                    "tool_call_id": tr.tool_call_id,
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "content": tr.result,
+                        "tool_call_id": tr.tool_call_id,
+                    }
+                )
 
             result = await self.ai_service.chat(
                 messages=messages,
@@ -167,22 +180,30 @@ class ChatService:
         )
 
     async def chat_stream(
-        self, request: ChatRequest, user_id: str
+        self,
+        request: ChatRequest,
+        user_id: str,
     ) -> AsyncIterator[StreamChunk]:
         settings = get_settings()
         conversation_id = request.conversation_id
         if not conversation_id:
-            conv = await self.conversation_repo.create(ConversationCreate(title=None), user_id=user_id)
+            conv = await self.conversation_repo.create(
+                ConversationCreate(title=None), user_id=user_id
+            )
             conversation_id = conv.id
 
         history = []
         if request.conversation_id:
-            messages = await self.conversation_repo.get_recent_messages(conversation_id, user_id, limit=20)
+            messages = await self.conversation_repo.get_recent_messages(
+                conversation_id, user_id, limit=20
+            )
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
         if request.use_memory:
-            memory_context = await self.memory_service.get_context_for_query(request.message, user_id=user_id)
+            memory_context = await self.memory_service.get_context_for_query(
+                request.message, user_id=user_id
+            )
 
         messages = self.prompt_builder.build_messages(
             user_message=request.message,

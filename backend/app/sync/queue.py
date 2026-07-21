@@ -3,10 +3,10 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from app.core.logging import get_logger
-from app.sync.errors import QueueError, RetryExceededError
 
 logger = get_logger(__name__)
 
@@ -177,7 +177,12 @@ class SyncQueue:
         pending = sum(1 for i in self._items.values() if i.status == "pending")
         completed = sum(1 for i in self._items.values() if i.status == "completed")
         failed = sum(1 for i in self._items.values() if i.status == "failed")
-        return {"total": len(self._items), "pending": pending, "completed": completed, "failed": failed}
+        return {
+            "total": len(self._items),
+            "pending": pending,
+            "completed": completed,
+            "failed": failed,
+        }
 
     def clear(self) -> None:
         self._items.clear()

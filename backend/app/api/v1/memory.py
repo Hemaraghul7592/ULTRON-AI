@@ -61,7 +61,9 @@ async def create_memory(data: MemoryCreate, user: dict = Depends(verify_token)) 
 
 
 @router.post("/search", response_model=MemorySearchResponse)
-async def search_memories(data: MemorySearchRequest, user: dict = Depends(verify_token)) -> MemorySearchResponse:
+async def search_memories(
+    data: MemorySearchRequest, user: dict = Depends(verify_token)
+) -> MemorySearchResponse:
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -126,18 +128,22 @@ async def get_memory(memory_id: str, user: dict = Depends(verify_token)) -> Memo
         memory = await service.get_memory(memory_id, user_id)
         if memory is None:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Memory", memory_id)
         return memory
 
 
 @router.patch("/{memory_id}", response_model=MemoryResponse)
-async def update_memory(memory_id: str, data: MemoryUpdate, user: dict = Depends(verify_token)) -> MemoryResponse:
+async def update_memory(
+    memory_id: str, data: MemoryUpdate, user: dict = Depends(verify_token)
+) -> MemoryResponse:
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
         memory = await service.update_memory(memory_id, data, user_id=user_id)
         if memory is None:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Memory", memory_id)
         await session.commit()
         return memory
@@ -151,6 +157,7 @@ async def delete_memory(memory_id: str, user: dict = Depends(verify_token)) -> N
         deleted = await service.delete_memory(memory_id, user_id=user_id)
         if not deleted:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Memory", memory_id)
         await session.commit()
 
@@ -163,6 +170,7 @@ async def archive_memory(memory_id: str, user: dict = Depends(verify_token)) -> 
         memory = await service.archive_memory(memory_id, user_id)
         if memory is None:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Memory", memory_id)
         await session.commit()
         return memory
@@ -176,6 +184,7 @@ async def restore_memory(memory_id: str, user: dict = Depends(verify_token)) -> 
         memory = await service.restore_memory(memory_id, user_id)
         if memory is None:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Memory", memory_id)
         await session.commit()
         return memory
@@ -187,9 +196,13 @@ async def promote_memory(memory_id: str, user: dict = Depends(verify_token)) -> 
     service, session = _get_service()
     async with session:
         from app.schemas.memory import MemoryUpdate as MU
-        memory = await service.update_memory(memory_id, MU(memory_type="long_term"), user_id=user_id)
+
+        memory = await service.update_memory(
+            memory_id, MU(memory_type="long_term"), user_id=user_id
+        )
         if memory is None:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Memory", memory_id)
         await session.commit()
         return {"id": memory.id, "memory_type": memory.memory_type}

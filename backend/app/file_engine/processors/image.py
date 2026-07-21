@@ -45,6 +45,7 @@ class ImageProcessor(Processor):
         try:
             if data.startswith(b"\x89PNG\r\n\x1a\n"):
                 import struct
+
                 w = struct.unpack(">I", data[16:20])[0]
                 h = struct.unpack(">I", data[20:24])[0]
                 return (w, h)
@@ -52,6 +53,7 @@ class ImageProcessor(Processor):
                 return self._jpeg_dimensions(data)
             if data.startswith(b"GIF8"):
                 import struct
+
                 w = struct.unpack("<H", data[6:8])[0]
                 h = struct.unpack("<H", data[8:10])[0]
                 return (w, h)

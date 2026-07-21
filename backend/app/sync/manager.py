@@ -4,8 +4,8 @@ import time
 from typing import Any
 
 from app.core.logging import get_logger
-from app.sync.errors import ConflictError, ProviderUnavailableError
-from app.sync.interface import SyncChange, SyncProvider, SyncResult, SyncState, ConflictInfo
+from app.sync.errors import ProviderUnavailableError
+from app.sync.interface import SyncChange, SyncProvider, SyncResult, SyncState
 from app.sync.models import change_key, is_older
 from app.sync.queue import SyncQueue
 from app.sync.resolver import ConflictResolver, ResolutionStrategy
@@ -87,7 +87,7 @@ class SyncManager:
         try:
             remote_changes = await provider.pull()
         except Exception as e:
-            raise ProviderUnavailableError(message=str(e), provider=provider_name, original_error=e)
+            raise ProviderUnavailableError(message=str(e), provider=provider_name, original_error=e) from e
 
         resolved: list[SyncChange] = []
         for lc in local_changes:
@@ -112,9 +112,15 @@ class SyncManager:
     def track_change(self, provider_name: str, change: SyncChange) -> None:
         if provider_name not in self._changes:
             self._changes[provider_name] = []
-        existing = [c for c in self._changes.get(provider_name, []) if change_key(c) == change_key(change)]
+        existing = [
+            c for c in self._changes.get(provider_name, []) if change_key(c) == change_key(change)
+        ]
         if existing and is_older(existing[0], change):
-            self._changes[provider_name] = [c for c in self._changes.get(provider_name, []) if change_key(c) != change_key(change)]
+            self._changes[provider_name] = [
+                c
+                for c in self._changes.get(provider_name, [])
+                if change_key(c) != change_key(change)
+            ]
         self._changes.setdefault(provider_name, []).append(change)
 
     def get_tracked_changes(self, provider_name: str) -> list[SyncChange]:

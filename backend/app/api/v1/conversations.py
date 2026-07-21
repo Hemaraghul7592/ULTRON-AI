@@ -16,7 +16,9 @@ from app.schemas.conversation import (
     MessageResponse,
 )
 
-router = APIRouter(prefix="/conversations", tags=["conversations"], dependencies=[Depends(verify_token)])
+router = APIRouter(
+    prefix="/conversations", tags=["conversations"], dependencies=[Depends(verify_token)]
+)
 
 
 async def get_repo() -> AsyncSession:
@@ -58,7 +60,9 @@ async def list_conversations(
 
 
 @router.post("", response_model=ConversationResponse, status_code=201)
-async def create_conversation(data: ConversationCreate, user: dict = Depends(verify_token)) -> ConversationResponse:
+async def create_conversation(
+    data: ConversationCreate, user: dict = Depends(verify_token)
+) -> ConversationResponse:
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -76,7 +80,9 @@ async def create_conversation(data: ConversationCreate, user: dict = Depends(ver
 
 
 @router.get("/{conversation_id}", response_model=ConversationDetailResponse)
-async def get_conversation(conversation_id: str, user: dict = Depends(verify_token)) -> ConversationDetailResponse:
+async def get_conversation(
+    conversation_id: str, user: dict = Depends(verify_token)
+) -> ConversationDetailResponse:
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -84,6 +90,7 @@ async def get_conversation(conversation_id: str, user: dict = Depends(verify_tok
         conv = await repo.get(conversation_id, user_id)
         if not conv:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Conversation", conversation_id)
         return ConversationDetailResponse(
             id=conv.id,
@@ -111,15 +118,20 @@ async def get_conversation(conversation_id: str, user: dict = Depends(verify_tok
 
 @router.patch("/{conversation_id}", response_model=ConversationResponse)
 async def update_conversation(
-    conversation_id: str, data: ConversationUpdate, user: dict = Depends(verify_token)
+    conversation_id: str,
+    data: ConversationUpdate,
+    user: dict = Depends(verify_token),
 ) -> ConversationResponse:
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
         repo = ConversationRepository(session)
-        conv = await repo.update(conversation_id, data.model_dump(exclude_unset=True), user_id=user_id)
+        conv = await repo.update(
+            conversation_id, data.model_dump(exclude_unset=True), user_id=user_id
+        )
         if not conv:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Conversation", conversation_id)
         await session.commit()
         return ConversationResponse(
@@ -141,13 +153,16 @@ async def delete_conversation(conversation_id: str, user: dict = Depends(verify_
         deleted = await repo.delete(conversation_id, user_id=user_id)
         if not deleted:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Conversation", conversation_id)
         await session.commit()
 
 
 @router.post("/{conversation_id}/messages", response_model=MessageResponse, status_code=201)
 async def add_message(
-    conversation_id: str, data: MessageCreate, user: dict = Depends(verify_token)
+    conversation_id: str,
+    data: MessageCreate,
+    user: dict = Depends(verify_token),
 ) -> MessageResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -156,6 +171,7 @@ async def add_message(
         conv = await repo.get(conversation_id, user_id)
         if not conv:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Conversation", conversation_id)
         msg = await repo.add_message(conversation_id, data, user_id)
         await session.commit()

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -39,7 +40,8 @@ class GeminiProvider(AIProvider):
         ]
 
     def _convert_messages(
-        self, messages: list[dict[str, Any]]
+        self,
+        messages: list[dict[str, Any]],
     ) -> tuple[str, list[dict[str, Any]]]:
         system_instruction = ""
         contents = []
@@ -59,11 +61,13 @@ class GeminiProvider(AIProvider):
         function_declarations = []
         for tool in tools:
             func = tool.get("function", tool)
-            function_declarations.append({
-                "name": func.get("name", ""),
-                "description": func.get("description", ""),
-                "parameters": func.get("parameters", {}),
-            })
+            function_declarations.append(
+                {
+                    "name": func.get("name", ""),
+                    "description": func.get("description", ""),
+                    "parameters": func.get("parameters", {}),
+                }
+            )
         return [{"function_declarations": function_declarations}]
 
     def _parse_gemini_response(self, data: dict[str, Any], latency_ms: float) -> dict[str, Any]:
@@ -80,11 +84,13 @@ class GeminiProvider(AIProvider):
                 text_parts.append(part["text"])
             if "functionCall" in part:
                 fc = part["functionCall"]
-                tool_calls.append({
-                    "id": f"gemini_{fc.get('name', '')}",
-                    "name": fc.get("name", ""),
-                    "arguments": fc.get("args", {}),
-                })
+                tool_calls.append(
+                    {
+                        "id": f"gemini_{fc.get('name', '')}",
+                        "name": fc.get("name", ""),
+                        "arguments": fc.get("args", {}),
+                    }
+                )
         usage = data.get("usageMetadata", {})
         return {
             "content": "\n".join(text_parts),
@@ -217,9 +223,11 @@ class GeminiProvider(AIProvider):
         body = e.response.text
         if status == 401 or status == 403:
             from app.core.exceptions import AIAuthenticationException
+
             return AIAuthenticationException(provider=self.name, message=body)
         if status == 429:
             from app.core.exceptions import AIRateLimitException
+
             return AIRateLimitException(provider=self.name, message=body)
         return AIServiceException(
             provider=self.name,

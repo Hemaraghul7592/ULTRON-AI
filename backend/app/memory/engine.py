@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -46,7 +45,9 @@ class MemoryEngine:
         memory_type: str | None = None,
         min_importance: float = 0.0,
     ) -> list[dict[str, Any]]:
-        text_results = await self.repo.search_by_content(query, user_id=user_id, limit=limit * 2, memory_type=memory_type)
+        text_results = await self.repo.search_by_content(
+            query, user_id=user_id, limit=limit * 2, memory_type=memory_type
+        )
 
         query_embedding = await self.embedding_service.embed(query)
         scored_results: list[dict[str, Any]] = []
@@ -62,14 +63,18 @@ class MemoryEngine:
             embedding_score = 0.0
             if memory.embedding_vector:
                 mem_embedding = self.embedding_service.deserialize_vector(memory.embedding_vector)
-                embedding_score = self.embedding_service.cosine_similarity(query_embedding, mem_embedding) * 0.5
+                embedding_score = (
+                    self.embedding_service.cosine_similarity(query_embedding, mem_embedding) * 0.5
+                )
 
             combined_score = text_score + embedding_score
             if combined_score > 0 and memory.importance >= min_importance:
-                scored_results.append({
-                    "memory": memory,
-                    "score": combined_score,
-                })
+                scored_results.append(
+                    {
+                        "memory": memory,
+                        "score": combined_score,
+                    }
+                )
 
         scored_results.sort(key=lambda x: x["score"], reverse=True)
         return scored_results[:limit]
@@ -87,7 +92,8 @@ class MemoryEngine:
     async def promote_important_memories(self, user_id: str) -> int:
         settings = get_settings()
         promoted = await self.repo.promote_to_long_term(
-            user_id=user_id, threshold=settings.MEMORY_LONG_TERM_THRESHOLD
+            user_id=user_id,
+            threshold=settings.MEMORY_LONG_TERM_THRESHOLD,
         )
         if promoted > 0:
             logger.info("memories_promoted", count=promoted)
@@ -122,8 +128,12 @@ class MemoryEngine:
         return len(short_term[:10])
 
     async def get_stats(self, user_id: str) -> dict[str, Any]:
-        short_term, st_total = await self.repo.list_all(user_id=user_id, page=1, page_size=1, memory_type="short_term")
-        long_term, lt_total = await self.repo.list_all(user_id=user_id, page=1, page_size=1, memory_type="long_term")
+        short_term, st_total = await self.repo.list_all(
+            user_id=user_id, page=1, page_size=1, memory_type="short_term"
+        )
+        long_term, lt_total = await self.repo.list_all(
+            user_id=user_id, page=1, page_size=1, memory_type="long_term"
+        )
         return {
             "short_term_count": st_total,
             "long_term_count": lt_total,

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.auth import verify_token
 from app.core.database import get_session
@@ -29,7 +28,9 @@ async def list_entities(
     session_factory = get_session()
     async with session_factory() as session:
         repo = EntityRepository(session)
-        entities, total = await repo.list_all(user_id=user_id, entity_type=entity_type, page=page, page_size=page_size)
+        entities, total = await repo.list_all(
+            user_id=user_id, entity_type=entity_type, page=page, page_size=page_size
+        )
         return KnowledgeGraphResponse(
             entities=[EntityResponse.model_validate(e) for e in entities],
             relationships=[],
@@ -84,12 +85,15 @@ async def get_entity(entity_id: str, user: dict = Depends(verify_token)) -> Enti
         entity = await repo.get(entity_id, user_id)
         if not entity:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Entity", entity_id)
         return EntityResponse.model_validate(entity)
 
 
 @router.post("/relationships", response_model=RelationshipResponse, status_code=201)
-async def create_relationship(data: RelationshipCreate, user: dict = Depends(verify_token)) -> RelationshipResponse:
+async def create_relationship(
+    data: RelationshipCreate, user: dict = Depends(verify_token)
+) -> RelationshipResponse:
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:

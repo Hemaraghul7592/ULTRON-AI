@@ -27,7 +27,11 @@ class GitHubRepoTool(BaseTool):
             "type": "object",
             "properties": {
                 "per_page": {"type": "integer", "default": 10},
-                "sort": {"type": "string", "enum": ["updated", "created", "pushed"], "default": "updated"},
+                "sort": {
+                    "type": "string",
+                    "enum": ["updated", "created", "pushed"],
+                    "default": "updated",
+                },
             },
         }
 
@@ -57,7 +61,7 @@ class GitHubRepoTool(BaseTool):
                 lang = repo.get("language", "N/A")
                 results.append(
                     f"- {repo['name']}: {repo.get('description', 'No description')}"
-                    f" [{lang}] Stars: {stars}"
+                    f" [{lang}] Stars: {stars}",
                 )
             return "\n".join(results)
         except Exception as e:
@@ -84,7 +88,11 @@ class GitHubSearchTool(BaseTool):
             "properties": {
                 "query": {"type": "string", "description": "Search query"},
                 "language": {"type": "string", "description": "Filter by language"},
-                "sort": {"type": "string", "enum": ["stars", "forks", "updated"], "default": "stars"},
+                "sort": {
+                    "type": "string",
+                    "enum": ["stars", "forks", "updated"],
+                    "default": "stars",
+                },
                 "per_page": {"type": "integer", "default": 10},
             },
             "required": ["query"],
@@ -122,7 +130,7 @@ class GitHubSearchTool(BaseTool):
             for repo in repos:
                 results.append(
                     f"- {repo['full_name']}: {repo.get('description', '')[:80]}"
-                    f" Stars: {repo.get('stargazers_count', 0)}"
+                    f" Stars: {repo.get('stargazers_count', 0)}",
                 )
             return "\n".join(results)
         except Exception as e:
@@ -181,8 +189,7 @@ class GitHubIssuesTool(BaseTool):
             for issue in issues:
                 labels = ", ".join(l["name"] for l in issue.get("labels", []))
                 results.append(
-                    f"#{issue['number']}: {issue['title']}"
-                    + (f" [{labels}]" if labels else "")
+                    f"#{issue['number']}: {issue['title']}" + (f" [{labels}]" if labels else ""),
                 )
             return "\n".join(results)
         except Exception as e:
@@ -215,6 +222,7 @@ class Plugin(PluginInterface):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         self._token = settings.GITHUB_TOKEN
         if self._token:
@@ -226,10 +234,19 @@ class Plugin(PluginInterface):
 
     async def health_check(self) -> dict:
         import time
+
         if not self._token:
-            return {"status": PluginStatus.AUTH_FAILED, "message": "GITHUB_TOKEN not configured", "last_check": time.time()}
+            return {
+                "status": PluginStatus.AUTH_FAILED,
+                "message": "GITHUB_TOKEN not configured",
+                "last_check": time.time(),
+            }
         if not self._tools:
-            return {"status": PluginStatus.DISABLED, "message": "No tools initialized", "last_check": time.time()}
+            return {
+                "status": PluginStatus.DISABLED,
+                "message": "No tools initialized",
+                "last_check": time.time(),
+            }
         try:
             async with httpx.AsyncClient(timeout=10.0) as client:
                 resp = await client.get(
@@ -237,10 +254,22 @@ class Plugin(PluginInterface):
                     headers={"Authorization": f"token {self._token}"},
                 )
                 if resp.status_code == 200:
-                    return {"status": PluginStatus.AVAILABLE, "message": "GitHub API reachable", "last_check": time.time()}
-                return {"status": PluginStatus.AUTH_FAILED, "message": f"GitHub API returned {resp.status_code}", "last_check": time.time()}
+                    return {
+                        "status": PluginStatus.AVAILABLE,
+                        "message": "GitHub API reachable",
+                        "last_check": time.time(),
+                    }
+                return {
+                    "status": PluginStatus.AUTH_FAILED,
+                    "message": f"GitHub API returned {resp.status_code}",
+                    "last_check": time.time(),
+                }
         except Exception as e:
-            return {"status": PluginStatus.UNAVAILABLE, "message": str(e), "last_check": time.time()}
+            return {
+                "status": PluginStatus.UNAVAILABLE,
+                "message": str(e),
+                "last_check": time.time(),
+            }
 
     async def validate(self) -> bool:
         return bool(self._token)

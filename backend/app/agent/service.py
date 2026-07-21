@@ -5,7 +5,6 @@ from typing import Any
 
 from app.agent.context import AgentContext
 from app.agent.executor import Executor
-from app.agent.models import TaskGraph
 from app.agent.planner import Planner
 from app.core.logging import get_logger
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -15,8 +14,6 @@ from app.search.interface import (
     SearchRateLimitError,
     SearchResponse,
     SearchResult,
-    SearchTimeoutError,
-    SearchUnavailableError,
 )
 from app.search.providers.tavily import TavilyProvider
 from app.search.service import SearchService
@@ -61,8 +58,13 @@ class FakeProvider(SearchProvider):
             answer=self._answer,
             results=self._results,
             citations=[
-                {"title": r.get("title", ""), "url": r.get("url", ""), "source": r.get("source", ""),
-                 "snippet": r.get("snippet", ""), "index": i + 1}
+                {
+                    "title": r.get("title", ""),
+                    "url": r.get("url", ""),
+                    "source": r.get("source", ""),
+                    "snippet": r.get("snippet", ""),
+                    "index": i + 1,
+                }
                 for i, r in enumerate(self._results)
             ],
             query=query.get("query", ""),
@@ -76,8 +78,20 @@ class FakeProvider(SearchProvider):
 @pytest.fixture
 def sample_results() -> list[SearchResult]:
     return [
-        SearchResult(title="Result 1", url="https://example.com/1", source="example.com", snippet="First result", score=0.95),
-        SearchResult(title="Result 2", url="https://example.com/2", source="example.com", snippet="Second result", score=0.85),
+        SearchResult(
+            title="Result 1",
+            url="https://example.com/1",
+            source="example.com",
+            snippet="First result",
+            score=0.95,
+        ),
+        SearchResult(
+            title="Result 2",
+            url="https://example.com/2",
+            source="example.com",
+            snippet="Second result",
+            score=0.85,
+        ),
     ]
 
 
@@ -334,7 +348,9 @@ class TestSearchServiceTimeout:
                 await asyncio.sleep(10)
                 return SearchResponse(results=[], total_results=0, query="", provider="slow")
 
-        svc = SearchService(provider=SlowProvider(), cache=SearchCache(default_ttl=60), timeout=0.01)
+        svc = SearchService(
+            provider=SlowProvider(), cache=SearchCache(default_ttl=60), timeout=0.01
+        )
         with pytest.raises(SearchProviderError, match="timed out"):
             await svc.search(SearchQuery(query="timeout test"))
 
@@ -346,10 +362,16 @@ class TestEmailAddress:
 class TestSearchIntegration:
     @pytest.mark.asyncio
     async def test_provider_and_service_together(self) -> None:
-        provider = FakeProvider(results=[
-            SearchResult(title="T1", url="https://a.com", source="a.com", snippet="Snippet 1", score=0.9),
-            SearchResult(title="T2", url="https://b.com", source="b.com", snippet="Snippet 2", score=0.8),
-        ])
+        provider = FakeProvider(
+            results=[
+                SearchResult(
+                    title="T1", url="https://a.com", source="a.com", snippet="Snippet 1", score=0.9
+                ),
+                SearchResult(
+                    title="T2", url="https://b.com", source="b.com", snippet="Snippet 2", score=0.8
+                ),
+            ]
+        )
         svc = SearchService(provider=provider, cache=SearchCache(default_ttl=300), timeout=10.0)
         response = await svc.search(SearchQuery(query="integration test"))
         assert response["total_results"] == 2
@@ -429,9 +451,14 @@ class TestTavilyProvider:
 class TestSearchServiceCacheIntegration:
     @pytest.mark.asyncio
     async def test_cache_works_across_search_and_research(self) -> None:
-        provider = FakeProvider(results=[
-            SearchResult(title="R1", url="https://x.com", source="x.com", snippet="X", score=0.9),
-        ], answer="Answer text")
+        provider = FakeProvider(
+            results=[
+                SearchResult(
+                    title="R1", url="https://x.com", source="x.com", snippet="X", score=0.9
+                ),
+            ],
+            answer="Answer text",
+        )
         svc = SearchService(provider=provider, cache=SearchCache(default_ttl=60), timeout=10.0)
 
         r1 = await svc.search(SearchQuery(query="hello"))
@@ -446,7 +473,11 @@ class TestSearchServiceCacheIntegration:
 
     @pytest.mark.asyncio
     async def test_cache_key_differs_by_mode(self) -> None:
-        provider = FakeProvider(results=[SearchResult(title="R", url="https://x.com", source="x.com", snippet="X", score=0.9)])
+        provider = FakeProvider(
+            results=[
+                SearchResult(title="R", url="https://x.com", source="x.com", snippet="X", score=0.9)
+            ]
+        )
         svc = SearchService(provider=provider, cache=SearchCache(default_ttl=60), timeout=10.0)
 
         await svc.search(SearchQuery(query="same query"))
@@ -456,8 +487,12 @@ class TestSearchServiceCacheIntegration:
     @pytest.mark.asyncio
     async def test_deduplication_across_research_citations(self) -> None:
         results = [
-            SearchResult(title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9),
-            SearchResult(title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9),
+            SearchResult(
+                title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9
+            ),
+            SearchResult(
+                title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9
+            ),
         ]
         provider = FakeProvider(results=results, answer="Answer")
         svc = SearchService(provider=provider, cache=SearchCache(default_ttl=60), timeout=10.0)

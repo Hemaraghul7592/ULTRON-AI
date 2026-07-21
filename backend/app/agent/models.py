@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Any, Callable, Optional
+from typing import Any
 
 
 class Task:

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import base64
 from typing import Any
 
 import httpx
@@ -170,6 +169,7 @@ class Plugin(BasePlugin):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         if settings.OCR_API_KEY:
             self._tools = [

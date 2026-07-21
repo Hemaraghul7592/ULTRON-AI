@@ -49,7 +49,11 @@ class SearchCache:
         return entry.data
 
     async def set(
-        self, query: str, data: Any, ttl: int | None = None, **params: Any
+        self,
+        query: str,
+        data: Any,
+        ttl: int | None = None,
+        **params: Any,
     ) -> None:
         key = self._make_key(query, **params)
         effective_ttl = ttl if ttl is not None else self._default_ttl

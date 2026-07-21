@@ -13,7 +13,7 @@ from app.core.exceptions import AuthenticationException
 from app.core.logging import get_logger
 from app.core.security import create_access_token, decode_access_token
 from app.repositories.google_token_repo import GoogleTokenRepository
-from app.services.google_oauth import ALL_SCOPES, GoogleOAuthService
+from app.services.google_oauth import GoogleOAuthService
 
 router = APIRouter(prefix="/google/auth", tags=["google_auth"])
 logger = get_logger(__name__)

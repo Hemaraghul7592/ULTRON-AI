@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import os
 import shutil
-from pathlib import Path
 from typing import Any
 
-from app.file_engine.errors import FileNotFoundError
+from app.file_engine.errors import FileNotFoundError, FilePermissionError
 from app.file_engine.interface import StorageProvider
-from app.file_engine.utils import safe_filename
 
-_DEFAULT_ROOT = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "storage")
+_DEFAULT_ROOT = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "storage",
+)
 
 
 class LocalStorage(StorageProvider):
@@ -28,7 +28,7 @@ class LocalStorage(StorageProvider):
     def _resolve(self, path: str) -> str:
         resolved = os.path.normpath(os.path.join(self._root, path))
         if not resolved.startswith(os.path.normpath(self._root)):
-            raise PermissionError(f"Path traversal denied: {path}")
+            raise FilePermissionError(f"Path traversal denied: {path}")
         return resolved
 
     async def save(self, path: str, data: bytes) -> str:

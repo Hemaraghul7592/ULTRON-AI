@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from typing import Any
 
 from app.core.logging import get_logger
@@ -14,7 +13,7 @@ from app.plugins.errors import (
     normalize_error,
     success_response,
 )
-from app.tools.plugin_loader import BUILTIN_PLUGINS, PluginLoader
+from app.tools.plugin_loader import PluginLoader
 from app.tools.router import ToolRouter
 
 logger = get_logger(__name__)
@@ -102,7 +101,11 @@ class PluginManager:
         if plugin_name:
             plugin = self.get_plugin(plugin_name)
             if plugin is None:
-                return {"plugin": plugin_name, "status": PluginStatus.UNAVAILABLE, "error": "not_found"}
+                return {
+                    "plugin": plugin_name,
+                    "status": PluginStatus.UNAVAILABLE,
+                    "error": "not_found",
+                }
             try:
                 health = await plugin.health_check()
                 self._statuses[plugin_name] = health.get("status", PluginStatus.AVAILABLE)
@@ -132,11 +135,16 @@ class PluginManager:
                 except Exception as e:
                     self._statuses[plugin.name] = PluginStatus.ERROR
                     results["unavailable"] += 1
-                    results["plugins"][plugin.name] = {"status": PluginStatus.ERROR, "error": str(e)}
+                    results["plugins"][plugin.name] = {
+                        "status": PluginStatus.ERROR,
+                        "error": str(e),
+                    }
             return results
 
     async def execute_tool(
-        self, tool_name: str, **kwargs: Any
+        self,
+        tool_name: str,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         plugin_name = self._find_plugin_for_tool(tool_name)
 
@@ -149,7 +157,11 @@ class PluginManager:
                 )
 
             status = self._statuses.get(plugin_name)
-            if status in (PluginStatus.DISABLED, PluginStatus.AUTH_FAILED, PluginStatus.UNAVAILABLE):
+            if status in (
+                PluginStatus.DISABLED,
+                PluginStatus.AUTH_FAILED,
+                PluginStatus.UNAVAILABLE,
+            ):
                 raise PluginUnavailableError(
                     message=f"Plugin '{plugin_name}' is {status}",
                     plugin_name=plugin_name,
@@ -157,7 +169,9 @@ class PluginManager:
 
             result = await tool.execute(**kwargs)
             self._statuses[plugin_name] = PluginStatus.AVAILABLE
-            return success_response(result=str(result), tool_name=tool_name, plugin_name=plugin_name)
+            return success_response(
+                result=str(result), tool_name=tool_name, plugin_name=plugin_name
+            )
 
         except PluginError:
             self._statuses[plugin_name] = PluginStatus.ERROR
@@ -168,7 +182,9 @@ class PluginManager:
             raise normalized
 
     async def execute_tool_safe(
-        self, tool_name: str, **kwargs: Any
+        self,
+        tool_name: str,
+        **kwargs: Any,
     ) -> dict[str, Any]:
         try:
             return await self.execute_tool(tool_name, **kwargs)

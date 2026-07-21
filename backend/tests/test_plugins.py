@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from unittest.mock import AsyncMock, MagicMock, patch
-
 import pytest
 
 from app.ai.tool_executor import ToolExecutor
@@ -18,7 +16,7 @@ from app.plugins.errors import (
     success_response,
 )
 from app.plugins.manager import PluginManager
-from app.tools.base import BasePlugin, BaseTool
+from app.tools.base import BaseTool
 
 
 class FakeTool(BaseTool):
@@ -45,7 +43,9 @@ class FakeTool(BaseTool):
 
 
 class FakePlugin(PluginInterface):
-    def __init__(self, name: str = "fake", version: str = "1.0.0", desc: str = "Fake plugin") -> None:
+    def __init__(
+        self, name: str = "fake", version: str = "1.0.0", desc: str = "Fake plugin"
+    ) -> None:
         self._name = name
         self._version = version
         self._desc = desc
@@ -95,18 +95,23 @@ class FailingPlugin(FakePlugin):
 class TestPluginInterface:
     def test_required_credentials_abstract(self) -> None:
         with pytest.raises(TypeError):
+
             class IncompletePlugin(PluginInterface):  # type: ignore
                 @property
                 def name(self) -> str:
                     return "test"
+
                 @property
                 def version(self) -> str:
                     return "1.0.0"
+
                 @property
                 def description(self) -> str:
                     return "test"
+
                 def get_tools(self) -> list:
                     return []
+
             IncompletePlugin()
 
     def test_get_metadata(self) -> None:
@@ -441,7 +446,9 @@ class TestToolExecutorSync:
         executor = ToolExecutor()
         executor.sync_from_plugin_manager(pm)
 
-        result = await executor.execute({"id": "call_1", "name": "alpha_tool1", "arguments": {"x": "y"}})
+        result = await executor.execute(
+            {"id": "call_1", "name": "alpha_tool1", "arguments": {"x": "y"}}
+        )
         assert result["success"] is True
         assert "alpha_tool1 executed" in result["result"]
         assert result["tool_call_id"] == "call_1"

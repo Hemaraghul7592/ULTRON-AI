@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import json
-from datetime import datetime, timezone
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from datetime import UTC, datetime
+from typing import Any
 
 from app.core.logging import get_logger
-from app.schemas.task import TaskCreate
 
 logger = get_logger(__name__)
 
@@ -35,7 +34,8 @@ class ReminderEngine:
         self._on_trigger: Callable[..., Coroutine[Any, Any, Any]] | None = None
 
     def set_trigger_callback(
-        self, callback: Callable[..., Coroutine[Any, Any, Any]]
+        self,
+        callback: Callable[..., Coroutine[Any, Any, Any]],
     ) -> None:
         self._on_trigger = callback
 
@@ -67,7 +67,7 @@ class ReminderEngine:
         return self._reminders.pop(reminder_id, None) is not None
 
     async def check_reminders(self) -> list[Reminder]:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         triggered: list[Reminder] = []
 
         for reminder in self._reminders.values():
@@ -103,17 +103,18 @@ class ReminderEngine:
 
     def _calculate_next(self, reminder: Reminder) -> datetime:
         from datetime import timedelta
-        now = datetime.now(timezone.utc)
+
+        now = datetime.now(UTC)
         if reminder.recurring == "daily":
             return now + timedelta(days=1)
-        elif reminder.recurring == "weekly":
+        if reminder.recurring == "weekly":
             return now + timedelta(weeks=1)
-        elif reminder.recurring == "hourly":
+        if reminder.recurring == "hourly":
             return now + timedelta(hours=1)
         return now + timedelta(days=1)
 
     def get_pending(self) -> list[dict[str, Any]]:
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         return [
             {
                 "reminder_id": r.reminder_id,

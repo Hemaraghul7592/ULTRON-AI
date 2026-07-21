@@ -49,10 +49,12 @@ class RedisRateLimiter:
     async def _get_redis(self) -> Any:
         if self._redis is None:
             from app.core.config import get_settings
+
             settings = get_settings()
             if not settings.REDIS_URL:
                 raise RuntimeError("REDIS_URL not configured")
             import redis.asyncio as aioredis
+
             self._redis = aioredis.from_url(settings.REDIS_URL, decode_responses=True)
         return self._redis
 

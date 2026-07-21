@@ -8,7 +8,7 @@ import httpx
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.voice.errors import ProviderAuthError, SpeechRecognitionError, SpeechSynthesisError
-from app.voice.interface import STTResult, SpeechToTextProvider, TTSResult, TextToSpeechProvider
+from app.voice.interface import SpeechToTextProvider, STTResult, TextToSpeechProvider, TTSResult
 
 logger = get_logger(__name__)
 
@@ -23,7 +23,10 @@ class GroqSTTProvider(SpeechToTextProvider):
         return "groq_stt"
 
     async def transcribe(
-        self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav"
+        self,
+        audio_data: bytes,
+        language: str = "en-US",
+        filename: str = "audio.wav",
     ) -> STTResult:
         if not self._api_key:
             raise ProviderAuthError(message="Groq API key not configured", provider=self.name)
@@ -50,7 +53,7 @@ class GroqSTTProvider(SpeechToTextProvider):
             )
         except Exception as e:
             logger.error("groq_stt_failed", error=str(e))
-            raise SpeechRecognitionError(message=str(e), provider=self.name, original_error=e)
+            raise SpeechRecognitionError(message=str(e), provider=self.name, original_error=e) from e
 
     async def validate(self) -> bool:
         return bool(self._api_key)
@@ -62,8 +65,26 @@ class GroqSTTProvider(SpeechToTextProvider):
 
     def supported_languages(self) -> list[str]:
         return [
-            "en", "en-US", "en-GB", "es", "fr", "de", "ja", "zh", "ko", "pt",
-            "ru", "ar", "hi", "vi", "it", "nl", "tr", "pl", "sv", "id",
+            "en",
+            "en-US",
+            "en-GB",
+            "es",
+            "fr",
+            "de",
+            "ja",
+            "zh",
+            "ko",
+            "pt",
+            "ru",
+            "ar",
+            "hi",
+            "vi",
+            "it",
+            "nl",
+            "tr",
+            "pl",
+            "sv",
+            "id",
         ]
 
     def _get_client(self) -> httpx.AsyncClient:
@@ -87,7 +108,11 @@ class GroqTTSProvider(TextToSpeechProvider):
         return "groq_tts"
 
     async def synthesize(
-        self, text: str, voice_id: str | None = None, speed: float = 1.0, language: str = "en"
+        self,
+        text: str,
+        voice_id: str | None = None,
+        speed: float = 1.0,
+        language: str = "en",
     ) -> TTSResult:
         if not self._api_key:
             raise ProviderAuthError(message="Groq API key not configured", provider=self.name)
@@ -119,7 +144,7 @@ class GroqTTSProvider(TextToSpeechProvider):
             )
         except Exception as e:
             logger.error("groq_tts_failed", error=str(e))
-            raise SpeechSynthesisError(message=str(e), provider=self.name, original_error=e)
+            raise SpeechSynthesisError(message=str(e), provider=self.name, original_error=e) from e
 
     async def validate(self) -> bool:
         return bool(self._api_key)

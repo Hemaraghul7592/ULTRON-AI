@@ -33,7 +33,7 @@ class ContextBuilder:
                 tags = mem.get("tags", [])
                 tag_str = ", ".join(tags) if tags else ""
                 memory_texts.append(
-                    f"- [{importance:.1f}] {content}" + (f" ({tag_str})" if tag_str else "")
+                    f"- [{importance:.1f}] {content}" + (f" ({tag_str})" if tag_str else ""),
                 )
             parts.append("Relevant memories:\n" + "\n".join(memory_texts))
 
@@ -61,7 +61,9 @@ class ContextBuilder:
         return len(text) // 4
 
     def truncate_to_fit(
-        self, messages: list[dict[str, Any]], max_tokens: int | None = None
+        self,
+        messages: list[dict[str, Any]],
+        max_tokens: int | None = None,
     ) -> list[dict[str, Any]]:
         limit = max_tokens or (self._max_context_tokens - self._reserved_tokens)
         total = 0

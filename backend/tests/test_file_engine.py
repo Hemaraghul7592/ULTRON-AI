@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-import os
 import tempfile
-from pathlib import Path
 
 import pytest
 
 from app.file_engine.errors import (
     DuplicateFileError,
     FileNotFoundError,
+    FilePermissionError,
     InvalidFileTypeError,
     ProcessingError,
     StorageError,
@@ -16,7 +15,7 @@ from app.file_engine.errors import (
 from app.file_engine.interface import FileMetadata, StorageProvider
 from app.file_engine.models import StoredFile
 from app.file_engine.processors.audio import AudioProcessor
-from app.file_engine.processors.base import ChainProcessor, Processor
+from app.file_engine.processors.base import ChainProcessor
 from app.file_engine.processors.image import ImageProcessor
 from app.file_engine.processors.ocr import OCRProcessor
 from app.file_engine.processors.pdf import PDFProcessor
@@ -151,6 +150,7 @@ class TestLocalStorage:
         d = tempfile.mkdtemp()
         yield d
         import shutil
+
         shutil.rmtree(d, ignore_errors=True)
 
     @pytest.mark.asyncio
@@ -170,7 +170,7 @@ class TestLocalStorage:
     @pytest.mark.asyncio
     async def test_path_traversal_blocked(self, tmp_root: str) -> None:
         s = LocalStorage(root=tmp_root)
-        with pytest.raises(PermissionError):
+        with pytest.raises(FilePermissionError):
             await s.load("../etc/passwd")
 
     @pytest.mark.asyncio
@@ -260,8 +260,12 @@ class TestProcessors:
         assert p.name == "text"
         assert ".txt" in p.supported_extensions()
         meta = FileMetadata(
-            filename="test.txt", mime_type="text/plain", extension=".txt",
-            size=12, sha256="x", storage_path="",
+            filename="test.txt",
+            mime_type="text/plain",
+            extension=".txt",
+            size=12,
+            sha256="x",
+            storage_path="",
         )
         text = await p.extract_text(b"hello world", meta)
         assert text == "hello world"
@@ -272,8 +276,12 @@ class TestProcessors:
     async def test_text_unicode_decode(self) -> None:
         p = TextProcessor()
         meta = FileMetadata(
-            filename="f.txt", mime_type="text/plain", extension=".txt",
-            size=5, sha256="x", storage_path="",
+            filename="f.txt",
+            mime_type="text/plain",
+            extension=".txt",
+            size=5,
+            sha256="x",
+            storage_path="",
         )
         text = await p.extract_text(b"\xff\xfe\x00\x68\x00", meta)
         assert isinstance(text, str)
@@ -287,12 +295,17 @@ class TestProcessors:
         w = 100
         h = 200
         import struct
+
         header += struct.pack(">II", w, h)
         header += b"\x00" * 8
 
         meta = FileMetadata(
-            filename="img.png", mime_type="image/png", extension=".png",
-            size=len(header), sha256="x", storage_path="",
+            filename="img.png",
+            mime_type="image/png",
+            extension=".png",
+            size=len(header),
+            sha256="x",
+            storage_path="",
         )
         processed = await p.process(header, meta)
         assert processed.width == 100
@@ -307,8 +320,12 @@ class TestProcessors:
             b"\xff\xd9"
         )
         meta = FileMetadata(
-            filename="img.jpg", mime_type="image/jpeg", extension=".jpg",
-            size=len(data), sha256="x", storage_path="",
+            filename="img.jpg",
+            mime_type="image/jpeg",
+            extension=".jpg",
+            size=len(data),
+            sha256="x",
+            storage_path="",
         )
         processed = await p.process(data, meta)
         assert processed.width == 384
@@ -326,8 +343,12 @@ class TestProcessors:
         p = PDFProcessor()
         pdf_data = b"%PDF-1.4\n1 0 obj<</Type /Page>>endobj\nxref\n...\n%%EOF"
         meta = FileMetadata(
-            filename="doc.pdf", mime_type="application/pdf", extension=".pdf",
-            size=len(pdf_data), sha256="x", storage_path="",
+            filename="doc.pdf",
+            mime_type="application/pdf",
+            extension=".pdf",
+            size=len(pdf_data),
+            sha256="x",
+            storage_path="",
         )
         processed = await p.process(pdf_data, meta)
         assert processed.pages is not None
@@ -337,16 +358,30 @@ class TestProcessors:
         p = AudioProcessor()
         assert ".wav" in p.supported_extensions()
         import struct
+
         sample_rate = 44100
         channels = 2
         bits = 16
         data_size = 44100 * 2 * 2
         wav = b"RIFF" + struct.pack("<I", 36 + data_size) + b"WAVE"
-        wav += b"fmt " + struct.pack("<IHHIIHH", 16, 1, channels, sample_rate, sample_rate * channels * bits // 8, channels * bits // 8, bits)
+        wav += b"fmt " + struct.pack(
+            "<IHHIIHH",
+            16,
+            1,
+            channels,
+            sample_rate,
+            sample_rate * channels * bits // 8,
+            channels * bits // 8,
+            bits,
+        )
         wav += b"data" + struct.pack("<I", data_size) + b"\x00" * data_size
         meta = FileMetadata(
-            filename="audio.wav", mime_type="audio/wav", extension=".wav",
-            size=len(wav), sha256="x", storage_path="",
+            filename="audio.wav",
+            mime_type="audio/wav",
+            extension=".wav",
+            size=len(wav),
+            sha256="x",
+            storage_path="",
         )
         processed = await p.process(wav, meta)
         assert processed.duration is not None
@@ -370,8 +405,12 @@ class TestProcessors:
         assert ".png" in chain.supported_extensions()
 
         meta = FileMetadata(
-            filename="test.txt", mime_type="text/plain", extension=".txt",
-            size=5, sha256="x", storage_path="",
+            filename="test.txt",
+            mime_type="text/plain",
+            extension=".txt",
+            size=5,
+            sha256="x",
+            storage_path="",
         )
         result = await chain.process(b"hello", meta)
         assert result.extra.get("char_count") == 5
@@ -513,6 +552,7 @@ class TestFileServiceProcessors:
         p = ImageProcessor()
         import struct
         import zlib
+
         sig = b"\x89PNG\r\n\x1a\n"
         ihdr_data = struct.pack(">IIBBBBB", 50, 75, 8, 2, 0, 0, 0)
         ihdr_crc = struct.pack(">I", zlib.crc32(b"IHDR" + ihdr_data) & 0xFFFFFFFF)
@@ -521,8 +561,12 @@ class TestFileServiceProcessors:
         iend_len = struct.pack(">I", 0)
         png_data = sig + ihdr_len + b"IHDR" + ihdr_data + ihdr_crc + iend_len + b"IEND" + iend_crc
         meta = FileMetadata(
-            filename="img.png", mime_type="image/png", extension=".png",
-            size=len(png_data), sha256="x", storage_path="",
+            filename="img.png",
+            mime_type="image/png",
+            extension=".png",
+            size=len(png_data),
+            sha256="x",
+            storage_path="",
         )
         processed = await p.process(png_data, meta)
         assert processed.width == 50
@@ -559,8 +603,12 @@ class TestFileMetadata:
 
     def test_stored_file_default_values(self) -> None:
         sf = StoredFile(
-            filename="a.txt", mime_type="text/plain", extension=".txt",
-            size=1, sha256="h", storage_path="h/a.txt",
+            filename="a.txt",
+            mime_type="text/plain",
+            extension=".txt",
+            size=1,
+            sha256="h",
+            storage_path="h/a.txt",
         )
         assert sf.file_id is not None
         assert sf.created_at is not None

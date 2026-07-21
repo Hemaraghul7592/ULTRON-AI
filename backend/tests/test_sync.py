@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import time
-
 import pytest
 
 from app.sync.errors import (
@@ -14,15 +12,11 @@ from app.sync.errors import (
 )
 from app.sync.interface import (
     SyncAction,
-    SyncChange,
-    SyncProvider,
-    SyncResult,
-    SyncStatus,
 )
 from app.sync.manager import SyncManager
-from app.sync.models import compute_checksum, make_change, change_key, is_older, merge_changes
+from app.sync.models import change_key, compute_checksum, is_older, make_change, merge_changes
 from app.sync.providers.mock import MockSyncProvider
-from app.sync.queue import QueueItem, SyncQueue
+from app.sync.queue import SyncQueue
 from app.sync.resolver import ConflictResolver, ResolutionStrategy
 from app.sync.service import SyncService
 
@@ -170,6 +164,7 @@ class TestSyncQueue:
     async def test_max_retries_exceeded(self, queue: SyncQueue) -> None:
         def always_fail() -> None:
             raise ValueError("fail")
+
         item_id = queue.enqueue(always_fail, max_retries=1)
         await queue.process_all()
         item = queue._items[item_id]
@@ -233,7 +228,9 @@ class TestSyncManager:
         return SyncManager()
 
     @pytest.mark.asyncio
-    async def test_register_provider(self, manager: SyncManager, provider: MockSyncProvider) -> None:
+    async def test_register_provider(
+        self, manager: SyncManager, provider: MockSyncProvider
+    ) -> None:
         manager.register_provider(provider)
         assert manager.get_provider("test_provider") is provider
 
@@ -265,7 +262,9 @@ class TestSyncManager:
     async def test_sync(self, manager: SyncManager, provider: MockSyncProvider) -> None:
         provider.set_pull_changes([make_change("t", "1", SyncAction.UPDATE, {"val": 1})])
         manager.register_provider(provider)
-        manager.track_change("test_provider", make_change("t", "1", SyncAction.CREATE, {"val": 0}, version=1))
+        manager.track_change(
+            "test_provider", make_change("t", "1", SyncAction.CREATE, {"val": 0}, version=1)
+        )
         result = await manager.sync("test_provider")
         assert result["status"] == "completed"
 
@@ -355,7 +354,9 @@ class TestSyncService:
         assert "mock" in result["providers"]
 
     @pytest.mark.asyncio
-    async def test_health_check_specific(self, service: SyncService, provider: MockSyncProvider) -> None:
+    async def test_health_check_specific(
+        self, service: SyncService, provider: MockSyncProvider
+    ) -> None:
         service.register_provider(provider)
         result = await service.health_check("mock")
         assert result["status"] == "available"
@@ -433,6 +434,7 @@ class TestMockProvider:
     def test_pushed_tracks_all(self) -> None:
         p = MockSyncProvider()
         import asyncio
+
         changes = [make_change("t", "1", SyncAction.CREATE, {})]
         asyncio.run(p.push(changes))
         assert len(p.pushed) == 1

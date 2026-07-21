@@ -98,7 +98,7 @@ class WeatherTool(BaseTool):
                 if forecast_response.status_code == 200:
                     forecast = forecast_response.json()
                     result += "\n\nForecast:"
-                    for item in forecast.get("list", [])[:days * 2]:
+                    for item in forecast.get("list", [])[: days * 2]:
                         dt = item["dt_txt"]
                         ftemp = item["main"]["temp"]
                         fdesc = item["weather"][0]["description"]
@@ -170,7 +170,7 @@ class WeatherForecastTool(BaseTool):
                 humidity = item["main"]["humidity"]
                 rain = item.get("rain", {}).get("3h", 0)
                 forecasts.append(
-                    f"{dt}: {temp}°C, {desc}, humidity {humidity}%, rain {rain}mm"
+                    f"{dt}: {temp}°C, {desc}, humidity {humidity}%, rain {rain}mm",
                 )
             return f"Forecast for {city}:\n" + "\n".join(forecasts)
         except Exception as e:
@@ -198,6 +198,7 @@ class Plugin(BasePlugin):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         api_key = settings.OPEN_WEATHER_API_KEY
         if api_key:

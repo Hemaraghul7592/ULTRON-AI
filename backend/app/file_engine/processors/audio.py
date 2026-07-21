@@ -42,6 +42,7 @@ class AudioProcessor(Processor):
         if mime == "audio/wav" and len(data) > 44:
             try:
                 import struct
+
                 sample_rate = struct.unpack("<I", data[24:28])[0]
                 channels = struct.unpack("<H", data[22:24])[0]
                 bits_per_sample = struct.unpack("<H", data[34:36])[0]

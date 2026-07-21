@@ -1,9 +1,20 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import Boolean, Column, DateTime, Float, ForeignKey, Index, Integer, String, Table, Text
+from sqlalchemy import (
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Table,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -11,13 +22,15 @@ from app.core.database import Base
 memory_tags = Table(
     "memory_tags",
     Base.metadata,
-    Column("memory_id", String(36), ForeignKey("memories.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "memory_id", String(36), ForeignKey("memories.id", ondelete="CASCADE"), primary_key=True
+    ),
     Column("tag_id", String(36), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True),
 )
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _uuid() -> str:
@@ -40,10 +53,14 @@ class Memory(Base):
     source: Mapped[str | None] = mapped_column(String(255), nullable=True)
     context: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow
+    )
     last_accessed: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    tags: Mapped[list[Tag]] = relationship(secondary=memory_tags, back_populates="memories", lazy="selectin")
+    tags: Mapped[list[Tag]] = relationship(
+        secondary=memory_tags, back_populates="memories", lazy="selectin"
+    )
 
     __table_args__ = (
         Index("ix_memories_type", "memory_type"),
@@ -59,7 +76,6 @@ class Tag(Base):
     name: Mapped[str] = mapped_column(String(100), nullable=False, unique=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
-    memories: Mapped[list[Memory]] = relationship(secondary=memory_tags, back_populates="tags", lazy="selectin")
-
-
-
+    memories: Mapped[list[Memory]] = relationship(
+        secondary=memory_tags, back_populates="tags", lazy="selectin"
+    )

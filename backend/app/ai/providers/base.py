@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 
 class AIProvider(abc.ABC):
@@ -18,8 +19,7 @@ class AIProvider(abc.ABC):
         max_tokens: int = 4096,
         tools: list[dict] | None = None,
         **kwargs: Any,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
     @abc.abstractmethod
     async def chat_stream(
@@ -29,16 +29,13 @@ class AIProvider(abc.ABC):
         max_tokens: int = 4096,
         tools: list[dict] | None = None,
         **kwargs: Any,
-    ) -> AsyncIterator[dict[str, Any]]:
-        ...
+    ) -> AsyncIterator[dict[str, Any]]: ...
 
     @abc.abstractmethod
-    def is_available(self) -> bool:
-        ...
+    def is_available(self) -> bool: ...
 
     @abc.abstractmethod
-    def get_models(self) -> list[str]:
-        ...
+    def get_models(self) -> list[str]: ...
 
     async def close(self) -> None:
         pass

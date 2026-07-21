@@ -31,14 +31,16 @@ class TextToSpeechService:
         settings = get_settings()
         if settings.GROQ_API_KEY:
             return await self._synthesize_groq(text, voice_id)
-        elif settings.GEMINI_API_KEY:
+        if settings.GEMINI_API_KEY:
             return await self._synthesize_gemini(text, voice_id)
 
         logger.warning("no_tts_provider_available")
         return {"audio_base64": "", "format": "wav"}
 
     async def _synthesize_groq(
-        self, text: str, voice_id: str | None
+        self,
+        text: str,
+        voice_id: str | None,
     ) -> dict[str, Any]:
         settings = get_settings()
         try:
@@ -71,7 +73,9 @@ class TextToSpeechService:
             return {"audio_base64": "", "format": "wav"}
 
     async def _synthesize_gemini(
-        self, text: str, voice_id: str | None
+        self,
+        text: str,
+        voice_id: str | None,
     ) -> dict[str, Any]:
         settings = get_settings()
         try:
@@ -86,7 +90,7 @@ class TextToSpeechService:
                 },
             }
             voice_name = voice_id or "Kore"
-            model = f"gemini-2.0-flash-preview-tts"
+            model = "gemini-2.0-flash-preview-tts"
             response = await self.client.post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                 headers={"x-goog-api-key": settings.GEMINI_API_KEY},

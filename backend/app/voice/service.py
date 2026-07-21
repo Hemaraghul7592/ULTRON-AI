@@ -7,16 +7,14 @@ from typing import Any
 from app.core.logging import get_logger
 from app.voice.errors import (
     InvalidAudioError,
-    ProviderUnavailableError,
-    SessionError,
     SpeechRecognitionError,
     SpeechSynthesisError,
 )
 from app.voice.interface import (
-    STTResult,
     SpeechToTextProvider,
-    TTSResult,
+    STTResult,
     TextToSpeechProvider,
+    TTSResult,
 )
 from app.voice.utils import validate_audio
 
@@ -108,6 +106,7 @@ class VoiceService:
         try:
             if audio_base64 and not audio_data:
                 import base64
+
                 audio_data = base64.b64decode(audio_base64)
 
             if not audio_data:
@@ -128,8 +127,10 @@ class VoiceService:
             raise
         except Exception as e:
             raise SpeechRecognitionError(
-                message=str(e), provider=self._stt.name, original_error=e
-            )
+                message=str(e),
+                provider=self._stt.name,
+                original_error=e,
+            ) from e
 
     async def synthesize(
         self,
@@ -140,6 +141,9 @@ class VoiceService:
     ) -> TTSResult:
         if not text:
             return TTSResult(provider=self._tts.name)
+
+        if len(text) > 5000:
+            raise ValueError("Text too long for TTS (max 5000 characters)")
 
         try:
             result = await self._tts.synthesize(
@@ -154,8 +158,10 @@ class VoiceService:
             raise
         except Exception as e:
             raise SpeechSynthesisError(
-                message=str(e), provider=self._tts.name, original_error=e
-            )
+                message=str(e),
+                provider=self._tts.name,
+                original_error=e,
+            ) from e
 
     async def process(
         self,

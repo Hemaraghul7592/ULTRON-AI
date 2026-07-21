@@ -97,11 +97,15 @@ async def test_tools_plugins(client: AsyncClient, auth_headers: dict):
 
 @pytest.mark.asyncio
 async def test_user_isolation_conversations(client: AsyncClient):
-    r1 = await client.post("/api/v1/auth/register", json={"username": "user_a", "password": "TestPass123!"})
+    r1 = await client.post(
+        "/api/v1/auth/register", json={"username": "user_a", "password": "TestPass123!"}
+    )
     token_a = r1.json()["access_token"]
     headers_a = {"Authorization": f"Bearer {token_a}"}
 
-    r2 = await client.post("/api/v1/auth/register", json={"username": "user_b", "password": "TestPass123!"})
+    r2 = await client.post(
+        "/api/v1/auth/register", json={"username": "user_b", "password": "TestPass123!"}
+    )
     token_b = r2.json()["access_token"]
     headers_b = {"Authorization": f"Bearer {token_b}"}
 
@@ -117,11 +121,15 @@ async def test_user_isolation_conversations(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_user_isolation_memories(client: AsyncClient):
-    r1 = await client.post("/api/v1/auth/register", json={"username": "user_c", "password": "TestPass123!"})
+    r1 = await client.post(
+        "/api/v1/auth/register", json={"username": "user_c", "password": "TestPass123!"}
+    )
     token_c = r1.json()["access_token"]
     headers_c = {"Authorization": f"Bearer {token_c}"}
 
-    r2 = await client.post("/api/v1/auth/register", json={"username": "user_d", "password": "TestPass123!"})
+    r2 = await client.post(
+        "/api/v1/auth/register", json={"username": "user_d", "password": "TestPass123!"}
+    )
     token_d = r2.json()["access_token"]
     headers_d = {"Authorization": f"Bearer {token_d}"}
 
@@ -137,11 +145,15 @@ async def test_user_isolation_memories(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_user_isolation_tasks(client: AsyncClient):
-    r1 = await client.post("/api/v1/auth/register", json={"username": "user_e", "password": "TestPass123!"})
+    r1 = await client.post(
+        "/api/v1/auth/register", json={"username": "user_e", "password": "TestPass123!"}
+    )
     token_e = r1.json()["access_token"]
     headers_e = {"Authorization": f"Bearer {token_e}"}
 
-    r2 = await client.post("/api/v1/auth/register", json={"username": "user_f", "password": "TestPass123!"})
+    r2 = await client.post(
+        "/api/v1/auth/register", json={"username": "user_f", "password": "TestPass123!"}
+    )
     token_f = r2.json()["access_token"]
     headers_f = {"Authorization": f"Bearer {token_f}"}
 
@@ -188,6 +200,7 @@ async def test_observability_metrics_no_auth(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_token_usage_model(client: AsyncClient):
     from app.models.token import TokenUsage
+
     tu = TokenUsage(
         provider="test",
         model="test-model",
@@ -212,7 +225,9 @@ async def test_root_public_no_auth(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_google_oauth_callback_persists_refresh_token(client: AsyncClient, auth_headers: dict):
+async def test_google_oauth_callback_persists_refresh_token(
+    client: AsyncClient, auth_headers: dict
+):
     from datetime import timedelta
 
     from app.core.security import create_access_token, decode_access_token

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import re
 from typing import Any
 
@@ -11,11 +10,25 @@ logger = get_logger(__name__)
 
 class EntityExtractor:
     PERSON_KEYWORDS = {
-        "mr", "mrs", "ms", "dr", "prof", "sir", "madam",
+        "mr",
+        "mrs",
+        "ms",
+        "dr",
+        "prof",
+        "sir",
+        "madam",
     }
     ORG_KEYWORDS = {
-        "inc", "llc", "corp", "ltd", "company", "organization",
-        "university", "college", "institute", "foundation",
+        "inc",
+        "llc",
+        "corp",
+        "ltd",
+        "company",
+        "organization",
+        "university",
+        "college",
+        "institute",
+        "foundation",
     }
 
     async def extract(self, text: str) -> dict[str, Any]:
@@ -30,11 +43,13 @@ class EntityExtractor:
             seen.add(name.lower())
 
             entity_type = self._classify_entity(name, text)
-            entities.append({
-                "name": name,
-                "type": entity_type,
-                "description": f"Extracted from text",
-            })
+            entities.append(
+                {
+                    "name": name,
+                    "type": entity_type,
+                    "description": "Extracted from text",
+                }
+            )
 
         patterns = [
             (r"(\w+)\s+(works at|is at|employed by)\s+(\w+)", "works_at"),
@@ -45,12 +60,14 @@ class EntityExtractor:
         for pattern, rel_type in patterns:
             matches = re.findall(pattern, text, re.IGNORECASE)
             for match in matches:
-                relationships.append({
-                    "source": match[0],
-                    "target": match[2],
-                    "type": rel_type,
-                    "weight": 0.7,
-                })
+                relationships.append(
+                    {
+                        "source": match[0],
+                        "target": match[2],
+                        "type": rel_type,
+                        "weight": 0.7,
+                    }
+                )
 
         return {
             "entities": entities,
@@ -70,12 +87,14 @@ class EntityExtractor:
             tags = self._extract_tags(sentence)
             memory_type = self._classify_memory(sentence)
 
-            memories.append({
-                "content": sentence,
-                "importance": importance,
-                "type": memory_type,
-                "tags": tags,
-            })
+            memories.append(
+                {
+                    "content": sentence,
+                    "importance": importance,
+                    "type": memory_type,
+                    "tags": tags,
+                }
+            )
 
         return memories
 
@@ -104,8 +123,16 @@ class EntityExtractor:
     def _assess_importance(self, text: str) -> float:
         importance = 0.3
         high_importance = [
-            "important", "critical", "deadline", "urgent", "must",
-            "always", "never", "remember", "key", "essential",
+            "important",
+            "critical",
+            "deadline",
+            "urgent",
+            "must",
+            "always",
+            "never",
+            "remember",
+            "key",
+            "essential",
         ]
         for word in high_importance:
             if word in text.lower():

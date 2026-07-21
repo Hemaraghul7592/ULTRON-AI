@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib
-import os
 from typing import Any
 
 from app.core.logging import get_logger
@@ -76,7 +75,7 @@ class PluginLoader:
     async def reload_plugin(self, module_path: str) -> BasePlugin | None:
         module = importlib.import_module(module_path)
         if hasattr(module, "Plugin"):
-            plugin_class = getattr(module, "Plugin")
+            plugin_class = module.Plugin
             old_plugin = None
             for p in self._loaded_plugins.values():
                 if type(p).__module__ == module_path:

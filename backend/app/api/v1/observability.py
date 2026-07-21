@@ -7,7 +7,9 @@ from app.core.database import get_session
 from app.observability.dashboard import DashboardService
 from app.observability.metrics import MetricsService
 
-router = APIRouter(prefix="/observability", tags=["observability"], dependencies=[Depends(verify_token)])
+router = APIRouter(
+    prefix="/observability", tags=["observability"], dependencies=[Depends(verify_token)]
+)
 
 
 @router.get("/dashboard")

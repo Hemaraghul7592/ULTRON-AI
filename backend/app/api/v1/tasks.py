@@ -1,11 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.auth import verify_token
 from app.core.database import get_session
-from app.repositories.task_repo import JobRepository, TaskRepository
+from app.repositories.task_repo import TaskRepository
 from app.schemas.task import TaskCreate, TaskListResponse, TaskResponse, TaskUpdate
 
 router = APIRouter(prefix="/tasks", tags=["tasks"], dependencies=[Depends(verify_token)])
@@ -22,7 +21,9 @@ async def list_tasks(
     session_factory = get_session()
     async with session_factory() as session:
         repo = TaskRepository(session)
-        tasks, total = await repo.list_all(user_id=user_id, page=page, page_size=page_size, status=status)
+        tasks, total = await repo.list_all(
+            user_id=user_id, page=page, page_size=page_size, status=status
+        )
         return TaskListResponse(
             tasks=[TaskResponse.model_validate(t) for t in tasks],
             total=total,
@@ -51,12 +52,15 @@ async def get_task(task_id: str, user: dict = Depends(verify_token)) -> TaskResp
         task = await repo.get(task_id, user_id)
         if not task:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Task", task_id)
         return TaskResponse.model_validate(task)
 
 
 @router.patch("/{task_id}", response_model=TaskResponse)
-async def update_task(task_id: str, data: TaskUpdate, user: dict = Depends(verify_token)) -> TaskResponse:
+async def update_task(
+    task_id: str, data: TaskUpdate, user: dict = Depends(verify_token)
+) -> TaskResponse:
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -64,6 +68,7 @@ async def update_task(task_id: str, data: TaskUpdate, user: dict = Depends(verif
         task = await repo.update(task_id, data.model_dump(exclude_unset=True), user_id=user_id)
         if not task:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Task", task_id)
         await session.commit()
         return TaskResponse.model_validate(task)
@@ -78,6 +83,7 @@ async def complete_task(task_id: str, user: dict = Depends(verify_token)) -> Tas
         task = await repo.complete(task_id, user_id=user_id)
         if not task:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Task", task_id)
         await session.commit()
         return TaskResponse.model_validate(task)
@@ -92,5 +98,6 @@ async def delete_task(task_id: str, user: dict = Depends(verify_token)) -> None:
         deleted = await repo.delete(task_id, user_id=user_id)
         if not deleted:
             from app.core.exceptions import NotFoundExceptionHTTP
+
             raise NotFoundExceptionHTTP("Task", task_id)
         await session.commit()

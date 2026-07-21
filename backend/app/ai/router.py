@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from app.ai.provider import AIProvider, AIProviderFactory
 from app.core.config import get_settings
@@ -22,8 +22,16 @@ class AIProviderRouter:
         provider_configs = [
             ("groq", settings_obj.GROQ_API_KEY),
             ("gemini", settings_obj.GEMINI_API_KEY),
-            ("openai", settings_obj.OPENAI_API_KEY.get_secret_value() if settings_obj.OPENAI_API_KEY else ""),
-            ("grok", settings_obj.GROK_API_KEY.get_secret_value() if settings_obj.GROK_API_KEY else ""),
+            (
+                "openai",
+                settings_obj.OPENAI_API_KEY.get_secret_value()
+                if settings_obj.OPENAI_API_KEY
+                else "",
+            ),
+            (
+                "grok",
+                settings_obj.GROK_API_KEY.get_secret_value() if settings_obj.GROK_API_KEY else "",
+            ),
         ]
         for name, api_key in provider_configs:
             if api_key:

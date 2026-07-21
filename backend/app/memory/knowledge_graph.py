@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -77,7 +76,10 @@ class KnowledgeGraphService:
         return rel
 
     async def search_entities(
-        self, query: str, user_id: str, limit: int = 10
+        self,
+        query: str,
+        user_id: str,
+        limit: int = 10,
     ) -> list[dict[str, Any]]:
         text_results = await self.repo.search(query, user_id=user_id, limit=limit * 2)
 
@@ -99,7 +101,9 @@ class KnowledgeGraphService:
         scored.sort(key=lambda x: x["score"], reverse=True)
         return scored[:limit]
 
-    async def get_entity_context(self, entity_name: str, user_id: str, depth: int = 2) -> dict[str, Any]:
+    async def get_entity_context(
+        self, entity_name: str, user_id: str, depth: int = 2
+    ) -> dict[str, Any]:
         entity = await self.repo.get_by_name(entity_name, user_id=user_id)
         if not entity:
             return {"entity": None, "neighbors": [], "relationships": []}

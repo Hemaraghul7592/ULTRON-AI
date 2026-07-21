@@ -60,7 +60,9 @@ async def test_delete_conversation(client: AsyncClient, auth_headers: dict):
 
 @pytest.mark.asyncio
 async def test_create_memory(client: AsyncClient, auth_headers: dict):
-    response = await client.post("/api/v1/memory", json={"content": "test memory"}, headers=auth_headers)
+    response = await client.post(
+        "/api/v1/memory", json={"content": "test memory"}, headers=auth_headers
+    )
     assert response.status_code == 201
     data = response.json()
     assert "id" in data
@@ -76,7 +78,9 @@ async def test_list_memories(client: AsyncClient, auth_headers: dict):
 
 @pytest.mark.asyncio
 async def test_search_memories(client: AsyncClient, auth_headers: dict):
-    response = await client.post("/api/v1/memory/search", json={"query": "test"}, headers=auth_headers)
+    response = await client.post(
+        "/api/v1/memory/search", json={"query": "test"}, headers=auth_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert "memories" in data

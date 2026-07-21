@@ -30,6 +30,7 @@ async def check_redis() -> dict[str, Any]:
         return {"status": "not_configured"}
     try:
         import redis.asyncio as aioredis
+
         r = aioredis.from_url(settings.REDIS_URL, decode_responses=True, socket_connect_timeout=2)
         await r.ping()
         await r.aclose()
@@ -42,7 +43,10 @@ async def check_redis() -> dict[str, Any]:
 async def get_health() -> dict[str, Any]:
     db_status = await check_database()
     redis_status = await check_redis()
-    all_healthy = db_status["status"] == "healthy" and redis_status["status"] in ("healthy", "not_configured")
+    all_healthy = db_status["status"] == "healthy" and redis_status["status"] in (
+        "healthy",
+        "not_configured",
+    )
     return {
         "status": "healthy" if all_healthy else "degraded",
         "version": get_settings().APP_VERSION,

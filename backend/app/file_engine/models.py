@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -32,7 +32,7 @@ class StoredFile:
         self.sha256 = sha256
         self.storage_path = storage_path
         self.storage_provider = storage_provider
-        self.created_at = created_at or datetime.now(timezone.utc).isoformat()
+        self.created_at = created_at or datetime.now(UTC).isoformat()
         self.width = width
         self.height = height
         self.duration = duration

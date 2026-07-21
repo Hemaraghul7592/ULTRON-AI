@@ -9,7 +9,7 @@ from app.agent.errors import (
     ExecutionError,
     PlanningError,
     RecoveryError,
-    TimeoutError,
+    TaskTimeoutError,
 )
 from app.agent.executor import Executor
 from app.agent.models import Task, TaskGraph
@@ -26,7 +26,15 @@ class TestTask:
         assert t.id
 
     def test_task_to_dict(self) -> None:
-        t = Task(name="t", service="s", action="a", args={"x": 1}, priority=5, max_retries=3, depends_on=["dep1"])
+        t = Task(
+            name="t",
+            service="s",
+            action="a",
+            args={"x": 1},
+            priority=5,
+            max_retries=3,
+            depends_on=["dep1"],
+        )
         d = t.to_dict()
         assert d["name"] == "t"
         assert d["priority"] == 5
@@ -290,7 +298,7 @@ class TestExecutor:
         ctx = AgentContext()
         await executor.execute(g, ctx)
         assert t.status == "failed"
-        assert "permanent error" in t.error
+        assert "ValueError" in t.error
 
     @pytest.mark.asyncio
     async def test_no_handler_raises(self, executor: Executor) -> None:
@@ -472,7 +480,7 @@ class TestAgentErrors:
         assert e2.task_id == "t1"
         e3 = DependencyError("dep failed")
         assert isinstance(e3, AgentError)
-        e4 = TimeoutError("timeout")
+        e4 = TaskTimeoutError("timeout")
         assert isinstance(e4, AgentError)
         e5 = RecoveryError("recovery failed")
         assert isinstance(e5, AgentError)
@@ -494,6 +502,7 @@ class TestAgentIntegration:
                 results.append(f"{name}:{task.action}")
                 context.search_results.setdefault(name, {})["done"] = True
                 return f"{name}_done"
+
             return handler
 
         for svc in ["search", "memory", "ai", "file", "plugin", "voice", "sync"]:

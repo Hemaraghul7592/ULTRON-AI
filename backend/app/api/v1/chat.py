@@ -6,11 +6,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
 from app.api.v1.auth import verify_token
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.core.config import get_settings
 from app.core.database import get_session
-from app.memory.service import MemoryService
 from app.plugins.manager import PluginManager
 from app.schemas.ai import ChatRequest, ChatResponse
 from app.services.chat_service import ChatService
@@ -56,11 +52,13 @@ async def chat_stream(
             chat_service = ChatService(session, plugin_manager=pm)
 
             async for chunk in chat_service.chat_stream(body, user_id=user_id):
-                data = json.dumps({
-                    "content": chunk.content,
-                    "done": chunk.done,
-                    "finish_reason": chunk.finish_reason,
-                })
+                data = json.dumps(
+                    {
+                        "content": chunk.content,
+                        "done": chunk.done,
+                        "finish_reason": chunk.finish_reason,
+                    }
+                )
                 yield f"data: {data}\n\n"
             await session.commit()
 

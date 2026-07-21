@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import base64
-import io
 from typing import Any
 
 import httpx
@@ -38,14 +37,17 @@ class SpeechToTextService:
 
         if settings.GROQ_API_KEY:
             return await self._transcribe_groq(audio_data, filename, language)
-        elif settings.GEMINI_API_KEY:
+        if settings.GEMINI_API_KEY:
             return await self._transcribe_gemini(audio_data, language)
 
         logger.warning("no_stt_provider_available")
         return {"text": "", "confidence": 0.0, "language": language}
 
     async def _transcribe_groq(
-        self, audio_data: bytes, filename: str, language: str
+        self,
+        audio_data: bytes,
+        filename: str,
+        language: str,
     ) -> dict[str, Any]:
         settings = get_settings()
         try:
@@ -72,23 +74,27 @@ class SpeechToTextService:
             return {"text": "", "confidence": 0.0, "language": language}
 
     async def _transcribe_gemini(
-        self, audio_data: bytes, language: str
+        self,
+        audio_data: bytes,
+        language: str,
     ) -> dict[str, Any]:
         settings = get_settings()
         try:
             audio_b64 = base64.b64encode(audio_data).decode()
             payload = {
-                "contents": [{
-                    "parts": [
-                        {"text": f"Transcribe this audio. Language: {language}"},
-                        {
-                            "inline_data": {
-                                "mime_type": "audio/wav",
-                                "data": audio_b64,
-                            }
-                        },
-                    ]
-                }]
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": f"Transcribe this audio. Language: {language}"},
+                            {
+                                "inline_data": {
+                                    "mime_type": "audio/wav",
+                                    "data": audio_b64,
+                                },
+                            },
+                        ],
+                    },
+                ],
             }
             response = await self.client.post(
                 "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",

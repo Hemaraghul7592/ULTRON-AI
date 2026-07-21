@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import abc
-from typing import Any, Literal
+from typing import Any
 
 
 class STTResult:

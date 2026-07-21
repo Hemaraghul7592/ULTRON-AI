@@ -1,7 +1,9 @@
+from datetime import UTC
+
 import pytest
 
-from app.automation.scheduler import SchedulerService, ScheduledJob
-from app.automation.reminders import ReminderEngine, Reminder
+from app.automation.reminders import ReminderEngine
+from app.automation.scheduler import SchedulerService
 from app.automation.workers import BackgroundWorker
 
 
@@ -60,34 +62,38 @@ class TestSchedulerService:
 class TestReminderEngine:
     @pytest.mark.asyncio
     async def test_add_reminder(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
+
         engine = ReminderEngine()
-        remind_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        remind_at = datetime.now(UTC) + timedelta(hours=1)
         reminder = engine.add_reminder("r1", "Test", "Test message", remind_at)
         assert reminder.reminder_id == "r1"
 
     @pytest.mark.asyncio
     async def test_remove_reminder(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
+
         engine = ReminderEngine()
-        remind_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        remind_at = datetime.now(UTC) + timedelta(hours=1)
         engine.add_reminder("r1", "Test", "Test message", remind_at)
         assert engine.remove_reminder("r1")
         assert not engine.remove_reminder("r1")
 
     @pytest.mark.asyncio
     async def test_check_no_triggered(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
+
         engine = ReminderEngine()
-        remind_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        remind_at = datetime.now(UTC) + timedelta(hours=1)
         engine.add_reminder("r1", "Test", "Test message", remind_at)
         triggered = await engine.check_reminders()
         assert len(triggered) == 0
 
     def test_get_pending(self):
-        from datetime import datetime, timezone, timedelta
+        from datetime import datetime, timedelta
+
         engine = ReminderEngine()
-        remind_at = datetime.now(timezone.utc) + timedelta(hours=1)
+        remind_at = datetime.now(UTC) + timedelta(hours=1)
         engine.add_reminder("r1", "Test", "Test message", remind_at)
         pending = engine.get_pending()
         assert len(pending) == 1

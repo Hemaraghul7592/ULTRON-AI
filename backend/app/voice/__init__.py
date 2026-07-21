@@ -7,10 +7,10 @@ from app.voice.errors import (
     VoiceError,
 )
 from app.voice.interface import (
-    STTResult,
     SpeechToTextProvider,
-    TTSResult,
+    STTResult,
     TextToSpeechProvider,
+    TTSResult,
 )
 from app.voice.pipeline import VoicePipeline
 from app.voice.providers.mock import MockSTTProvider, MockTTSProvider

@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.logging import get_logger
+from app.voice.session import VoiceSessionManager
 from app.voice.stt import SpeechToTextService
 from app.voice.tts import TextToSpeechService
-from app.voice.session import VoiceSessionManager, VoiceSession
 
 logger = get_logger(__name__)
 

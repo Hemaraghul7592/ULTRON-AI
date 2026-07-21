@@ -153,8 +153,6 @@ class TavilyProvider(SearchProvider):
 
     async def _call_api(self, payload: dict[str, Any]) -> dict[str, Any]:
         client = self._get_client()
-        error_response: dict[str, Any] | None = None
-
         for attempt in range(2):
             try:
                 resp = await client.post(f"{TAVILY_API_URL}/search", json=payload)
@@ -172,24 +170,23 @@ class TavilyProvider(SearchProvider):
                         provider="tavily",
                     )
                 if resp.status_code >= 500 and attempt == 0:
-                    error_response = resp.json() if resp.content else {}
                     continue
                 raise SearchProviderError(
                     message=f"Tavily error: {resp.status_code}",
                     provider="tavily",
                 )
 
-            except httpx.TimeoutException:
+            except httpx.TimeoutException as e:
                 if attempt == 0:
                     continue
-                raise SearchTimeoutError(message="Tavily request timed out", provider="tavily")
+                raise SearchTimeoutError(message="Tavily request timed out", provider="tavily") from e
             except httpx.RequestError as e:
                 if attempt == 0:
                     continue
                 raise SearchUnavailableError(
-                    message=f"Tavily unavailable: {e}",
+                    message="Tavily unavailable (network error)",
                     provider="tavily",
-                )
+                ) from e
 
         raise SearchProviderError(
             message="Tavily failed after retries",
@@ -237,6 +234,7 @@ class TavilyProvider(SearchProvider):
             return ""
         try:
             from urllib.parse import urlparse
+
             parsed = urlparse(url)
             hostname = parsed.hostname or ""
             return hostname.replace("www.", "")

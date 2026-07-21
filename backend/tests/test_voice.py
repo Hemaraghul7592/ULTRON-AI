@@ -13,12 +13,12 @@ from app.voice.errors import (
     SpeechSynthesisError,
     VoiceError,
 )
-from app.voice.interface import STTResult, SpeechToTextProvider, TTSResult, TextToSpeechProvider
+from app.voice.interface import SpeechToTextProvider, STTResult, TextToSpeechProvider, TTSResult
 from app.voice.providers.mock import MockSTTProvider, MockTTSProvider
 from app.voice.service import VoiceService, VoiceSession
 from app.voice.utils import (
-    get_audio_format,
     estimate_audio_duration,
+    get_audio_format,
     validate_audio,
 )
 
@@ -26,14 +26,18 @@ from app.voice.utils import (
 class TestProviderInterfaces:
     def test_stt_provider_abstract(self) -> None:
         with pytest.raises(TypeError):
+
             class _(SpeechToTextProvider):  # type: ignore
                 pass
+
             _()
 
     def test_tts_provider_abstract(self) -> None:
         with pytest.raises(TypeError):
+
             class _(TextToSpeechProvider):  # type: ignore
                 pass
+
             _()
 
     def test_stt_provider_with_name(self) -> None:
@@ -42,7 +46,9 @@ class TestProviderInterfaces:
             def name(self) -> str:
                 return "test"
 
-            async def transcribe(self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav") -> STTResult:
+            async def transcribe(
+                self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav"
+            ) -> STTResult:
                 return STTResult(text="ok", provider=self.name)
 
         p = P()
@@ -295,8 +301,10 @@ class TestVoiceService:
     @pytest.mark.asyncio
     async def test_process_with_failing_stt(self) -> None:
         p = MockSTTProvider()
-        p.transcribe = lambda audio_data, language="en-US", filename="audio.wav": (_ for _ in ()).throw(  # type: ignore
-            SpeechRecognitionError("fail")
+        p.transcribe = lambda audio_data, language="en-US", filename="audio.wav": (
+            _ for _ in ()
+        ).throw(  # type: ignore
+            SpeechRecognitionError("fail"),
         )
         svc = VoiceService(stt_provider=p, tts_provider=MockTTSProvider())
         with pytest.raises(SpeechRecognitionError):
@@ -306,7 +314,7 @@ class TestVoiceService:
     async def test_process_with_failing_tts(self) -> None:
         p = MockTTSProvider()
         p.synthesize = lambda text, voice_id=None, speed=1.0, language="en": (_ for _ in ()).throw(  # type: ignore
-            SpeechSynthesisError("fail")
+            SpeechSynthesisError("fail"),
         )
         svc = VoiceService(stt_provider=MockSTTProvider(), tts_provider=p)
         with pytest.raises(SpeechSynthesisError):

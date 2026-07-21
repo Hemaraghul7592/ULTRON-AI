@@ -14,7 +14,9 @@ class EntityRepository:
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
-    async def create(self, data: EntityCreate, user_id: str, embedding: str | None = None) -> Entity:
+    async def create(
+        self, data: EntityCreate, user_id: str, embedding: str | None = None
+    ) -> Entity:
         entity = Entity(
             user_id=user_id,
             name=data.name,
@@ -29,36 +31,47 @@ class EntityRepository:
 
     async def get(self, entity_id: str, user_id: str) -> Entity | None:
         result = await self.session.execute(
-            select(Entity).where(Entity.id == entity_id, Entity.user_id == user_id)
+            select(Entity).where(Entity.id == entity_id, Entity.user_id == user_id),
         )
         return result.scalar_one_or_none()
 
     async def get_by_name(self, name: str, user_id: str) -> Entity | None:
         result = await self.session.execute(
-            select(Entity).where(Entity.name == name, Entity.user_id == user_id)
+            select(Entity).where(Entity.name == name, Entity.user_id == user_id),
         )
         return result.scalar_one_or_none()
 
     async def list_all(
-        self, user_id: str, entity_type: str | None = None, page: int = 1, page_size: int = 50
+        self,
+        user_id: str,
+        entity_type: str | None = None,
+        page: int = 1,
+        page_size: int = 50,
     ) -> tuple[list[Entity], int]:
         query = select(Entity).where(Entity.user_id == user_id)
         if entity_type:
             query = query.where(Entity.entity_type == entity_type)
 
-        count_result = await self.session.execute(select(func.count()).select_from(query.subquery()))
+        count_result = await self.session.execute(
+            select(func.count()).select_from(query.subquery())
+        )
         total = count_result.scalar_one()
 
         offset = (page - 1) * page_size
-        result = await self.session.execute(query.order_by(Entity.name).offset(offset).limit(page_size))
+        result = await self.session.execute(
+            query.order_by(Entity.name).offset(offset).limit(page_size)
+        )
         return list(result.scalars().all()), total
 
     async def search(self, query: str, user_id: str, limit: int = 20) -> list[Entity]:
         result = await self.session.execute(
-            select(Entity).where(
+            select(Entity)
+            .where(
                 Entity.user_id == user_id,
-                Entity.name.ilike(f"%{escape_like(query)}%") | Entity.description.ilike(f"%{escape_like(query)}%"),
-            ).limit(limit)
+                Entity.name.ilike(f"%{escape_like(query)}%")
+                | Entity.description.ilike(f"%{escape_like(query)}%"),
+            )
+            .limit(limit),
         )
         return list(result.scalars().all())
 
@@ -95,7 +108,9 @@ class EntityRepository:
         return rel
 
     async def get_relationships(
-        self, entity_id: str, direction: str = "both"
+        self,
+        entity_id: str,
+        direction: str = "both",
     ) -> list[Relationship]:
         if direction == "outgoing":
             query = select(Relationship).where(Relationship.source_id == entity_id)
@@ -103,7 +118,7 @@ class EntityRepository:
             query = select(Relationship).where(Relationship.target_id == entity_id)
         else:
             query = select(Relationship).where(
-                (Relationship.source_id == entity_id) | (Relationship.target_id == entity_id)
+                (Relationship.source_id == entity_id) | (Relationship.target_id == entity_id),
             )
         result = await self.session.execute(query)
         return list(result.scalars().all())
@@ -131,6 +146,6 @@ class EntityRepository:
             return []
 
         result = await self.session.execute(
-            select(Entity).where(Entity.id.in_(all_ids))
+            select(Entity).where(Entity.id.in_(all_ids)),
         )
         return list(result.scalars().all())

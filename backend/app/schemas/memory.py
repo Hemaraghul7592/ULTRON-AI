@@ -21,7 +21,9 @@ class TagResponse(BaseModel):
 
 class MemoryCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=50000)
-    memory_type: str = Field(default="short_term", pattern="^(short_term|long_term|episodic|semantic)$")
+    memory_type: str = Field(
+        default="short_term", pattern="^(short_term|long_term|episodic|semantic)$"
+    )
     category: str = Field(default="general", pattern=CATEGORY_PATTERN)
     importance: float = Field(default=0.5, ge=0.0, le=1.0)
     source: str | None = None

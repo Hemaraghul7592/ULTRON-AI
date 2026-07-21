@@ -2,16 +2,26 @@ from __future__ import annotations
 
 import logging
 import sys
-from typing import Any
 
 import structlog
 
 from app.core.config import get_settings
 
 SENSITIVE_KEYS = {
-    "password", "passwd", "secret", "token", "api_key", "api_key",
-    "authorization", "auth", "jwt", "access_token", "refresh_token",
-    "private_key", "secret_key", "encryption_key", "credentials",
+    "password",
+    "passwd",
+    "secret",
+    "token",
+    "api_key",
+    "authorization",
+    "auth",
+    "jwt",
+    "access_token",
+    "refresh_token",
+    "private_key",
+    "secret_key",
+    "encryption_key",
+    "credentials",
 }
 
 
@@ -40,7 +50,7 @@ def setup_logging() -> None:
                 structlog.processors.CallsiteParameter.FILENAME,
                 structlog.processors.CallsiteParameter.FUNC_NAME,
                 structlog.processors.CallsiteParameter.LINENO,
-            ]
+            ],
         ),
     ]
 
@@ -56,7 +66,7 @@ def setup_logging() -> None:
             renderer,
         ],
         wrapper_class=structlog.make_filtering_bound_logger(
-            logging.getLevelName(settings.LOG_LEVEL)
+            logging.getLevelName(settings.LOG_LEVEL),
         ),
         context_class=dict,
         logger_factory=structlog.PrintLoggerFactory(file=sys.stderr),

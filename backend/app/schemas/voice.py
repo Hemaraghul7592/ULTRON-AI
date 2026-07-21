@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field, field_validator
-
+from pydantic import BaseModel, field_validator
 
 _MAX_AUDIO_BYTES = 25 * 1024 * 1024
 _MAX_AUDIO_BASE64 = 35 * 1024 * 1024
@@ -18,14 +17,14 @@ class VoiceRequest(BaseModel):
     @classmethod
     def validate_audio_data_size(cls, v: bytes | None) -> bytes | None:
         if v is not None and len(v) > _MAX_AUDIO_BYTES:
-            raise ValueError(f"Audio data exceeds maximum size of 25MB")
+            raise ValueError("Audio data exceeds maximum size of 25MB")
         return v
 
     @field_validator("audio_base64")
     @classmethod
     def validate_audio_base64_size(cls, v: str | None) -> str | None:
         if v is not None and len(v) > _MAX_AUDIO_BASE64:
-            raise ValueError(f"Audio data exceeds maximum size")
+            raise ValueError("Audio data exceeds maximum size")
         return v
 
 

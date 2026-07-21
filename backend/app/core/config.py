@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from functools import lru_cache
 from pathlib import Path
 from typing import Any
@@ -77,11 +76,12 @@ class Settings(BaseSettings):
     def parse_cors(cls, v: Any) -> list[str]:
         if isinstance(v, str):
             import json
+
             return json.loads(v)
         return v
 
     @model_validator(mode="after")
-    def validate_secret_key(self) -> "Settings":
+    def validate_secret_key(self) -> Settings:
         insecure_defaults = {
             "change-me-in-production",
             "change-me-in-production-use-openssl-rand-hex-32",
@@ -89,16 +89,16 @@ class Settings(BaseSettings):
         if self.SECRET_KEY in insecure_defaults:
             raise ValueError(
                 "SECRET_KEY must be changed from the default value. "
-                "Generate a strong key with: openssl rand -hex 32"
+                "Generate a strong key with: openssl rand -hex 32",
             )
         return self
 
     @model_validator(mode="after")
-    def validate_encryption_key(self) -> "Settings":
+    def validate_encryption_key(self) -> Settings:
         if not self.ENCRYPTION_KEY:
             raise ValueError(
                 "ENCRYPTION_KEY is required. Generate one with: "
-                "python -c \"from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())\""
+                'python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"',
             )
         return self
 

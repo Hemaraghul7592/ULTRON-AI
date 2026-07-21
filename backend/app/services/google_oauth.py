@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import secrets
 import time
 from typing import Any
 
 import httpx
 
 from app.core.config import get_settings
-from app.core.encryption import encrypt_value
 from app.core.logging import get_logger
 
 logger = get_logger(__name__)
@@ -24,12 +22,14 @@ SCOPES_BY_SERVICE: dict[str, list[str]] = {
     "people": ["https://www.googleapis.com/auth/contacts.readonly"],
 }
 
-ALL_SCOPES = sorted({
-    "openid",
-    "https://www.googleapis.com/auth/userinfo.email",
-    "https://www.googleapis.com/auth/userinfo.profile",
-    *[s for scopes in SCOPES_BY_SERVICE.values() for s in scopes],
-})
+ALL_SCOPES = sorted(
+    {
+        "openid",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/userinfo.profile",
+        *[s for scopes in SCOPES_BY_SERVICE.values() for s in scopes],
+    }
+)
 
 
 class GoogleOAuthService:
@@ -46,6 +46,7 @@ class GoogleOAuthService:
     async def for_user(cls, user_id: str) -> GoogleOAuthService:
         from app.core.database import get_session
         from app.repositories.google_token_repo import GoogleTokenRepository
+
         session_factory = get_session()
         async with session_factory() as session:
             repo = GoogleTokenRepository(session)
@@ -114,6 +115,7 @@ class GoogleOAuthService:
     async def _refresh_access_token(self) -> None:
         try:
             from app.core.encryption import decrypt_value
+
             refresh_token = decrypt_value(self._encrypted_refresh_token)
             response = await self.client.post(
                 TOKEN_URL,

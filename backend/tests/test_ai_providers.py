@@ -77,7 +77,7 @@ class TestOpenAICompatibleProvider:
                 {
                     "message": {"content": "Hello from AI", "tool_calls": []},
                     "finish_reason": "stop",
-                }
+                },
             ],
             "usage": {"total_tokens": 10, "prompt_tokens": 5, "completion_tokens": 5},
             "model": "gpt-4o-mini",
@@ -98,9 +98,13 @@ class TestOpenAICompatibleProvider:
         mock_resp = _make_response(401)
         mock_resp.text = "Invalid API key"
         provider._client = MagicMock()
-        provider._client.post = AsyncMock(side_effect=httpx.HTTPStatusError(
-            "401", request=MagicMock(), response=mock_resp,
-        ))
+        provider._client.post = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "401",
+                request=MagicMock(),
+                response=mock_resp,
+            )
+        )
 
         with pytest.raises(AIAuthenticationException):
             await provider.chat(messages=[{"role": "user", "content": "Hi"}])
@@ -110,9 +114,13 @@ class TestOpenAICompatibleProvider:
         mock_resp = _make_response(429)
         mock_resp.text = "Rate limited"
         provider._client = MagicMock()
-        provider._client.post = AsyncMock(side_effect=httpx.HTTPStatusError(
-            "429", request=MagicMock(), response=mock_resp,
-        ))
+        provider._client.post = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "429",
+                request=MagicMock(),
+                response=mock_resp,
+            )
+        )
 
         with pytest.raises(AIRateLimitException):
             await provider.chat(messages=[{"role": "user", "content": "Hi"}])
@@ -122,9 +130,13 @@ class TestOpenAICompatibleProvider:
         mock_resp = _make_response(400)
         mock_resp.text = "context_length_exceeded"
         provider._client = MagicMock()
-        provider._client.post = AsyncMock(side_effect=httpx.HTTPStatusError(
-            "400", request=MagicMock(), response=mock_resp,
-        ))
+        provider._client.post = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "400",
+                request=MagicMock(),
+                response=mock_resp,
+            )
+        )
 
         with pytest.raises(AIContextLengthException):
             await provider.chat(messages=[{"role": "user", "content": "Hi"}])
@@ -209,7 +221,7 @@ class TestGeminiProvider:
                         "parts": [{"text": "Hello from Gemini"}],
                     },
                     "finishReason": "STOP",
-                }
+                },
             ],
             "usageMetadata": {
                 "totalTokenCount": 10,
@@ -228,10 +240,12 @@ class TestGeminiProvider:
         assert result["provider"] == "gemini"
 
     def test_convert_messages_with_system(self, provider):
-        system, contents = provider._convert_messages([
-            {"role": "system", "content": "You are helpful"},
-            {"role": "user", "content": "Hello"},
-        ])
+        system, contents = provider._convert_messages(
+            [
+                {"role": "system", "content": "You are helpful"},
+                {"role": "user", "content": "Hello"},
+            ]
+        )
         assert system == "You are helpful"
         assert len(contents) == 1
 
@@ -249,9 +263,13 @@ class TestGeminiProvider:
         mock_resp = _make_response(401)
         mock_resp.text = "Unauthorized"
         provider._client = MagicMock()
-        provider._client.post = AsyncMock(side_effect=httpx.HTTPStatusError(
-            "401", request=MagicMock(), response=mock_resp,
-        ))
+        provider._client.post = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "401",
+                request=MagicMock(),
+                response=mock_resp,
+            )
+        )
 
         with pytest.raises(AIAuthenticationException):
             await provider.chat(messages=[{"role": "user", "content": "Hi"}])
@@ -261,9 +279,13 @@ class TestGeminiProvider:
         mock_resp = _make_response(429)
         mock_resp.text = "Rate limited"
         provider._client = MagicMock()
-        provider._client.post = AsyncMock(side_effect=httpx.HTTPStatusError(
-            "429", request=MagicMock(), response=mock_resp,
-        ))
+        provider._client.post = AsyncMock(
+            side_effect=httpx.HTTPStatusError(
+                "429",
+                request=MagicMock(),
+                response=mock_resp,
+            )
+        )
 
         with pytest.raises(AIRateLimitException):
             await provider.chat(messages=[{"role": "user", "content": "Hi"}])
@@ -329,11 +351,15 @@ class TestAIService:
         failing = MagicMock()
         failing.name = "failing"
         failing.is_available.return_value = True
-        failing.chat = AsyncMock(side_effect=AIServiceException(provider="failing", message="Error"))
+        failing.chat = AsyncMock(
+            side_effect=AIServiceException(provider="failing", message="Error")
+        )
 
         service = AIService()
         service._providers = {"failing": failing, "test": mock_provider}
-        result = await service.chat(messages=[{"role": "user", "content": "Hi"}], fallback=["failing", "test"])
+        result = await service.chat(
+            messages=[{"role": "user", "content": "Hi"}], fallback=["failing", "test"]
+        )
         assert result["content"] == "test"
 
     @pytest.mark.asyncio
@@ -341,7 +367,9 @@ class TestAIService:
         failing = MagicMock()
         failing.name = "failing"
         failing.is_available.return_value = True
-        failing.chat = AsyncMock(side_effect=AIServiceException(provider="failing", message="Error"))
+        failing.chat = AsyncMock(
+            side_effect=AIServiceException(provider="failing", message="Error")
+        )
 
         service = AIService()
         service._providers = {"failing": failing}

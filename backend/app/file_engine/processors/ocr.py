@@ -8,7 +8,6 @@ from app.file_engine.processors.base import Processor
 from app.file_engine.processors.pdf import PDF_EXTENSIONS
 from app.file_engine.utils import IMAGE_EXTENSIONS
 
-
 OCR_EXTENSIONS: set[str] = IMAGE_EXTENSIONS | PDF_EXTENSIONS
 
 
@@ -44,6 +43,7 @@ class OCRProcessor(Processor):
     async def _run_ocr(self, data: bytes, metadata: FileMetadata) -> str:
         try:
             from app.plugins.ocr_plugin import Plugin as OCRPlugin
+
             plugin = OCRPlugin()
             await plugin.initialize()
             tools = plugin.get_tools()

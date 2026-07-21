@@ -54,7 +54,8 @@ ERROR_MAP: dict[str, type[PluginError]] = {
 
 
 def normalize_error(
-    error: Exception, plugin_name: str = ""
+    error: Exception,
+    plugin_name: str = "",
 ) -> PluginError:
     if isinstance(error, PluginError):
         return error
@@ -74,7 +75,9 @@ def normalize_error(
 
 
 def error_response(
-    error: Exception, plugin_name: str = "", tool_name: str = ""
+    error: Exception,
+    plugin_name: str = "",
+    tool_name: str = "",
 ) -> dict[str, Any]:
     normalized = normalize_error(error, plugin_name)
     error_type = type(normalized).__name__
@@ -88,7 +91,9 @@ def error_response(
 
 
 def success_response(
-    result: str, tool_name: str = "", plugin_name: str = ""
+    result: str,
+    tool_name: str = "",
+    plugin_name: str = "",
 ) -> dict[str, Any]:
     return {
         "success": True,

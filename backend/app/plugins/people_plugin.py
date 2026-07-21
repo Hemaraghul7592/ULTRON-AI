@@ -178,6 +178,7 @@ class Plugin(BasePlugin):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         if settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET:
             self._tools = [

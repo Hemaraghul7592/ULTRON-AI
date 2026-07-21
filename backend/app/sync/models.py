@@ -4,11 +4,12 @@ import hashlib
 import time
 from typing import Any
 
-from app.sync.interface import SyncAction, SyncChange, SyncStatus
+from app.sync.interface import SyncAction, SyncChange
 
 
 def compute_checksum(data: dict[str, Any]) -> str:
     import json
+
     raw = json.dumps(data, sort_keys=True)
     return hashlib.sha256(raw.encode()).hexdigest()
 
@@ -49,8 +50,6 @@ def merge_changes(local: list[SyncChange], remote: list[SyncChange]) -> list[Syn
         merged[change_key(c)] = c
     for c in remote:
         key = change_key(c)
-        if key in merged and is_older(merged[key], c):
-            merged[key] = c
-        elif key not in merged:
+        if key in merged and is_older(merged[key], c) or key not in merged:
             merged[key] = c
     return list(merged.values())

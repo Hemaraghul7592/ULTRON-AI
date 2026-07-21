@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-from typing import Any
 
 import numpy as np
 
@@ -21,6 +20,7 @@ class EmbeddingService:
     async def initialize(self) -> None:
         try:
             from sentence_transformers import SentenceTransformer
+
             self._model = SentenceTransformer("all-MiniLM-L6-v2")
             logger.info("embedding_model_loaded", dim=self._dim)
         except ImportError:

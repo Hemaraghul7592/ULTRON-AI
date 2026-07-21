@@ -1,7 +1,9 @@
 import os
 
 os.environ["SECRET_KEY"] = "d41d8cd98f00b204e9800998ecf8427e"
-os.environ["ENCRYPTION_KEY"] = "dGVzdC1rZXktdGhhdC1pcy1hdC1sZWFzdC0zMi1ieXRlcy1sb25nLWZvci1mZXJuZXQh"
+os.environ["ENCRYPTION_KEY"] = (
+    "dGVzdC1rZXktdGhhdC1pcy1hdC1sZWFzdC0zMi1ieXRlcy1sb25nLWZvci1mZXJuZXQh"
+)
 os.environ["RATE_LIMIT_PER_MINUTE"] = "1000"
 os.environ["RATE_LIMIT_AUTH_PER_MINUTE"] = "1000"
 
@@ -16,12 +18,14 @@ from app.main import app
 async def setup_database():
     await init_db()
     from app.core.database import engine
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     yield
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     from app.core.database import close_db
+
     await close_db()
 
 
@@ -34,6 +38,8 @@ async def client():
 
 @pytest.fixture
 async def auth_headers(client: AsyncClient):
-    r = await client.post("/api/v1/auth/register", json={"username": "testuser", "password": "TestPass123!"})
+    r = await client.post(
+        "/api/v1/auth/register", json={"username": "testuser", "password": "TestPass123!"}
+    )
     token = r.json()["access_token"]
     return {"Authorization": f"Bearer {token}"}

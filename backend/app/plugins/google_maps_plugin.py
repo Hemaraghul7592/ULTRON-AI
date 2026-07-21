@@ -79,7 +79,11 @@ class PlacesSearchTool(BaseTool):
             "properties": {
                 "query": {"type": "string", "description": "Place search query"},
                 "location": {"type": "string", "description": "Latitude,longitude to bias results"},
-                "radius": {"type": "integer", "default": 5000, "description": "Search radius in meters"},
+                "radius": {
+                    "type": "integer",
+                    "default": 5000,
+                    "description": "Search radius in meters",
+                },
             },
             "required": ["query"],
         }
@@ -144,6 +148,7 @@ class Plugin(BasePlugin):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         if settings.GOOGLE_MAPS_API_KEY:
             self._tools = [

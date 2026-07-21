@@ -25,7 +25,9 @@ async def list_tools(pm: PluginManager | None = Depends(_get_plugin_manager)) ->
 
 
 @router.get("/definitions")
-async def get_tool_definitions(pm: PluginManager | None = Depends(_get_plugin_manager)) -> list[dict]:
+async def get_tool_definitions(
+    pm: PluginManager | None = Depends(_get_plugin_manager),
+) -> list[dict]:
     if pm is None:
         return []
     return pm.get_tool_definitions()

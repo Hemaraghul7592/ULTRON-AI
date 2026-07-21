@@ -12,7 +12,7 @@ class GoogleTokenRepository:
 
     async def get_by_user_id(self, user_id: str) -> GoogleToken | None:
         result = await self.session.execute(
-            select(GoogleToken).where(GoogleToken.user_id == user_id)
+            select(GoogleToken).where(GoogleToken.user_id == user_id),
         )
         return result.scalar_one_or_none()
 

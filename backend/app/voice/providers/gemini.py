@@ -8,7 +8,7 @@ import httpx
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.voice.errors import ProviderAuthError, SpeechRecognitionError, SpeechSynthesisError
-from app.voice.interface import STTResult, SpeechToTextProvider, TTSResult, TextToSpeechProvider
+from app.voice.interface import SpeechToTextProvider, STTResult, TextToSpeechProvider, TTSResult
 
 logger = get_logger(__name__)
 
@@ -23,19 +23,24 @@ class GeminiSTTProvider(SpeechToTextProvider):
         return "gemini_stt"
 
     async def transcribe(
-        self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav"
+        self,
+        audio_data: bytes,
+        language: str = "en-US",
+        filename: str = "audio.wav",
     ) -> STTResult:
         if not self._api_key:
             raise ProviderAuthError(message="Gemini API key not configured", provider=self.name)
         try:
             audio_b64 = base64.b64encode(audio_data).decode()
             payload = {
-                "contents": [{
-                    "parts": [
-                        {"text": f"Transcribe this audio. Language: {language}"},
-                        {"inline_data": {"mime_type": "audio/wav", "data": audio_b64}},
-                    ]
-                }]
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": f"Transcribe this audio. Language: {language}"},
+                            {"inline_data": {"mime_type": "audio/wav", "data": audio_b64}},
+                        ],
+                    },
+                ],
             }
             client = self._get_client()
             response = await client.post(
@@ -61,7 +66,7 @@ class GeminiSTTProvider(SpeechToTextProvider):
             )
         except Exception as e:
             logger.error("gemini_stt_failed", error=str(e))
-            raise SpeechRecognitionError(message=str(e), provider=self.name, original_error=e)
+            raise SpeechRecognitionError(message=str(e), provider=self.name, original_error=e) from e
 
     async def validate(self) -> bool:
         return bool(self._api_key)
@@ -92,7 +97,11 @@ class GeminiTTSProvider(TextToSpeechProvider):
         return "gemini_tts"
 
     async def synthesize(
-        self, text: str, voice_id: str | None = None, speed: float = 1.0, language: str = "en"
+        self,
+        text: str,
+        voice_id: str | None = None,
+        speed: float = 1.0,
+        language: str = "en",
     ) -> TTSResult:
         if not self._api_key:
             raise ProviderAuthError(message="Gemini API key not configured", provider=self.name)
@@ -128,7 +137,7 @@ class GeminiTTSProvider(TextToSpeechProvider):
             return TTSResult(provider=self.name, voice_id=voice_id or "Kore")
         except Exception as e:
             logger.error("gemini_tts_failed", error=str(e))
-            raise SpeechSynthesisError(message=str(e), provider=self.name, original_error=e)
+            raise SpeechSynthesisError(message=str(e), provider=self.name, original_error=e) from e
 
     async def validate(self) -> bool:
         return bool(self._api_key)

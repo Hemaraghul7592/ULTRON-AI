@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import time
 from typing import Any
 
 from app.core.logging import get_logger
@@ -80,12 +79,12 @@ class SearchService:
             await self._cache.set(query=q, data=result, **cache_params)
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError as e:
             logger.error("search_timeout", query=q[:50])
             raise SearchProviderError(
                 message=f"Search timed out after {self._timeout}s",
                 provider=self._provider.name,
-            )
+            ) from e
 
     async def research(self, query: ResearchQuery) -> ResearchResponse:
         q = query.get("query", "").strip()
@@ -115,12 +114,12 @@ class SearchService:
             await self._cache.set(query=q, data=result, **cache_params)
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError as e_re:
             logger.error("research_timeout", query=q[:50])
             raise SearchProviderError(
                 message=f"Research timed out after {self._timeout}s",
                 provider=self._provider.name,
-            )
+            ) from e_re
 
     async def health_check(self) -> dict[str, Any]:
         provider_health = await self._provider.health_check()

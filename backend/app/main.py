@@ -1,5 +1,5 @@
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -35,6 +35,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     if settings.DEBUG:
         from app.core.database import engine
+
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
 
@@ -60,14 +61,10 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     from app.search.providers import TavilyProvider
     from app.search.service import SearchService
     from app.sync.service import SyncService
-    from app.tools.plugin_loader import PluginLoader
-    from app.tools.router import ToolRouter
-    from app.voice.providers.groq import GroqSTTProvider, GroqTTSProvider
     from app.voice.providers.gemini import GeminiSTTProvider, GeminiTTSProvider
+    from app.voice.providers.groq import GroqSTTProvider, GroqTTSProvider
     from app.voice.providers.mock import MockSTTProvider, MockTTSProvider
     from app.voice.service import VoiceService
-    from app.voice.pipeline import VoicePipeline
-    from app.voice.session import VoiceSessionManager
 
     search_cache = SearchCache(default_ttl=300)
     tavily_provider = TavilyProvider()

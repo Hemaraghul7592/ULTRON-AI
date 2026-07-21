@@ -5,9 +5,9 @@ import os
 import re
 import tempfile
 import uuid
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
-from typing import AsyncIterator
 
 from app.file_engine.errors import InvalidFileTypeError
 

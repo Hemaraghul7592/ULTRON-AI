@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.database import get_session
-from app.core.security import create_access_token, decode_access_token
+from app.core.security import decode_access_token
 from app.schemas.auth import TokenResponse, UserCreate, UserLogin
 from app.services.auth_service import AuthService
 

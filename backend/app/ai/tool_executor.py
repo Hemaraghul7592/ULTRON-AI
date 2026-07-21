@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -48,24 +47,31 @@ class ToolExecutor:
         async def handler(**kwargs: Any) -> str:
             pm = self._plugin_manager
             if pm is None:
-                raise ToolExecutionException(tool_name=tool_name, message="PluginManager not available")
+                raise ToolExecutionException(
+                    tool_name=tool_name, message="PluginManager not available"
+                )
             result = await pm.execute_tool_safe(tool_name, **kwargs)
             if result.get("success"):
                 return result.get("result", "")
-            raise ToolExecutionException(tool_name=tool_name, message=result.get("error", "Unknown error"))
+            raise ToolExecutionException(
+                tool_name=tool_name, message=result.get("error", "Unknown error")
+            )
+
         return handler
 
     def get_tool_definitions(self) -> list[dict[str, Any]]:
         definitions = []
         for name, tool in self._tools.items():
-            definitions.append({
-                "type": "function",
-                "function": {
-                    "name": name,
-                    "description": tool["description"],
-                    "parameters": tool["parameters"],
-                },
-            })
+            definitions.append(
+                {
+                    "type": "function",
+                    "function": {
+                        "name": name,
+                        "description": tool["description"],
+                        "parameters": tool["parameters"],
+                    },
+                }
+            )
         return definitions
 
     async def execute(self, tool_call: dict[str, Any]) -> dict[str, Any]:
@@ -75,7 +81,8 @@ class ToolExecutor:
 
         if name not in self._tools:
             raise ToolExecutionException(
-                tool_name=name, message="Tool not found"
+                tool_name=name,
+                message="Tool not found",
             )
 
         tool = self._tools[name]
@@ -85,6 +92,7 @@ class ToolExecutor:
         try:
             if callable(handler):
                 import inspect
+
                 if inspect.iscoroutinefunction(handler):
                     result = await handler(**arguments)
                 else:
@@ -126,7 +134,8 @@ class ToolExecutor:
             }
 
     async def execute_multiple(
-        self, tool_calls: list[dict[str, Any]]
+        self,
+        tool_calls: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         results = []
         for tc in tool_calls:

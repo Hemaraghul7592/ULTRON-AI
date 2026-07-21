@@ -26,13 +26,15 @@ class MetricsService:
         status_code: int,
         latency_ms: float,
     ) -> None:
-        await self.repo.record(MetricCreate(
-            name="request_latency_ms",
-            value=latency_ms,
-            unit="ms",
-            tags={"endpoint": endpoint, "method": method, "status": status_code},
-            source="api",
-        ))
+        await self.repo.record(
+            MetricCreate(
+                name="request_latency_ms",
+                value=latency_ms,
+                unit="ms",
+                tags={"endpoint": endpoint, "method": method, "status": status_code},
+                source="api",
+            )
+        )
 
     async def record_ai_request(
         self,
@@ -43,46 +45,59 @@ class MetricsService:
         cost_usd: float = 0.0,
         conversation_id: str | None = None,
     ) -> None:
-        await self.repo.record(MetricCreate(
-            name="ai_request_latency_ms",
-            value=latency_ms,
-            unit="ms",
-            tags={"provider": provider, "model": model},
-            source="ai",
-        ))
-        await self.repo.record(MetricCreate(
-            name="ai_tokens_used",
-            value=tokens,
-            unit="tokens",
-            tags={"provider": provider, "model": model},
-            source="ai",
-        ))
-        if cost_usd > 0:
-            await self.repo.record(MetricCreate(
-                name="ai_cost_usd",
-                value=cost_usd,
-                unit="usd",
+        await self.repo.record(
+            MetricCreate(
+                name="ai_request_latency_ms",
+                value=latency_ms,
+                unit="ms",
                 tags={"provider": provider, "model": model},
                 source="ai",
-            ))
+            )
+        )
+        await self.repo.record(
+            MetricCreate(
+                name="ai_tokens_used",
+                value=tokens,
+                unit="tokens",
+                tags={"provider": provider, "model": model},
+                source="ai",
+            )
+        )
+        if cost_usd > 0:
+            await self.repo.record(
+                MetricCreate(
+                    name="ai_cost_usd",
+                    value=cost_usd,
+                    unit="usd",
+                    tags={"provider": provider, "model": model},
+                    source="ai",
+                )
+            )
 
     async def record_error(
-        self, error_type: str, source: str, details: str | None = None
+        self,
+        error_type: str,
+        source: str,
+        details: str | None = None,
     ) -> None:
-        await self.repo.record(MetricCreate(
-            name="error_count",
-            value=1.0,
-            tags={"type": error_type, "details": details or ""},
-            source=source,
-        ))
+        await self.repo.record(
+            MetricCreate(
+                name="error_count",
+                value=1.0,
+                tags={"type": error_type, "details": details or ""},
+                source=source,
+            )
+        )
 
     async def record_retry(self, provider: str, attempt: int) -> None:
-        await self.repo.record(MetricCreate(
-            name="retry_count",
-            value=1.0,
-            tags={"provider": provider, "attempt": str(attempt)},
-            source="ai",
-        ))
+        await self.repo.record(
+            MetricCreate(
+                name="retry_count",
+                value=1.0,
+                tags={"provider": provider, "attempt": str(attempt)},
+                source="ai",
+            )
+        )
 
     async def get_latency_percentiles(self, hours: int = 24) -> dict[str, float]:
         return await self.repo.get_latency_percentiles(hours=hours)

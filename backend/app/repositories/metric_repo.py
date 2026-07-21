@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +15,7 @@ class MetricRepository:
 
     async def record(self, data: MetricCreate) -> Metric:
         import json
+
         metric = Metric(
             name=data.name,
             value=data.value,
@@ -28,14 +29,16 @@ class MetricRepository:
 
     async def get_recent(self, limit: int = 50) -> list[Metric]:
         result = await self.session.execute(
-            select(Metric).order_by(Metric.created_at.desc()).limit(limit)
+            select(Metric).order_by(Metric.created_at.desc()).limit(limit),
         )
         return list(result.scalars().all())
 
     async def aggregate(
-        self, name: str, hours: int = 24
+        self,
+        name: str,
+        hours: int = 24,
     ) -> dict:
-        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        since = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
             select(
                 func.min(Metric.value),
@@ -46,7 +49,7 @@ class MetricRepository:
             ).where(
                 Metric.name == name,
                 Metric.created_at >= since,
-            )
+            ),
         )
         row = result.one()
         return {
@@ -59,11 +62,11 @@ class MetricRepository:
         }
 
     async def get_latency_percentiles(self, hours: int = 24) -> dict[str, float]:
-        since = datetime.now(timezone.utc) - timedelta(hours=hours)
+        since = datetime.now(UTC) - timedelta(hours=hours)
         result = await self.session.execute(
             select(Metric.value)
             .where(Metric.name == "request_latency_ms", Metric.created_at >= since)
-            .order_by(Metric.value)
+            .order_by(Metric.value),
         )
         values = [r[0] for r in result.all()]
         if not values:
@@ -77,9 +80,9 @@ class MetricRepository:
         }
 
     async def cleanup_old(self, days: int = 90) -> int:
-        cutoff = datetime.now(timezone.utc) - timedelta(days=days)
+        cutoff = datetime.now(UTC) - timedelta(days=days)
         result = await self.session.execute(
-            select(Metric).where(Metric.created_at < cutoff)
+            select(Metric).where(Metric.created_at < cutoff),
         )
         metrics = list(result.scalars().all())
         for m in metrics:

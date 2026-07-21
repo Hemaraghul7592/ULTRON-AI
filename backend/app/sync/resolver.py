@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import time
-from typing import Any
-
 from app.core.logging import get_logger
-from app.sync.interface import SyncAction, SyncChange, ConflictInfo
+from app.sync.interface import ConflictInfo, SyncChange
 
 logger = get_logger(__name__)
 
@@ -30,7 +27,9 @@ class ConflictResolver:
         self._strategy = value
 
     def resolve(
-        self, local: SyncChange, remote: SyncChange
+        self,
+        local: SyncChange,
+        remote: SyncChange,
     ) -> tuple[SyncChange, ConflictInfo]:
         resolution = self._strategy
         resolved: SyncChange

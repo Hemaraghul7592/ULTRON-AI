@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from app.core.logging import get_logger
@@ -48,25 +48,29 @@ class PromptBuilder:
             system_parts.append(f"\n\nAdditional context:\n{additional_context}")
 
         system_parts.append(
-            f"\n\nCurrent time: {datetime.now(timezone.utc).isoformat()}"
+            f"\n\nCurrent time: {datetime.now(UTC).isoformat()}",
         )
 
         messages.append({"role": "system", "content": "\n".join(system_parts)})
 
         if conversation_history:
             for msg in conversation_history[-20:]:
-                messages.append({
-                    "role": msg.get("role", "user"),
-                    "content": msg.get("content", ""),
-                })
+                messages.append(
+                    {
+                        "role": msg.get("role", "user"),
+                        "content": msg.get("content", ""),
+                    }
+                )
 
         if tool_results:
             for tr in tool_results:
-                messages.append({
-                    "role": "tool",
-                    "content": f"Tool {tr['name']} result: {tr['result']}",
-                    "tool_call_id": tr.get("tool_call_id", ""),
-                })
+                messages.append(
+                    {
+                        "role": "tool",
+                        "content": f"Tool {tr['name']} result: {tr['result']}",
+                        "tool_call_id": tr.get("tool_call_id", ""),
+                    }
+                )
 
         messages.append({"role": "user", "content": user_message})
         return messages
@@ -77,11 +81,13 @@ class PromptBuilder:
         tool_call_results: list[dict[str, Any]],
     ) -> list[dict[str, Any]]:
         for result in tool_call_results:
-            messages.append({
-                "role": "tool",
-                "content": result.get("result", ""),
-                "tool_call_id": result.get("tool_call_id", ""),
-            })
+            messages.append(
+                {
+                    "role": "tool",
+                    "content": result.get("result", ""),
+                    "tool_call_id": result.get("tool_call_id", ""),
+                }
+            )
         return messages
 
     def build_summary_prompt(self, texts: list[str]) -> str:

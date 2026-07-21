@@ -4,7 +4,7 @@ import abc
 import time
 from typing import Any, TypedDict
 
-from app.tools.base import BasePlugin, BaseTool
+from app.tools.base import BasePlugin
 
 
 class PluginHealth(TypedDict, total=False):

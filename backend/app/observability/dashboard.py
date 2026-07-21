@@ -22,10 +22,14 @@ class DashboardService:
         self.token_repo = TokenRepository(session)
 
     async def get_dashboard(self, user_id: str) -> dict[str, Any]:
-        _, total_conversations = await self.conversation_repo.list_all(user_id=user_id, page=1, page_size=1)
+        _, total_conversations = await self.conversation_repo.list_all(
+            user_id=user_id, page=1, page_size=1
+        )
         _, total_memories = await self.memory_repo.list_all(user_id=user_id, page=1, page_size=1)
         _, total_tasks = await self.task_repo.list_all(user_id=user_id, page=1, page_size=1)
-        active_tasks_data, _ = await self.task_repo.list_all(user_id=user_id, page=1, page_size=1, status="pending")
+        active_tasks_data, _ = await self.task_repo.list_all(
+            user_id=user_id, page=1, page_size=1, status="pending"
+        )
         active_tasks = len(active_tasks_data)
 
         _, total_jobs = await self.job_repo.list_all(page=1, page_size=1)

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 from app.ai.providers import AIProvider, GeminiProvider, GrokProvider, GroqProvider, OpenAIProvider
 from app.core.config import get_settings
@@ -29,7 +30,9 @@ class AIService:
         if settings.GEMINI_API_KEY:
             self._providers["gemini"] = GeminiProvider(api_key=settings.GEMINI_API_KEY)
         if settings.OPENAI_API_KEY:
-            self._providers["openai"] = OpenAIProvider(api_key=settings.OPENAI_API_KEY.get_secret_value())
+            self._providers["openai"] = OpenAIProvider(
+                api_key=settings.OPENAI_API_KEY.get_secret_value()
+            )
         if settings.GROK_API_KEY:
             self._providers["grok"] = GrokProvider(api_key=settings.GROK_API_KEY.get_secret_value())
 

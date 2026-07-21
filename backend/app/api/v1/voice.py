@@ -4,7 +4,6 @@ from fastapi import APIRouter, Depends, Request
 
 from app.api.v1.auth import verify_token
 from app.schemas.voice import VoiceRequest, VoiceResponse, VoiceSessionConfig
-from app.voice.pipeline import VoicePipeline
 from app.voice.providers.mock import MockSTTProvider, MockTTSProvider
 from app.voice.service import VoiceService
 
@@ -26,7 +25,9 @@ def _get_voice_service(request: Request) -> VoiceService:
 
 
 @router.post("/stt")
-async def speech_to_text(request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service)) -> VoiceResponse:
+async def speech_to_text(
+    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service)
+) -> VoiceResponse:
     result = await vs.transcribe(
         audio_data=request.audio_data,
         audio_base64=request.audio_base64,
@@ -41,7 +42,9 @@ async def speech_to_text(request: VoiceRequest, vs: VoiceService = Depends(_get_
 
 
 @router.post("/tts")
-async def text_to_speech(request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service)) -> VoiceResponse:
+async def text_to_speech(
+    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service)
+) -> VoiceResponse:
     result = await vs.synthesize(
         text=request.text or "",
         voice_id=request.voice_id,

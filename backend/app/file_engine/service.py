@@ -4,14 +4,6 @@ import os
 import time
 from typing import Any
 
-from app.file_engine.interface import FileMetadata, StorageProvider
-from app.file_engine.models import StoredFile
-from app.file_engine.processors.base import Processor
-from app.file_engine.processors.text import TextProcessor
-from app.file_engine.processors.image import ImageProcessor
-from app.file_engine.processors.pdf import PDFProcessor
-from app.file_engine.processors.audio import AudioProcessor
-from app.file_engine.processors.ocr import OCRProcessor
 from app.file_engine.errors import (
     DuplicateFileError,
     FileNotFoundError,
@@ -19,6 +11,14 @@ from app.file_engine.errors import (
     ProcessingError,
     StorageError,
 )
+from app.file_engine.interface import FileMetadata, StorageProvider
+from app.file_engine.models import StoredFile
+from app.file_engine.processors.audio import AudioProcessor
+from app.file_engine.processors.base import Processor
+from app.file_engine.processors.image import ImageProcessor
+from app.file_engine.processors.ocr import OCRProcessor
+from app.file_engine.processors.pdf import PDFProcessor
+from app.file_engine.processors.text import TextProcessor
 from app.file_engine.utils import (
     get_extension,
     get_storage_subpath,
@@ -26,7 +26,6 @@ from app.file_engine.utils import (
     is_supported_filename,
     safe_filename,
     sha256_hash,
-    temp_file,
 )
 
 _DEFAULT_MAX_SIZE = 50 * 1024 * 1024
@@ -100,11 +99,8 @@ class FileService:
 
         try:
             actual_path = await self._storage.save(storage_path, data)
-        except Exception as e:
-            raise StorageError(
-                message=f"Failed to save file: {e}",
-                path=storage_path,
-            )
+        except Exception:
+            raise StorageError(message="Failed to save file", path=storage_path) from e
 
         meta = FileMetadata(
             filename=safe_name,
@@ -137,18 +133,18 @@ class FileService:
     async def load(self, file_id_or_path: str) -> bytes:
         path = file_id_or_path
         if not await self._storage.exists(path):
-            raise FileNotFoundError(message=f"File not found", path=path)
+            raise FileNotFoundError(message="File not found", path=path)
         try:
             return await self._storage.load(path)
         except Exception as e:
-            raise StorageError(message=f"Failed to load file: {e}", path=path)
+            raise StorageError(message=f"Failed to load file: {e}", path=path) from e
 
     async def delete(self, file_id_or_path: str) -> bool:
         path = file_id_or_path
         try:
             return await self._storage.delete(path)
         except Exception as e:
-            raise StorageError(message=f"Failed to delete file: {e}", path=path)
+            raise StorageError(message=f"Failed to delete file: {e}", path=path) from e
 
     async def copy(self, source_path: str, dest_filename: str) -> StoredFile:
         if not await self._storage.exists(source_path):
@@ -170,10 +166,10 @@ class FileService:
     async def get_metadata(self, path: str) -> dict[str, Any]:
         try:
             return await self._storage.get_metadata(path)
-        except FileNotFoundError:
+        except FileNotFoundError as e:
             raise
         except Exception as e:
-            raise StorageError(message=f"Failed to get metadata: {e}", path=path)
+            raise StorageError(message=f"Failed to get metadata: {e}", path=path) from e
 
     async def extract_text(self, data: bytes, filename: str) -> str:
         ext = get_extension(filename)
@@ -194,10 +190,13 @@ class FileService:
             raise ProcessingError(
                 message=f"Text extraction failed: {e}",
                 path=filename,
-            )
+            ) from e
 
     async def _process_file(
-        self, data: bytes, meta: FileMetadata, run_ocr: bool = False
+        self,
+        data: bytes,
+        meta: FileMetadata,
+        run_ocr: bool = False,
     ) -> FileMetadata:
         ext = meta.extension
         processor = self._processors.get(ext)
@@ -209,7 +208,7 @@ class FileService:
             raise ProcessingError(
                 message=f"File processing failed: {e}",
                 path=meta.filename,
-            )
+            ) from e
         return meta
 
     async def _find_by_hash(self, sha256: str) -> StoredFile | None:

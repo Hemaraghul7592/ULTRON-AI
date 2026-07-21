@@ -1,5 +1,7 @@
 class SyncError(Exception):
-    def __init__(self, message: str = "", provider: str = "", original_error: Exception | None = None) -> None:
+    def __init__(
+        self, message: str = "", provider: str = "", original_error: Exception | None = None,
+    ) -> None:
         self.provider = provider
         self.original_error = original_error
         super().__init__(message)

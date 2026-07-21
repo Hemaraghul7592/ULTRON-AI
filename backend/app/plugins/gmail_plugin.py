@@ -4,8 +4,8 @@ from typing import Any
 
 import httpx
 
-from app.services.google_oauth import GoogleOAuthService
 from app.plugins.base import PluginInterface, PluginStatus
+from app.services.google_oauth import GoogleOAuthService
 from app.tools.base import BaseTool
 
 
@@ -66,7 +66,9 @@ class GmailSearchTool(BaseTool):
                 )
                 if msg_resp.status_code == 200:
                     msg = msg_resp.json()
-                    headers = {h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])}
+                    headers = {
+                        h["name"]: h["value"] for h in msg.get("payload", {}).get("headers", [])
+                    }
                     subject = headers.get("Subject", "No subject")
                     sender = headers.get("From", "Unknown")
                     results.append(f"- {subject} from {sender}")
@@ -134,13 +136,17 @@ class GmailReadTool(BaseTool):
     def _extract_body(self, payload: dict) -> str:
         if "body" in payload and payload["body"].get("data"):
             import base64
-            return base64.urlsafe_b64decode(payload["body"]["data"]).decode("utf-8", errors="replace")
+
+            return base64.urlsafe_b64decode(payload["body"]["data"]).decode(
+                "utf-8", errors="replace"
+            )
         parts = payload.get("parts", [])
         for part in parts:
             if part.get("mimeType") == "text/plain":
                 data = part.get("body", {}).get("data")
                 if data:
                     import base64
+
                     return base64.urlsafe_b64decode(data).decode("utf-8", errors="replace")
         return ""
 
@@ -175,6 +181,7 @@ class Plugin(PluginInterface):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         self._has_oauth = bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET)
         if self._has_oauth:
@@ -185,11 +192,24 @@ class Plugin(PluginInterface):
 
     async def health_check(self) -> dict:
         import time
+
         if not self._has_oauth:
-            return {"status": PluginStatus.AUTH_FAILED, "message": "Google OAuth not configured", "last_check": time.time()}
+            return {
+                "status": PluginStatus.AUTH_FAILED,
+                "message": "Google OAuth not configured",
+                "last_check": time.time(),
+            }
         if not self._tools:
-            return {"status": PluginStatus.DISABLED, "message": "No tools initialized", "last_check": time.time()}
-        return {"status": PluginStatus.AVAILABLE, "message": "Google credentials configured", "last_check": time.time()}
+            return {
+                "status": PluginStatus.DISABLED,
+                "message": "No tools initialized",
+                "last_check": time.time(),
+            }
+        return {
+            "status": PluginStatus.AVAILABLE,
+            "message": "Google credentials configured",
+            "last_check": time.time(),
+        }
 
     async def validate(self) -> bool:
         return self._has_oauth

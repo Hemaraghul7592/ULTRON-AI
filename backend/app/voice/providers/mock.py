@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 from typing import Any
 
-from app.voice.interface import STTResult, SpeechToTextProvider, TTSResult, TextToSpeechProvider
+from app.voice.interface import SpeechToTextProvider, STTResult, TextToSpeechProvider, TTSResult
 
 
 class MockSTTProvider(SpeechToTextProvider):
@@ -20,7 +20,10 @@ class MockSTTProvider(SpeechToTextProvider):
         return "mock_stt"
 
     async def transcribe(
-        self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav"
+        self,
+        audio_data: bytes,
+        language: str = "en-US",
+        filename: str = "audio.wav",
     ) -> STTResult:
         return STTResult(
             text=self._transcript,
@@ -46,7 +49,11 @@ class MockTTSProvider(TextToSpeechProvider):
         return "mock_tts"
 
     async def synthesize(
-        self, text: str, voice_id: str | None = None, speed: float = 1.0, language: str = "en"
+        self,
+        text: str,
+        voice_id: str | None = None,
+        speed: float = 1.0,
+        language: str = "en",
     ) -> TTSResult:
         return TTSResult(
             audio_base64=self._output_base64,

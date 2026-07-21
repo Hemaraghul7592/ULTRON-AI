@@ -13,8 +13,9 @@ _search_service: SearchService | None = None
 def get_search_service() -> SearchService:
     if _search_service is None:
         from app.search.service import SearchService
+
         raise RuntimeError(
-            "SearchService not initialized. Call init_search_service() during app startup."
+            "SearchService not initialized. Call init_search_service() during app startup.",
         )
     return _search_service
 
@@ -38,4 +39,3 @@ __all__ = [
     "init_search_service",
     "reset_search_service",
 ]
-

@@ -13,7 +13,11 @@ ALLOWED_MIME_TYPES: set[str] = {
     "audio/flac",
 }
 ALLOWED_EXTENSIONS: set[str] = {
-    ".wav", ".mp3", ".m4a", ".ogg", ".flac",
+    ".wav",
+    ".mp3",
+    ".m4a",
+    ".ogg",
+    ".flac",
 }
 
 
@@ -26,12 +30,13 @@ def validate_audio(
 
     if audio_base64 and not audio_data:
         import base64
+
         if len(audio_base64) > MAX_AUDIO_BASE64:
             raise InvalidAudioError(f"Audio base64 exceeds {MAX_AUDIO_BASE64} bytes")
         try:
             audio_data = base64.b64decode(audio_base64)
-        except Exception:
-            raise InvalidAudioError("Invalid base64 audio data")
+        except Exception as e:
+            raise InvalidAudioError("Invalid base64 audio data") from e
 
     if not audio_data or len(audio_data) == 0:
         raise InvalidAudioError("Audio data is empty")
@@ -48,7 +53,11 @@ def get_audio_format(audio_data: bytes) -> str:
         return "unknown"
     if audio_data.startswith(b"RIFF") and audio_data[8:12] == b"WAVE":
         return "wav"
-    if audio_data.startswith(b"\xff\xfb") or audio_data.startswith(b"\xff\xf3") or audio_data.startswith(b"\xff\xf2"):
+    if (
+        audio_data.startswith(b"\xff\xfb")
+        or audio_data.startswith(b"\xff\xf3")
+        or audio_data.startswith(b"\xff\xf2")
+    ):
         return "mp3"
     if audio_data.startswith(b"\xff\xf1") or audio_data.startswith(b"ID3"):
         return "mp3"
@@ -59,8 +68,8 @@ def get_audio_format(audio_data: bytes) -> str:
     return "unknown"
 
 
-def estimate_audio_duration(audio_data: bytes, format: str) -> float:
-    if format == "wav" and len(audio_data) > 44:
+def estimate_audio_duration(audio_data: bytes, fmt: str) -> float:
+    if fmt == "wav" and len(audio_data) > 44:
         try:
             sample_rate = struct.unpack("<I", audio_data[24:28])[0]
             channels = struct.unpack("<H", audio_data[22:24])[0]
@@ -72,6 +81,6 @@ def estimate_audio_duration(audio_data: bytes, format: str) -> float:
                     return data_size / bytes_per_second
         except Exception:
             pass
-    if format == "mp3":
+    if fmt == "mp3":
         return len(audio_data) / (128 * 1000 / 8)
     return 0.0

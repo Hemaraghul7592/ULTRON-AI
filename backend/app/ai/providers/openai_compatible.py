@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 import time
-from typing import Any, AsyncIterator
+from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 
@@ -72,11 +73,13 @@ class OpenAICompatibleProvider(AIProvider):
                 args = json.loads(func.get("arguments", "{}"))
             except json.JSONDecodeError:
                 args = {"raw": func.get("arguments", "")}
-            tool_calls.append({
-                "id": tc.get("id", ""),
-                "name": func.get("name", ""),
-                "arguments": args,
-            })
+            tool_calls.append(
+                {
+                    "id": tc.get("id", ""),
+                    "name": func.get("name", ""),
+                    "arguments": args,
+                }
+            )
 
         return {
             "content": message.get("content", ""),
@@ -158,11 +161,13 @@ class OpenAICompatibleProvider(AIProvider):
                         tool_calls = []
                         for tc in delta.get("tool_calls", []):
                             func = tc.get("function", {})
-                            tool_calls.append({
-                                "id": tc.get("id", ""),
-                                "name": func.get("name", ""),
-                                "arguments": func.get("arguments", ""),
-                            })
+                            tool_calls.append(
+                                {
+                                    "id": tc.get("id", ""),
+                                    "name": func.get("name", ""),
+                                    "arguments": func.get("arguments", ""),
+                                }
+                            )
                         yield {
                             "content": content,
                             "done": finish is not None,
@@ -179,12 +184,15 @@ class OpenAICompatibleProvider(AIProvider):
         body = e.response.text
         if status == 401:
             from app.core.exceptions import AIAuthenticationException
+
             return AIAuthenticationException(provider=self.name, message=body)
         if status == 429:
             from app.core.exceptions import AIRateLimitException
+
             return AIRateLimitException(provider=self.name, message=body)
         if status == 400 and "context_length" in body.lower():
             from app.core.exceptions import AIContextLengthException
+
             return AIContextLengthException(provider=self.name, message=body)
         return AIServiceException(
             provider=self.name,

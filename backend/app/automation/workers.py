@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import time
-from typing import Any, Callable, Coroutine
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from app.core.logging import get_logger
 
@@ -101,7 +101,7 @@ class BackgroundWorker:
         while self._running:
             try:
                 _, task = await asyncio.wait_for(self._queue.get(), timeout=1.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 continue
             except asyncio.CancelledError:
                 return

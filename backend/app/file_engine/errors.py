@@ -27,5 +27,5 @@ class ProcessingError(FileError):
     pass
 
 
-class PermissionError(FileError):
+class FilePermissionError(FileError):
     pass

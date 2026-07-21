@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import builtins
 import time
 from typing import TYPE_CHECKING, Any
 
 from app.agent.context import AgentContext
-from app.agent.errors import DependencyError, ExecutionError, RecoveryError, TimeoutError
+from app.agent.errors import DependencyError, ExecutionError, RecoveryError
 from app.core.logging import get_logger
 
 if TYPE_CHECKING:
@@ -62,7 +63,10 @@ class Executor:
         return task.result
 
     async def _execute_task(
-        self, task: Task, graph: TaskGraph, context: AgentContext
+        self,
+        task: Task,
+        graph: TaskGraph,
+        context: AgentContext,
     ) -> None:
         task.status = "in_progress"
         task.started_at = time.time()
@@ -84,7 +88,7 @@ class Executor:
             task.status = "completed"
             graph.mark_completed(task.id)
 
-        except asyncio.TimeoutError:
+        except builtins.TimeoutError:
             task.status = "failed"
             task.error = f"Timeout after {self._timeout}s"
             graph.mark_failed(task.id, task.error)
@@ -93,19 +97,22 @@ class Executor:
         except Exception as e:
             if task.can_retry():
                 graph.mark_retry(task.id)
-                logger.warning("task_retry", task=task.name, attempt=task.attempts, error=str(e))
+                logger.warning("task_retry", task=task.name, attempt=task.attempts, error=type(e).__name__)
             else:
                 task.status = "failed"
-                task.error = str(e)
+                task.error = type(e).__name__
                 graph.mark_failed(task.id, task.error)
-                logger.error("task_failed", task=task.name, error=str(e))
+                logger.error("task_failed", task=task.name, error=type(e).__name__)
 
         finally:
             duration_ms = (time.monotonic() - start) * 1000
             context.log(task, result=task.result, error=task.error, duration_ms=duration_ms)
 
     async def recover(
-        self, task: Task, graph: TaskGraph, recovery_action: str = "retry"
+        self,
+        task: Task,
+        graph: TaskGraph,
+        recovery_action: str = "retry",
     ) -> None:
         if recovery_action == "retry":
             task.attempts = 0

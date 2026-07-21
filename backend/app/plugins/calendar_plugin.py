@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+from datetime import UTC
 from typing import Any
 
 import httpx
 
-from app.services.google_oauth import GoogleOAuthService
 from app.plugins.base import PluginInterface, PluginStatus
+from app.services.google_oauth import GoogleOAuthService
 from app.tools.base import BaseTool
 
 
@@ -47,8 +48,9 @@ class CalendarListTool(BaseTool):
             self._client = httpx.AsyncClient(timeout=15.0)
 
         try:
-            from datetime import datetime, timedelta, timezone
-            now = datetime.now(timezone.utc)
+            from datetime import datetime, timedelta
+
+            now = datetime.now(UTC)
             time_max = now + timedelta(days=days)
 
             resp = await self._client.get(
@@ -69,7 +71,9 @@ class CalendarListTool(BaseTool):
                 return f"No events in the next {days} days"
             results = [f"Upcoming events ({len(events)}):"]
             for event in events:
-                start = event.get("start", {}).get("dateTime", event.get("start", {}).get("date", ""))
+                start = event.get("start", {}).get(
+                    "dateTime", event.get("start", {}).get("date", "")
+                )
                 summary = event.get("summary", "No title")
                 location = event.get("location", "")
                 line = f"- {start}: {summary}"
@@ -183,6 +187,7 @@ class Plugin(PluginInterface):
 
     async def initialize(self, config: dict | None = None) -> None:
         from app.core.config import get_settings
+
         settings = get_settings()
         self._has_oauth = bool(settings.GOOGLE_CLIENT_ID and settings.GOOGLE_CLIENT_SECRET)
         if self._has_oauth:
@@ -193,11 +198,24 @@ class Plugin(PluginInterface):
 
     async def health_check(self) -> dict:
         import time
+
         if not self._has_oauth:
-            return {"status": PluginStatus.AUTH_FAILED, "message": "Google OAuth not configured", "last_check": time.time()}
+            return {
+                "status": PluginStatus.AUTH_FAILED,
+                "message": "Google OAuth not configured",
+                "last_check": time.time(),
+            }
         if not self._tools:
-            return {"status": PluginStatus.DISABLED, "message": "No tools initialized", "last_check": time.time()}
-        return {"status": PluginStatus.AVAILABLE, "message": "Google credentials configured", "last_check": time.time()}
+            return {
+                "status": PluginStatus.DISABLED,
+                "message": "No tools initialized",
+                "last_check": time.time(),
+            }
+        return {
+            "status": PluginStatus.AVAILABLE,
+            "message": "Google credentials configured",
+            "last_check": time.time(),
+        }
 
     async def validate(self) -> bool:
         return self._has_oauth

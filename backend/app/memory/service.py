@@ -4,10 +4,15 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.repositories.memory_repo import MemoryRepository
-from app.schemas.memory import MemoryCreate, MemoryListResponse, MemoryResponse, MemoryUpdate, TagResponse
+from app.schemas.memory import (
+    MemoryCreate,
+    MemoryListResponse,
+    MemoryResponse,
+    MemoryUpdate,
+    TagResponse,
+)
 
 logger = get_logger(__name__)
 
@@ -34,7 +39,9 @@ class MemoryService:
             return None
         return self._to_response(memory)
 
-    async def update_memory(self, memory_id: str, data: MemoryUpdate, user_id: str) -> MemoryResponse | None:
+    async def update_memory(
+        self, memory_id: str, data: MemoryUpdate, user_id: str
+    ) -> MemoryResponse | None:
         update_dict = data.model_dump(exclude_unset=True)
         if not update_dict:
             existing = await self.repo.get(memory_id, user_id)
@@ -96,7 +103,9 @@ class MemoryService:
 
     # ── Category convenience ──────────────────────────────────
 
-    async def get_by_category(self, category: str, user_id: str, limit: int = 50) -> list[MemoryResponse]:
+    async def get_by_category(
+        self, category: str, user_id: str, limit: int = 50
+    ) -> list[MemoryResponse]:
         memories = await self.repo.get_by_category(category, user_id=user_id, limit=limit)
         return [self._to_response(m) for m in memories]
 
@@ -111,7 +120,11 @@ class MemoryService:
         return await self.get_by_category("project", user_id=user_id)
 
     async def record_conversation_memory(
-        self, summary: str, user_id: str, importance: float = 0.5, tags: list[str] | None = None,
+        self,
+        summary: str,
+        user_id: str,
+        importance: float = 0.5,
+        tags: list[str] | None = None,
     ) -> MemoryResponse:
         data = MemoryCreate(
             content=summary,
@@ -144,7 +157,10 @@ class MemoryService:
     # ── AI Integration ────────────────────────────────────────
 
     async def get_context_for_query(
-        self, query: str, user_id: str, limit: int = 5,
+        self,
+        query: str,
+        user_id: str,
+        limit: int = 5,
         categories: list[str] | None = None,
     ) -> str:
         memories = await self.repo.search_by_content(
@@ -173,9 +189,12 @@ class MemoryService:
 
         session = self.repo.session
         results = await session.execute(
-            select(Memory.category, func.count()).where(
-                Memory.user_id == user_id, Memory.is_archived == False  # noqa: E712
-            ).group_by(Memory.category)
+            select(Memory.category, func.count())
+            .where(
+                Memory.user_id == user_id,
+                Memory.is_archived == False,  # noqa: E712
+            )
+            .group_by(Memory.category),
         )
         counts: dict[str, int] = {}
         total = 0
@@ -185,8 +204,9 @@ class MemoryService:
 
         archived_result = await session.execute(
             select(func.count()).where(
-                Memory.user_id == user_id, Memory.is_archived == True  # noqa: E712
-            )
+                Memory.user_id == user_id,
+                Memory.is_archived == True,  # noqa: E712
+            ),
         )
         archived_count = archived_result.scalar_one()
 

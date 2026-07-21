@@ -27,11 +27,13 @@ class VoiceSession:
         return elapsed > self.config.max_session_duration_ms
 
     def add_message(self, role: str, content: str) -> None:
-        self.messages.append({
-            "role": role,
-            "content": content,
-            "timestamp": time.monotonic(),
-        })
+        self.messages.append(
+            {
+                "role": role,
+                "content": content,
+                "timestamp": time.monotonic(),
+            },
+        )
         self.update_activity()
 
     def get_history(self, limit: int = 20) -> list[dict[str, str]]:
@@ -46,7 +48,8 @@ class VoiceSessionManager:
         self._sessions: dict[str, VoiceSession] = {}
 
     def create_session(
-        self, config: VoiceSessionConfig | None = None
+        self,
+        config: VoiceSessionConfig | None = None,
     ) -> VoiceSession:
         session_id = str(uuid.uuid4())
         cfg = config or VoiceSessionConfig()
@@ -72,10 +75,7 @@ class VoiceSessionManager:
         return False
 
     def cleanup_expired(self) -> int:
-        expired = [
-            sid for sid, s in self._sessions.items()
-            if s.is_expired()
-        ]
+        expired = [sid for sid, s in self._sessions.items() if s.is_expired()]
         for sid in expired:
             del self._sessions[sid]
         return len(expired)
