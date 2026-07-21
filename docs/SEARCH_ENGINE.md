@@ -1,130 +1,168 @@
-# Search Engine — ULTRON AI Platform
+# Search Engine — ULTRON AI
 
 ## Architecture
 
 ```
-User Query
-    │
-    ▼
-┌─────────────────────────────┐
-│  Query Processor             │
-│  - Expand / rewrite query   │
-│  - Classify intent          │
-│  - Detect research mode     │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│     Cache Lookup             │
-│  ┌─────────┐                │
-│  │  Redis  │── hit ──► return cached │
-│  └─────────┘                │
-│       │ miss                │
-│       ▼                     │
-│  ┌──────────────────┐      │
-│  │  Tavily API      │      │
-│  └──────────────────┘      │
-└─────────────┬───────────────┘
-              │
-              ▼
-┌─────────────────────────────┐
-│  Result Processor            │
-│  - Extract citations        │
-│  - Rank by relevance        │
-│  - Format for LLM context   │
-│  - Store in history         │
-└─────────────────────────────┘
+AI Engine → ToolExecutor → PluginManager → TavilyPlugin
+                                                  │
+                                           SearchService
+                                           │         │
+                                     SearchCache  TavilyProvider
+                                                      │
+                                                   Tavily API
+```
+
+All search flows through `SearchService`. The AI never calls a provider directly.
+
+## Core Files
+
+| File | Purpose |
+|------|---------|
+| `app/search/interface.py` | `SearchProvider` ABC + types (`SearchQuery`, `SearchResult`, `SearchResponse`, `ResearchQuery`, `ResearchResponse`, `Citation`, `SearchFeature`) |
+| `app/search/cache.py` | `SearchCache` with configurable TTL, SHA-256 keyed, hit/miss tracking |
+| `app/search/service.py` | `SearchService` — single entry point for all search |
+| `app/search/providers/tavily.py` | `TavilyProvider` — wraps Tavily API behind `SearchProvider` |
+| `app/plugins/tavily_plugin.py` | Updated to call `SearchService` (v3.0.0) |
+
+## SearchProvider Interface
+
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `search(query)` | `SearchResponse` | Standard web search |
+| `research(query)` | `ResearchResponse` | Deep research with answer + citations |
+| `health_check()` | `dict` | Provider health status |
+| `validate()` | `bool` | Credentials present |
+| `metadata()` | `dict` | Provider name + features |
+| `supported_features()` | `list[str]` | Feature flags |
+
+## SearchService Methods
+
+| Method | Description |
+|--------|-------------|
+| `search(query)` | Validate → cache check → provider call (with timeout) → deduplicate → cache set → return |
+| `research(query)` | Same flow but for deep research with citations |
+| `health_check()` | Provider health + cache stats |
+| `clear_cache()` | Flush all cached entries |
+| `cache_stats()` | Size, hits, misses, hit rate |
+| `format_citations(results)` | Static: convert results to citation list with indices |
+
+## SearchCache
+
+- `SearchCache(default_ttl=300)` — 5 min default
+- Uses SHA-256 of normalized query + params as key
+- `get(query, **params)` — returns `None` on miss/expiry
+- `set(query, data, ttl, **params)` — optional per-entry TTL
+- `invalidate(query, **params)` — remove single entry
+- `clear()` — flush all
+- `stats()` — size, hits, misses, hit rate
+
+To swap for Redis later: implement `SearchCache` with the same interface using Redis as backend.
+
+## Response Format
+
+### `SearchResponse`
+```python
+{
+    "results": [SearchResult],
+    "total_results": int,
+    "query": str,
+    "answer": None,
+    "provider": str,
+    "cached": bool,
+    "mode": "standard",
+}
+```
+
+### `ResearchResponse`
+```python
+{
+    "answer": str,
+    "results": [SearchResult],
+    "citations": [Citation],
+    "query": str,
+    "provider": str,
+    "cached": bool,
+    "mode": "deep",
+    "total_results": int,
+}
+```
+
+### `SearchResult`
+```python
+{
+    "title": str,
+    "url": str,
+    "source": str,          # Extracted domain
+    "snippet": str,         # Content preview
+    "published_date": str | None,
+    "score": float,
+}
+```
+
+### `Citation`
+```python
+{
+    "title": str,
+    "url": str,
+    "source": str,
+    "snippet": str,
+    "published_date": str | None,
+    "index": int,           # 1-based
+}
 ```
 
 ## Search Modes
 
-### Quick Search
-- Single Tavily API call
-- Returns top 5–10 results
-- Cached for 1 hour
-- Use case: General questions, quick facts
+| Mode | Description |
+|------|-------------|
+| `standard` | `SearchService.search()` — quick web search, returns results list |
+| `deep` | `SearchService.research()` — includes AI-generated answer + numbered citations |
 
-### Deep Research
-- Multi-step search pipeline
-- Query decomposition → parallel sub-searches → aggregation
-- Results ranked by source authority + relevance
-- Returns structured report with citations
-- Use case: Complex topics, competitive analysis
+The architecture supports adding new modes by extending `SearchProvider`.
 
-### Streaming Research (future)
-- Real-time WebSocket updates as each sub-search completes
-- User sees intermediate results
-- Can refine query mid-search
+## Error Handling
 
-## Cache Strategy
+Errors are normalized into `SearchProviderError` subclasses:
 
-```python
-CACHE_TTL = {
-    "quick": 3600,        # 1 hour
-    "deep": 86400,        # 24 hours
-    "research": 604800,   # 7 days
-}
+| Error | When |
+|-------|------|
+| `SearchAuthError` | 401/403, missing API key |
+| `SearchRateLimitError` | 429 |
+| `SearchTimeoutError` | Request exceeded timeout |
+| `SearchUnavailableError` | Provider unreachable |
+| `SearchProviderError` | Generic provider error |
 
-def get_cache_key(query: str, mode: str, user_id: str) -> str:
-    return f"search:{user_id}:{mode}:{hash(query)}"
-```
+## TavilyProvider
 
-Cache is invalidated when:
-- Explicit user request
-- Source is known to have updated (future: webhook)
+Wraps the existing Tavily API with:
+- Retry logic (2 attempts on 5xx)
+- Timeout handling
+- Error mapping (401 → SearchAuthError, 429 → SearchRateLimitError)
+- Source extraction (strips `www.` from URLs)
+- Domain filtering support
 
-## Source Citations
+## AI Integration
 
-```json
-{
-  "results": [
-    {
-      "title": "Latest AI Developments 2026",
-      "url": "https://example.com/ai-2026",
-      "snippet": "The field of artificial intelligence has seen remarkable progress...",
-      "relevance_score": 0.95,
-      "source_authority": 0.85,
-      "published_date": "2026-06-15",
-      "cached": true
-    }
-  ],
-  "total_results": 42,
-  "mode": "quick",
-  "cache_hit": false,
-  "latency_ms": 1234
-}
-```
-
-## LLM Context Format
-
-When search results are fed to AI:
+The Tavily plugin's tools (`tavily_search`, `tavily_answer`) now call `SearchService` via `get_search_service()` instead of making direct HTTP calls. The AI flow is:
 
 ```
-<search_results>
-[1] Title: Latest AI Developments 2026
-    URL: https://example.com/ai-2026
-    Content: The field of artificial intelligence has seen remarkable progress...
-
-[2] Title: AI Regulation Update
-    URL: https://example.com/ai-regulation
-    Content: New regulations for AI systems were proposed today...
-</search_results>
-
-Based on the search results above, answer the user's question.
-Cite sources using [1], [2] notation.
+ChatService → ToolExecutor → PluginManager → TavilyPlugin → SearchService → TavilyProvider → Tavily API
 ```
 
-## Search History
+## Testing
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | FK to users |
-| query | TEXT | Original query |
-| mode | VARCHAR | quick / deep / research |
-| result_count | INT | Number of results |
-| tokens_used | INT | Tokens consumed |
-| cached | BOOLEAN | Was result cached? |
-| created_at | TIMESTAMPTZ | Search timestamp |
+`tests/test_search.py` — 48 tests covering:
+- SearchProvider interface (name, health, validate, metadata, features)
+- SearchCache (miss, hit, expiry, normalization, invalidation, stats, TTL override)
+- SearchService (search, research, dedup, caching, empty/long query, auth/rate-limit errors, timeout, health, clear cache)
+- SearchService + SearchCache integration
+- TavilyProvider (name, validate, health, search/research without key, features, source extraction)
+- Citation formatting
+- Deduplication across results and citations
 
-History is retained for 90 days. Users can delete individual entries or clear all.
+## Future Extensibility
+
+- Add new providers by implementing `SearchProvider` ABC (e.g., `GoogleSearchProvider`, `BingProvider`)
+- Swap cache backend by implementing the same `get/set/clear/invalidate/stats` interface
+- Add new research strategies by extending `SearchService` with more methods
+- Register `SearchService` as a FastAPI dependency for REST search endpoints

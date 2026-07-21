@@ -50,21 +50,31 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         )
 
     from app.automation.reminders import ReminderEngine
-    from app.automation.scheduler import SchedulerService
+    from app.automation.scheduler import SchedulerService as SchedService
     from app.plugins.manager import PluginManager
+    from app.search import init_search_service
+    from app.search.cache import SearchCache
+    from app.search.providers import TavilyProvider
+    from app.search.service import SearchService
     from app.tools.plugin_loader import PluginLoader
     from app.tools.router import ToolRouter
     from app.voice.pipeline import VoicePipeline
     from app.voice.session import VoiceSessionManager
 
+    search_cache = SearchCache(default_ttl=300)
+    tavily_provider = TavilyProvider()
+    search_service = SearchService(provider=tavily_provider, cache=search_cache, timeout=25.0)
+    init_search_service(search_service)
+
     plugin_manager = PluginManager()
     await plugin_manager.initialize()
 
-    scheduler = SchedulerService()
+    scheduler = SchedService()
     reminders = ReminderEngine()
     voice_session_manager = VoiceSessionManager()
     voice_pipeline = VoicePipeline()
 
+    application.state.search_service = search_service
     application.state.plugin_manager = plugin_manager
     application.state.scheduler = scheduler
     application.state.reminders = reminders
