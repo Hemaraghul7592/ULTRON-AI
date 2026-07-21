@@ -51,6 +51,8 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     from app.automation.reminders import ReminderEngine
     from app.automation.scheduler import SchedulerService as SchedService
+    from app.file_engine.service import FileService
+    from app.file_engine.storage.local import LocalStorage
     from app.plugins.manager import PluginManager
     from app.search import init_search_service
     from app.search.cache import SearchCache
@@ -66,6 +68,9 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     search_service = SearchService(provider=tavily_provider, cache=search_cache, timeout=25.0)
     init_search_service(search_service)
 
+    file_storage = LocalStorage()
+    file_service = FileService(storage=file_storage, max_size=50 * 1024 * 1024, deduplicate=True)
+
     plugin_manager = PluginManager()
     await plugin_manager.initialize()
 
@@ -75,6 +80,7 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     voice_pipeline = VoicePipeline()
 
     application.state.search_service = search_service
+    application.state.file_service = file_service
     application.state.plugin_manager = plugin_manager
     application.state.scheduler = scheduler
     application.state.reminders = reminders
