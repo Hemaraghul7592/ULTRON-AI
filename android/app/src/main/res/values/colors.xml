@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ultron_primary">#FF6750A4</color>
+    <color name="ultron_on_primary">#FFFFFFFF</color>
+    <color name="ultron_primary_container">#FFEADDFF</color>
+    <color name="ultron_secondary">#FF625B71</color>
+    <color name="ultron_background">#FF1C1B1F</color>
+    <color name="ultron_surface">#FF1C1B1F</color>
+    <color name="ultron_surface_variant">#FF49454F</color>
+    <color name="ultron_error">#FFB3261E</color>
+    <color name="ultron_on_error">#FFFFFFFF</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="black">#FF000000</color>
+</resources>
