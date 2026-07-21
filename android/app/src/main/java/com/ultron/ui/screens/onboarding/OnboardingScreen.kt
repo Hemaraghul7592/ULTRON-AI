@@ -17,7 +17,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.SmartToy
 import androidx.compose.material3.Button
@@ -49,7 +49,7 @@ fun OnboardingScreen(onComplete: () -> Unit) {
             description = "Your personal AI assistant powered by cutting-edge language models.",
         ),
         OnboardingPage(
-            icon = Icons.Default.Chat,
+            icon = Icons.AutoMirrored.Filled.Chat,
             title = "Intelligent Conversations",
             description = "Have natural conversations with AI that remembers context and learns from interactions.",
         ),

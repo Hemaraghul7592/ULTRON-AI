@@ -2,11 +2,13 @@ package com.ultron.di
 
 import android.content.Context
 import androidx.room.Room
+import com.ultron.BuildConfig
 import com.ultron.data.local.AppDatabase
 import com.ultron.data.local.ConversationDao
 import com.ultron.data.local.MemoryDao
 import com.ultron.data.local.MessageDao
 import com.ultron.data.local.SettingsDataStore
+import com.ultron.data.remote.ApiConfig
 import com.ultron.data.remote.ApiService
 import dagger.Module
 import dagger.Provides
@@ -28,7 +30,8 @@ object AppModule {
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
+            else HttpLoggingInterceptor.Level.NONE
         }
         return OkHttpClient.Builder()
             .addInterceptor(logging)
@@ -42,7 +45,7 @@ object AppModule {
     @Singleton
     fun provideRetrofit(client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("http://127.0.0.1:8000/api/v1/")
+            .baseUrl("${ApiConfig.DEFAULT_BASE_URL}/${ApiConfig.API_PATH}")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()

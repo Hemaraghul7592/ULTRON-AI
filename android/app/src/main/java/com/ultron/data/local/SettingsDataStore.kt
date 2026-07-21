@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.ultron.data.remote.ApiConfig
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
@@ -30,7 +31,7 @@ class SettingsDataStore @Inject constructor(
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
     }
 
-    val serverUrl: Flow<String> = context.dataStore.data.map { it[Keys.SERVER_URL] ?: "http://127.0.0.1:8000" }
+    val serverUrl: Flow<String> = context.dataStore.data.map { it[Keys.SERVER_URL] ?: ApiConfig.DEFAULT_BASE_URL }
     val theme: Flow<String> = context.dataStore.data.map { it[Keys.THEME] ?: "system" }
     val darkMode: Flow<Boolean> = context.dataStore.data.map { it[Keys.DARK_MODE] ?: true }
     val ttsEnabled: Flow<Boolean> = context.dataStore.data.map { it[Keys.TTS_ENABLED] ?: true }

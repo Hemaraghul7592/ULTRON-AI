@@ -4,22 +4,9 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Chat
-import androidx.compose.material.icons.filled.Memory
-import androidx.compose.material.icons.filled.Mic
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -27,13 +14,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.ultron.data.local.SettingsDataStore
+import com.ultron.ui.components.UltronBottomNav
 import com.ultron.ui.navigation.Screen
 import com.ultron.ui.screens.chat.ChatScreen
 import com.ultron.ui.screens.dashboard.DashboardScreen
@@ -45,7 +31,6 @@ import com.ultron.ui.screens.voice.VoiceScreen
 import com.ultron.ui.theme.UltronTheme
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -58,11 +43,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        val onboardingComplete = runBlocking { settingsDataStore.onboardingComplete.first() }
-
         setContent {
+            var startOnBoarding by remember { mutableStateOf(true) }
+
+            LaunchedEffect(Unit) {
+                val onboardingComplete = settingsDataStore.onboardingComplete.first()
+                startOnBoarding = !onboardingComplete
+            }
+
             UltronTheme {
-                UltronApp(startOnBoarding = !onboardingComplete)
+                UltronApp(startOnBoarding = startOnBoarding)
             }
         }
     }
@@ -70,9 +60,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun UltronApp(startOnBoarding: Boolean) {
-    val navController = rememberNavController()
     var showSplash by remember { mutableStateOf(true) }
-    var showOnboarding by remember { mutableStateOf(startOnBoarding) }
+    var showOnboarding by remember(startOnBoarding) { mutableStateOf(startOnBoarding) }
 
     LaunchedEffect(Unit) {
         kotlinx.coroutines.delay(2000)
@@ -109,70 +98,11 @@ fun MainApp() {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         bottomBar = {
-            AnimatedVisibility(
+            UltronBottomNav(
+                currentRoute = currentRoute,
                 visible = showBottomBar,
-                enter = fadeIn(),
-                exit = fadeOut(),
-            ) {
-                NavigationBar {
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Chat, contentDescription = "Chat") },
-                        label = { Text("Chat") },
-                        selected = currentRoute == Screen.Chat.route,
-                        onClick = {
-                            navController.navigate(Screen.Chat.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Memory, contentDescription = "Memory") },
-                        label = { Text("Memory") },
-                        selected = currentRoute == Screen.Memory.route,
-                        onClick = {
-                            navController.navigate(Screen.Memory.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Mic, contentDescription = "Voice") },
-                        label = { Text("Voice") },
-                        selected = currentRoute == Screen.Voice.route,
-                        onClick = {
-                            navController.navigate(Screen.Voice.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-                    NavigationBarItem(
-                        icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
-                        label = { Text("Settings") },
-                        selected = currentRoute == Screen.Settings.route,
-                        onClick = {
-                            navController.navigate(Screen.Settings.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
-                    )
-                }
-            }
+                navController = navController,
+            )
         },
     ) { innerPadding ->
         NavHost(
