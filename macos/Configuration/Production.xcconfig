@@ -1,0 +1,10 @@
+// Production.xcconfig
+// Purpose: App Store / direct distribution. Maximum optimization.
+// Used by: End users.
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = PRODUCTION
+SWIFT_OPTIMIZATION_LEVEL = -Osize
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+ENABLE_TESTABILITY = NO
+SWIFT_COMPILATION_MODE = wholemodule
+OTHER_SWIFT_FLAGS = $(inherited) -D PRODUCTION

@@ -1,0 +1,9 @@
+// Debug.xcconfig
+// Purpose: Internal testing. Verbose logging, debug UI helpers.
+// Used by: QA, internal testers.
+// Inherits: All Development settings plus additional instrumentation.
+
+#include "Development.xcconfig"
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = $(inherited) DEBUG
+OTHER_SWIFT_FLAGS = $(inherited) -D DEBUG

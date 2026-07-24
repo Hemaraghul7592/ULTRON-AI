@@ -1,0 +1,10 @@
+// Release.xcconfig
+// Purpose: Beta distribution. Optimized, retained debug symbols.
+// Used by: TestFlight, beta testers.
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = RELEASE
+SWIFT_OPTIMIZATION_LEVEL = -O
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+ENABLE_TESTABILITY = NO
+SWIFT_COMPILATION_MODE = wholemodule
+OTHER_SWIFT_FLAGS = $(inherited) -D RELEASE

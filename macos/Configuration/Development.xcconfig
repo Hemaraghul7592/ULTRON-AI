@@ -1,0 +1,10 @@
+// Development.xcconfig
+// Purpose: Day-to-day engineering. Fast compile, full debug symbols.
+// Used by: Engineers during active development.
+
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEVELOPMENT
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+DEBUG_INFORMATION_FORMAT = dwarf
+ENABLE_TESTABILITY = YES
+ASSETCATALOG_COMPILER_OPTIMIZATION = space
+OTHER_SWIFT_FLAGS = $(inherited) -D DEVELOPMENT
