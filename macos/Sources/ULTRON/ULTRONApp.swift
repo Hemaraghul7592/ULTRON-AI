@@ -40,18 +40,17 @@ struct ULTRONApp: App {
 
     /// The root scene of the application.
     ///
-    /// In this milestone, a single window with no content is provided
-    /// to satisfy the `App` protocol requirement. The actual window
-    /// architecture (main, overlay, settings) will be managed by
-    /// `WindowManager` in a subsequent milestone.
+    /// The application delegate constructs the composition root before the
+    /// first scene is presented. The scene therefore starts only after the
+    /// same service graph used by lifecycle startup has been assembled.
     var body: some Scene {
         WindowGroup {
-            ContentPlaceholderView()
-                .frame(minWidth: 400, minHeight: 300)
+            AppShell()
+                .frame(minWidth: 900, minHeight: 650)
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
-        .defaultSize(width: 900, height: 650)
+        .defaultSize(width: 1200, height: 800)
         .onChange(of: scenePhase) { _, newPhase in
             handleScenePhaseChange(newPhase)
         }
@@ -75,31 +74,5 @@ struct ULTRONApp: App {
         @unknown default:
             break
         }
-    }
-}
-
-// MARK: - Content Placeholder
-
-/// A minimal view that serves as the root content until the window
-/// architecture is implemented in a future milestone.
-///
-/// This view will be replaced by the full window management system
-/// when the Window Manager milestone is reached.
-private struct ContentPlaceholderView: View {
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "brain.head.profile")
-                .font(.system(size: 48))
-                .foregroundStyle(.secondary)
-
-            Text("ULTRON")
-                .font(.largeTitle)
-                .fontWeight(.medium)
-
-            Text("Personal AI Operating Companion")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }

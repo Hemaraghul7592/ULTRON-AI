@@ -61,3 +61,5 @@ node_modules/
 **/build/
 local.properties
 **/local.properties
+# Local Secrets
+macos/Sources/ULTRON/Secrets/

@@ -20,6 +20,10 @@ import Foundation
 @MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
 
+    /// The composition root owns the application container and all service
+    /// registrations used during startup.
+    public let compositionRoot: ApplicationCompositionRoot
+
     // MARK: - Lifecycle Sequences
 
     /// The ordered startup sequence. Hooks are registered by subsystems
@@ -30,6 +34,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// order when the application terminates.
     public let shutdownSequence = ShutdownSequence()
 
+    public override init() {
+        compositionRoot = ApplicationCompositionRoot()
+        super.init()
+        compositionRoot.registerLifecycleHooks(startup: startupSequence, shutdown: shutdownSequence)
+    }
+
     // MARK: - NSApplicationDelegate
 
     /// Called before the application finishes launching.
@@ -38,8 +48,6 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// all hooks finish. If any hook throws, the app transitions to
     /// an error state rather than presenting its UI.
     public func applicationWillFinishLaunching(_ notification: Notification) {
-        // Startup hooks execute in applicationDidFinishLaunching
-        // where we can properly await async work.
     }
 
     /// Called after the application has finished launching.
