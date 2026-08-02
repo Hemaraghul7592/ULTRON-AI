@@ -36,6 +36,10 @@ public struct SEBICompanyProfile: Sendable, Codable, Identifiable {
     public let sector: String; public let listingDate: Date?
     public var latestFiling: Date?; public var filingCount: Int
 
+    enum CodingKeys: String, CodingKey {
+        case symbol, isin, companyName, exchange, sector, listingDate, latestFiling, filingCount
+    }
+
     public init(symbol: String, isin: String = "", companyName: String, exchange: SEBIExchange = .nse, sector: String = "", listingDate: Date? = nil) {
         self.symbol = symbol; self.isin = isin; self.companyName = companyName; self.exchange = exchange
         self.sector = sector; self.listingDate = listingDate; filingCount = 0

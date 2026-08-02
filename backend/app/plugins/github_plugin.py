@@ -65,7 +65,7 @@ class GitHubRepoTool(BaseTool):
                 )
             return "\n".join(results)
         except Exception as e:
-            return f"GitHub error: {e}"
+            return "GitHub operation failed"
 
 
 class GitHubSearchTool(BaseTool):
@@ -134,7 +134,7 @@ class GitHubSearchTool(BaseTool):
                 )
             return "\n".join(results)
         except Exception as e:
-            return f"GitHub search error: {e}"
+            return "GitHub search failed"
 
 
 class GitHubIssuesTool(BaseTool):
@@ -193,7 +193,7 @@ class GitHubIssuesTool(BaseTool):
                 )
             return "\n".join(results)
         except Exception as e:
-            return f"GitHub issues error: {e}"
+            return "GitHub issue lookup failed"
 
 
 class Plugin(PluginInterface):
@@ -267,7 +267,7 @@ class Plugin(PluginInterface):
         except Exception as e:
             return {
                 "status": PluginStatus.UNAVAILABLE,
-                "message": str(e),
+                "message": "GitHub operation failed",
                 "last_check": time.time(),
             }
 

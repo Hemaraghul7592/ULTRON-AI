@@ -7,6 +7,17 @@ plugins {
     id("androidx.room")
 }
 
+val releaseKeystoreFile = System.getenv("ULTRON_KEYSTORE_FILE")
+val releaseKeystorePassword = System.getenv("ULTRON_KEYSTORE_PASSWORD")
+val releaseKeyAlias = System.getenv("ULTRON_KEY_ALIAS")
+val releaseKeyPassword = System.getenv("ULTRON_KEY_PASSWORD")
+val releaseSigningConfigured = listOf(
+    releaseKeystoreFile,
+    releaseKeystorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword,
+).all { !it.isNullOrBlank() }
+
 room {
     schemaDirectory("$projectDir/schemas")
 }
@@ -22,6 +33,19 @@ android {
         versionCode = 1
         versionName = "1.0.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "API_BASE_URL", "\"${project.findProperty("ultronBaseUrl") ?: System.getenv("ULTRON_BASE_URL") ?: "https://api.ultron.ai"}\"")
+        buildConfigField("String", "API_PATH", "\"api/v1/\"")
+    }
+
+    signingConfigs {
+        create("release") {
+            if (releaseSigningConfigured) {
+                storeFile = file(releaseKeystoreFile!!)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
     }
 
     buildTypes {
@@ -32,8 +56,13 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            buildConfigField("String", "API_BASE_URL", "\"${project.findProperty("ultronBaseUrl") ?: System.getenv("ULTRON_BASE_URL") ?: "https://api.ultron.ai"}\"")
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
+
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -111,6 +140,7 @@ dependencies {
     testImplementation("app.cash.turbine:turbine:1.2.0")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.6.1")
+    androidTestImplementation("androidx.room:room-testing:2.6.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.12.01"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")

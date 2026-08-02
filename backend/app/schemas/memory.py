@@ -26,19 +26,19 @@ class MemoryCreate(BaseModel):
     )
     category: str = Field(default="general", pattern=CATEGORY_PATTERN)
     importance: float = Field(default=0.5, ge=0.0, le=1.0)
-    source: str | None = None
-    context: str | None = None
-    tags: list[str] = []
+    source: str | None = Field(default=None, max_length=100)
+    context: str | None = Field(default=None, max_length=10000)
+    tags: list[str] = Field(default_factory=list, max_length=50)
 
 
 class MemoryUpdate(BaseModel):
-    content: str | None = None
-    summary: str | None = None
-    memory_type: str | None = None
+    content: str | None = Field(default=None, min_length=1, max_length=50000)
+    summary: str | None = Field(default=None, max_length=10000)
+    memory_type: str | None = Field(default=None, pattern="^(short_term|long_term|episodic|semantic)$")
     category: str | None = Field(default=None, pattern=CATEGORY_PATTERN)
     importance: float | None = Field(default=None, ge=0.0, le=1.0)
     is_archived: bool | None = None
-    tags: list[str] | None = None
+    tags: list[str] | None = Field(default=None, max_length=50)
 
 
 class MemoryResponse(BaseModel):
@@ -69,8 +69,8 @@ class MemoryListResponse(BaseModel):
 
 class MemorySearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000)
-    memory_type: str | None = None
-    category: str | None = None
+    memory_type: str | None = Field(default=None, pattern="^(short_term|long_term|episodic|semantic)$")
+    category: str | None = Field(default=None, pattern=CATEGORY_PATTERN)
     limit: int = Field(default=10, ge=1, le=50)
     min_importance: float = Field(default=0.0, ge=0.0, le=1.0)
 

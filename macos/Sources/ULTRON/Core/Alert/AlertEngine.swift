@@ -8,25 +8,45 @@ public final class AlertEngine {
     private let manager: AlertManager
     private let storage: AlertStorage
     private let logger: Logger
+    private var restorationTask: Task<Void, Never>?
+    private var pendingSave: Task<Void, Never>?
+    private var lastSavedFingerprint: Data?
+    private var hasMutatedBeforeRestore = false
     public weak var advisorEngine: AIAdvisorEngine?
 
     public init(manager: AlertManager = AlertManager(), storage: AlertStorage = InMemoryAlertStorage(), logger: Logger) {
         self.manager = manager
         self.storage = storage
         self.logger = logger
+        restorationTask = Task { @MainActor [weak self] in await self?.loadPersistedState() }
+    }
+
+    public func restorePersistedState() async {
+        if let restorationTask { await restorationTask.value; self.restorationTask = nil }
+        else { await loadPersistedState() }
+    }
+
+    public func flushPersistence() async {
+        await restorationTask?.value
+        await pendingSave?.value
     }
 
     // MARK: - Rules
 
-    public func addRule(_ rule: AlertRule) { rules.append(rule) }
-    public func removeRule(id: String) { rules.removeAll { $0.id == id } }
+    public func addRule(_ rule: AlertRule) { rules.append(rule); scheduleSaveIfChanged() }
+    public func removeRule(id: String) { let oldCount = rules.count; rules.removeAll { $0.id == id }; if oldCount != rules.count { scheduleSaveIfChanged() } }
+    public func updateRule(_ rule: AlertRule) {
+        guard let idx = rules.firstIndex(where: { $0.id == rule.id }) else { return }
+        rules[idx] = rule
+        scheduleSaveIfChanged()
+    }
     public func getRules() -> [AlertRule] { rules }
     public func setRuleEnabled(id: String, enabled: Bool) {
-        if let idx = rules.firstIndex(where: { $0.id == id }) { rules[idx].enabled = enabled }
+        if let idx = rules.firstIndex(where: { $0.id == id }), rules[idx].enabled != enabled { rules[idx].enabled = enabled; scheduleSaveIfChanged() }
     }
 
-    public func saveRules() async { try? await storage.saveRules(rules) }
-    public func loadRules() async { if let loaded = try? await storage.loadRules() { rules = loaded } }
+    public func saveRules() async { scheduleSaveIfChanged(); await pendingSave?.value }
+    public func loadRules() async { await restorePersistedState() }
 
     // MARK: - Evaluation
 
@@ -54,6 +74,7 @@ public final class AlertEngine {
 
             guard let recorded = await manager.record(triggered, cooldown: rule.cooldownSeconds, oneTime: rule.oneTime) else { continue }
             results.append(recorded)
+            scheduleSaveIfChanged()
             await logger.info("Alert triggered", metadata: ["title": recorded.title, "severity": recorded.severity.rawValue])
 
             if recorded.severity >= .high, let advisor = advisorEngine {
@@ -77,9 +98,10 @@ public final class AlertEngine {
 
     public func getActive() async -> [Alert] { await manager.active() }
     public func getRecent(_ count: Int = 50) async -> [Alert] { await manager.recent(count) }
-    public func acknowledge(alertID: String) async { await manager.acknowledge(alertID) }
-    public func dismiss(alertID: String) async { await manager.dismiss(alertID) }
-    public func clearHistory() async { await manager.clear() }
+    public func acknowledge(alertID: String) async { await manager.acknowledge(alertID); scheduleSaveIfChanged() }
+    public func dismiss(alertID: String) async { await manager.dismiss(alertID); scheduleSaveIfChanged() }
+    public func updateAlertMetadata(alertID: String, aiExplanation: String?) async { await manager.updateMetadata(alertID, aiExplanation: aiExplanation); scheduleSaveIfChanged() }
+    public func clearHistory() async { await manager.clear(); scheduleSaveIfChanged() }
     public func alertCount() async -> Int { await manager.count }
 
     // MARK: - Notifications
@@ -100,5 +122,36 @@ public final class AlertEngine {
     public func addDefaultPortfolioRules() {
         addRule(AlertRule(name: "Portfolio drawdown", category: .portfolio, severity: .high, condition: .portfolioDrawdown))
         addRule(AlertRule(name: "Cash below $1000", category: .portfolio, severity: .low, condition: .cashBelow(threshold: 1000)))
+    }
+
+    private func loadPersistedState() async {
+        guard !hasMutatedBeforeRestore else {
+            lastSavedFingerprint = fingerprint(rules: rules, history: await manager.recent(10_000))
+            return
+        }
+        let loadedRules = (try? await storage.loadRules()) ?? []
+        let loadedHistory = (try? await storage.loadHistory()) ?? []
+        rules = loadedRules
+        await manager.restore(history: loadedHistory)
+        lastSavedFingerprint = fingerprint(rules: rules, history: loadedHistory)
+    }
+
+    private func scheduleSaveIfChanged() {
+        hasMutatedBeforeRestore = true
+        let history = Task { await manager.recent(10_000) }
+        let previous = pendingSave
+        pendingSave = Task { [storage, logger] in
+            await previous?.value
+            let alerts = await history.value
+            let currentFingerprint = fingerprint(rules: rules, history: alerts)
+            guard currentFingerprint != lastSavedFingerprint else { return }
+            lastSavedFingerprint = currentFingerprint
+            do { try await storage.saveState(rules, history: alerts) }
+            catch { await logger.error("Alert persistence failed", metadata: ["error": String(describing: error)]) }
+        }
+    }
+
+    private func fingerprint(rules: [AlertRule], history: [Alert]) -> Data? {
+        try? JSONEncoder().encode(AlertPersistenceEnvelope(rules: rules, history: history))
     }
 }

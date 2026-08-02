@@ -8,10 +8,13 @@ public actor BinanceProvider: FinancialProvider {
     public let category: ServiceCategory = .custom
 
     private let session: URLSession
+    private let baseURL: String
 
     public init() {
-        session = URLSession(configuration: .ephemeral)
+        self.init(session: URLSession(configuration: .ephemeral), baseURL: "https://api.binance.com")
     }
+
+    init(session: URLSession, baseURL: String = "https://api.binance.com") { self.session = session; self.baseURL = baseURL }
 
     public func initialize() async throws {}
     public func healthCheck() async -> HealthStatus { .healthy }
@@ -19,21 +22,38 @@ public actor BinanceProvider: FinancialProvider {
 
     public func fetchQuote(symbol: String) async throws -> Quote {
         let sym = symbol.uppercased() + "USDT"
-        let url = URL(string: "https://api.binance.com/api/v3/ticker/24hr?symbol=\(sym)")!
-        let (data, _) = try await session.data(from: url)
-        let ticker = try JSONDecoder().decode(BinanceTicker.self, from: data)
-        return Quote(symbol: symbol, price: Double(ticker.lastPrice) ?? 0, change: Double(ticker.priceChange) ?? 0, changePercent: Double(ticker.priceChangePercent) ?? 0, volume: Int64(Double(ticker.volume) ?? 0), timestamp: Date(), exchange: "Binance", currency: "USDT")
+        let url = try ProviderHTTP.makeURL(base: "\(baseURL)/api/v3/ticker/24hr", queryItems: [URLQueryItem(name: "symbol", value: sym)])
+        var request = URLRequest(url: url); request.httpMethod = "GET"
+        let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+        let ticker = try ProviderHTTP.decode(BinanceTicker.self, data: data, provider: providerID)
+        guard let price = Double(ticker.lastPrice), let change = Double(ticker.priceChange), let changePercent = Double(ticker.priceChangePercent), let volume = Double(ticker.volume), volume >= 0 else {
+            throw FinancialError.invalidResponse("\(providerID) returned invalid numeric quote fields")
+        }
+        return Quote(symbol: symbol, price: price, change: change, changePercent: changePercent, volume: Int64(volume), timestamp: Date(), exchange: "Binance", currency: "USDT")
     }
 
     public func fetchOHLCV(symbol: String, range: OHLCVRange) async throws -> [OHLCV] {
         let sym = symbol.uppercased() + "USDT"
         let interval = rangeToBinance(range)
-        let url = URL(string: "https://api.binance.com/api/v3/klines?symbol=\(sym)&interval=\(interval)&limit=50")!
-        let (data, _) = try await session.data(from: url)
-        let klines = try JSONDecoder().decode([[BinanceKlineValue]].self, from: data)
-        return klines.map { k in
-            OHLCV(symbol: symbol, open: Double(k[1].value)!, high: Double(k[2].value)!, low: Double(k[3].value)!, close: Double(k[4].value)!, volume: Int64(Double(k[5].value)!), timestamp: Date(timeIntervalSince1970: Double(k[0].value)! / 1000))
+        let url = try ProviderHTTP.makeURL(base: "\(baseURL)/api/v3/klines", queryItems: [URLQueryItem(name: "symbol", value: sym), URLQueryItem(name: "interval", value: interval), URLQueryItem(name: "limit", value: "50")])
+        var request = URLRequest(url: url); request.httpMethod = "GET"
+        let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+        let klines = try ProviderHTTP.decode([[BinanceKlineValue]].self, data: data, provider: providerID)
+        var bars: [OHLCV] = []
+        for kline in klines {
+            guard kline.count >= 6,
+                  let timestamp = Double(kline[0].value),
+                  let open = Double(kline[1].value),
+                  let high = Double(kline[2].value),
+                  let low = Double(kline[3].value),
+                  let close = Double(kline[4].value),
+                  let volume = Double(kline[5].value),
+                  volume >= 0 else {
+                throw FinancialError.invalidResponse("\(providerID) returned an invalid kline")
+            }
+            bars.append(OHLCV(symbol: symbol, open: open, high: high, low: low, close: close, volume: Int64(volume), timestamp: Date(timeIntervalSince1970: timestamp / 1000)))
         }
+        return bars
     }
 
     public func fetchCompanyProfile(symbol: String) async throws -> CompanyProfile { throw FinancialError.unsupportedCapability("company_profile") }

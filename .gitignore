@@ -63,3 +63,9 @@ local.properties
 **/local.properties
 # Local Secrets
 macos/Sources/ULTRON/Secrets/
+APIKeys.local.plist
+macos/APIKeys.local.plist
+**/APIKeys.local.plist
+
+# Release artifacts
+macos/Release/artifacts/

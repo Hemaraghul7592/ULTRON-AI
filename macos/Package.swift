@@ -17,7 +17,7 @@ let package = Package(
         .executableTarget(
             name: "ULTRON",
             path: "Sources/ULTRON",
-            resources: [.process("Secrets")]
+            exclude: ["Secrets"]
         ),
         .testTarget(
             name: "UnitTests",

@@ -13,6 +13,7 @@ public struct FinancialRegistry: Sendable {
         let supportedExchanges: Set<String>
         let supportedSymbols: Set<String>
         let priority: Int
+        let enabled: Bool
     }
 
     // MARK: - Registration
@@ -23,10 +24,11 @@ public struct FinancialRegistry: Sendable {
         capabilities: Set<FinancialCapability>,
         exchanges: Set<String> = [],
         symbols: Set<String> = [],
-        priority: Int = 0
+        priority: Int = 0,
+        enabled: Bool = true
     ) {
         entries.removeAll { $0.providerID == providerID }
-        entries.append(Entry(providerID: providerID, capabilities: capabilities, supportedExchanges: exchanges, supportedSymbols: symbols, priority: priority))
+        entries.append(Entry(providerID: providerID, capabilities: capabilities, supportedExchanges: exchanges, supportedSymbols: symbols, priority: priority, enabled: enabled))
         entries.sort { $0.priority < $1.priority }
     }
 
@@ -40,6 +42,11 @@ public struct FinancialRegistry: Sendable {
     /// Returns provider IDs that support the given capability, sorted by priority.
     public func providers(for capability: FinancialCapability) -> [String] {
         entries.filter { $0.capabilities.contains(capability) }.map(\.providerID)
+    }
+
+    /// Whether a registered provider is enabled for routing.
+    public func isEnabled(providerID: String) -> Bool {
+        entries.first { $0.providerID == providerID }?.enabled ?? false
     }
 
     /// Returns provider IDs that support the given symbol.

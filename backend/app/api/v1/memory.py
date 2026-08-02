@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Path, Query
 
 from app.api.v1.auth import verify_token
 from app.core.database import get_session
@@ -30,8 +30,8 @@ def _get_service():
 async def list_memories(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    memory_type: str | None = None,
-    category: str | None = None,
+    memory_type: str | None = Query(default=None, pattern="^(short_term|long_term|episodic|semantic)$"),
+    category: str | None = Query(default=None, pattern="^(general|user_profile|preference|project|conversation)$"),
     min_importance: float = Query(0.0, ge=0.0, le=1.0),
     include_archived: bool = Query(False),
     user: dict = Depends(verify_token),
@@ -121,7 +121,7 @@ async def get_project_memories(user: dict = Depends(verify_token)) -> list[Memor
 
 
 @router.get("/{memory_id}", response_model=MemoryResponse)
-async def get_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:
+async def get_memory(memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)) -> MemoryResponse:
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -135,7 +135,9 @@ async def get_memory(memory_id: str, user: dict = Depends(verify_token)) -> Memo
 
 @router.patch("/{memory_id}", response_model=MemoryResponse)
 async def update_memory(
-    memory_id: str, data: MemoryUpdate, user: dict = Depends(verify_token)
+    data: MemoryUpdate,
+    memory_id: str = Path(..., min_length=1, max_length=36),
+    user: dict = Depends(verify_token),
 ) -> MemoryResponse:
     user_id = user["user_id"]
     service, session = _get_service()
@@ -150,7 +152,7 @@ async def update_memory(
 
 
 @router.delete("/{memory_id}", status_code=204)
-async def delete_memory(memory_id: str, user: dict = Depends(verify_token)) -> None:
+async def delete_memory(memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)) -> None:
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:

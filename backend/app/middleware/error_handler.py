@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import time
-import traceback
 from collections.abc import Callable
 from typing import Any
 
@@ -75,7 +74,6 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
                 error=str(e),
                 path=request.url.path,
                 elapsed_ms=elapsed,
-                traceback=traceback.format_exc(),
             )
             return _error_response(
                 status_code=500,

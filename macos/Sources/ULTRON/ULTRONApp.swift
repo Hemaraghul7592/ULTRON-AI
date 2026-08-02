@@ -45,8 +45,15 @@ struct ULTRONApp: App {
     /// same service graph used by lifecycle startup has been assembled.
     var body: some Scene {
         WindowGroup {
-            AppShell()
-                .frame(minWidth: 900, minHeight: 650)
+            if case .ready = appDelegate.lifecycleState.phase {
+                AppShell(compositionRoot: appDelegate.compositionRoot)
+                    .frame(minWidth: 900, minHeight: 650)
+            } else {
+                StartupGateView(state: appDelegate.lifecycleState) {
+                    appDelegate.retryStartup()
+                }
+                .frame(minWidth: 520, minHeight: 360)
+            }
         }
         .windowStyle(.hiddenTitleBar)
         .windowResizability(.contentSize)
@@ -74,5 +81,39 @@ struct ULTRONApp: App {
         @unknown default:
             break
         }
+    }
+}
+
+private struct StartupGateView: View {
+    @ObservedObject var state: ApplicationLifecycleState
+    let retry: () -> Void
+
+    var body: some View {
+        VStack(spacing: 18) {
+            Image(systemName: "bolt.horizontal.circle.fill")
+                .font(.system(size: 48))
+                .foregroundStyle(.blue)
+            Text("ULTRON")
+                .font(.largeTitle.weight(.bold))
+            switch state.phase {
+            case .failed(let message):
+                Text("ULTRON could not start")
+                    .font(.headline)
+                Text(message)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                Button("Retry Startup", action: retry)
+                    .buttonStyle(.borderedProminent)
+            case .shuttingDown:
+                ProgressView("Shutting down...")
+            case .terminated:
+                Text("ULTRON has stopped.")
+            default:
+                ProgressView("Starting ULTRON...")
+            }
+        }
+        .padding(36)
+        .accessibilityIdentifier("startup.gate")
     }
 }

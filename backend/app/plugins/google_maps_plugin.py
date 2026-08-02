@@ -52,7 +52,7 @@ class GeocodeTool(BaseTool):
             formatted = results[0]["formatted_address"]
             return f"{formatted}\nLatitude: {loc['lat']}, Longitude: {loc['lng']}"
         except Exception as e:
-            return f"Geocoding error: {e}"
+            return "Geocoding failed"
 
     async def close(self) -> None:
         if self._client:
@@ -120,7 +120,7 @@ class PlacesSearchTool(BaseTool):
                 output.append(f"- {name} ({address}) Rating: {rating}")
             return "\n".join(output)
         except Exception as e:
-            return f"Places search error: {e}"
+            return "Places search failed"
 
     async def close(self) -> None:
         if self._client:

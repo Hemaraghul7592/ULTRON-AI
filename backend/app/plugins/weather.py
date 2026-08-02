@@ -174,7 +174,7 @@ class WeatherForecastTool(BaseTool):
                 )
             return f"Forecast for {city}:\n" + "\n".join(forecasts)
         except Exception as e:
-            return f"Forecast error: {e}"
+            return "Forecast failed"
 
 
 class Plugin(BasePlugin):

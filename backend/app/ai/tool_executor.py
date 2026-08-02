@@ -50,7 +50,8 @@ class ToolExecutor:
                 raise ToolExecutionException(
                     tool_name=tool_name, message="PluginManager not available"
                 )
-            result = await pm.execute_tool_safe(tool_name, **kwargs)
+            user_id = kwargs.pop("user_id", None)
+            result = await pm.execute_tool_safe(tool_name, user_id=user_id, **kwargs)
             if result.get("success"):
                 return result.get("result", "")
             raise ToolExecutionException(
@@ -74,9 +75,13 @@ class ToolExecutor:
             )
         return definitions
 
-    async def execute(self, tool_call: dict[str, Any]) -> dict[str, Any]:
+    async def execute(self, tool_call: dict[str, Any], user_id: str | None = None) -> dict[str, Any]:
         name = tool_call.get("name", "")
         arguments = tool_call.get("arguments", {})
+        if any(key in arguments for key in ("user_id", "userId", "owner_id", "ownerId")):
+            raise ToolExecutionException(tool_name=name, message="Caller identity is not an accepted tool argument")
+        if user_id is not None:
+            arguments = {**arguments, "user_id": user_id}
         tool_call_id = tool_call.get("id", "")
 
         if name not in self._tools:
@@ -129,17 +134,18 @@ class ToolExecutor:
                 "name": name,
                 "result": "",
                 "success": False,
-                "error": str(e),
+                "error": "Tool execution failed",
                 "execution_time_ms": execution_time,
             }
 
     async def execute_multiple(
         self,
         tool_calls: list[dict[str, Any]],
+        user_id: str | None = None,
     ) -> list[dict[str, Any]]:
         results = []
         for tc in tool_calls:
-            result = await self.execute(tc)
+            result = await self.execute(tc, user_id=user_id)
             results.append(result)
         return results
 

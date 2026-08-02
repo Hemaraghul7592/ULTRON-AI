@@ -12,7 +12,7 @@ public actor MarketauxProvider: FinancialProvider {
     private let session: URLSession
 
     public init(token: String? = nil) {
-        self.token = token ?? APIConfiguration.shared.marketauxToken
+        self.token = token ?? SecretManager.shared.marketauxToken
         session = URLSession(configuration: .ephemeral)
     }
 

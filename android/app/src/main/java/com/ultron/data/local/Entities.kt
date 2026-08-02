@@ -2,6 +2,7 @@ package com.ultron.data.local
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import java.util.Date
 import java.util.UUID
@@ -20,7 +21,7 @@ data class ConversationEntity(
     val updatedAt: Date = Date(),
 )
 
-@Entity(tableName = "messages")
+@Entity(tableName = "messages", indices = [Index(value = ["conversation_id", "created_at"])])
 data class MessageEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),
@@ -35,7 +36,7 @@ data class MessageEntity(
     val createdAt: Date = Date(),
 )
 
-@Entity(tableName = "memories")
+@Entity(tableName = "memories", indices = [Index(value = ["memory_type", "updated_at"])])
 data class MemoryEntity(
     @PrimaryKey
     val id: String = UUID.randomUUID().toString(),

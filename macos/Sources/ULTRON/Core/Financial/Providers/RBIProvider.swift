@@ -19,9 +19,10 @@ public actor RBIProvider: FinancialProvider {
     private var isAvailable = false
 
     public init(endpoint: String? = nil) {
-        self.endpoint = endpoint ?? "http://localhost:8500"
-        session = URLSession(configuration: .ephemeral)
+        self.init(endpoint: endpoint ?? "http://localhost:8500", session: URLSession(configuration: .ephemeral))
     }
+
+    init(endpoint: String, session: URLSession) { self.endpoint = endpoint; self.session = session }
 
     public func initialize() async throws {
         isAvailable = await checkAvailability()
@@ -78,14 +79,18 @@ public actor RBIProvider: FinancialProvider {
 
     private func fetch(_ urlString: String) async throws -> [String: Any] {
         guard let url = URL(string: urlString) else { throw FinancialError.invalidData("Invalid URL") }
-        let (data, response) = try await session.data(from: url)
-        guard (response as? HTTPURLResponse)?.statusCode == 200 else {
-            throw FinancialError.invalidData("RBI returned non-200")
+        var request = URLRequest(url: url); request.httpMethod = "GET"
+        let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+        do {
+            guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+                throw FinancialError.decodingFailed("\(providerID) response is not an object")
+            }
+            return json
+        } catch let error as FinancialError {
+            throw error
+        } catch {
+            throw FinancialError.decodingFailed("\(providerID): \(error.localizedDescription)")
         }
-        guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
-            throw FinancialError.invalidData("RBI response is not JSON")
-        }
-        return json
     }
 
     private func dateParams(start: String?, end: String?) -> String {
@@ -98,8 +103,9 @@ public actor RBIProvider: FinancialProvider {
     private func checkAvailability() async -> Bool {
         guard let url = URL(string: "\(endpoint)/health") else { return false }
         do {
-            let (_, response) = try await session.data(from: url)
-            return (response as? HTTPURLResponse)?.statusCode == 200
+            var request = URLRequest(url: url); request.httpMethod = "GET"
+            _ = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+            return true
         } catch {
             return false
         }

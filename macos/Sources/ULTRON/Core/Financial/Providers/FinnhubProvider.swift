@@ -9,21 +9,23 @@ public actor FinnhubProvider: FinancialProvider {
 
     private let apiKey: String
     private let session: URLSession
-    private let baseURL = "https://finnhub.io/api/v1"
+    private let baseURL: String
 
     public init(apiKey: String? = nil) {
-        self.apiKey = apiKey ?? APIConfiguration.shared.finnhubKey
-        session = URLSession(configuration: .ephemeral)
+        self.init(apiKey: apiKey ?? SecretManager.shared.finnhubKey, session: URLSession(configuration: .ephemeral), baseURL: "https://finnhub.io/api/v1")
     }
+
+    init(apiKey: String, session: URLSession, baseURL: String = "https://finnhub.io/api/v1") { self.apiKey = apiKey; self.session = session; self.baseURL = baseURL }
 
     public func initialize() async throws {}
     public func healthCheck() async -> HealthStatus { apiKey.isEmpty ? .unhealthy : .healthy }
     public func shutdown() async { session.invalidateAndCancel() }
 
     public func fetchQuote(symbol: String) async throws -> Quote {
-        let url = URL(string: "\(baseURL)/quote?symbol=\(symbol)&token=\(apiKey)")!
-        let (data, _) = try await session.data(from: url)
-        let fq = try JSONDecoder().decode(FinnhubQuote.self, from: data)
+        let url = try ProviderHTTP.makeURL(base: "\(baseURL)/quote", queryItems: [URLQueryItem(name: "symbol", value: symbol), URLQueryItem(name: "token", value: apiKey)])
+        var request = URLRequest(url: url); request.httpMethod = "GET"
+        let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+        let fq = try ProviderHTTP.decode(FinnhubQuote.self, data: data, provider: providerID)
         return Quote(symbol: symbol, price: fq.c, change: fq.d, changePercent: fq.dp, volume: 0, timestamp: Date(), exchange: "", currency: "USD")
     }
 
@@ -31,21 +33,27 @@ public actor FinnhubProvider: FinancialProvider {
         let resolution = rangeToResolution(range)
         let to = Int(Date().timeIntervalSince1970)
         let from = to - (resolution == "D" ? 86400 * 30 : 3600)
-        let url = URL(string: "\(baseURL)/stock/candle?symbol=\(symbol)&resolution=\(resolution)&from=\(from)&to=\(to)&token=\(apiKey)")!
-        let (data, _) = try await session.data(from: url)
-        let result = try JSONDecoder().decode(FinnhubCandles.self, from: data)
+        let url = try ProviderHTTP.makeURL(base: "\(baseURL)/stock/candle", queryItems: [URLQueryItem(name: "symbol", value: symbol), URLQueryItem(name: "resolution", value: resolution), URLQueryItem(name: "from", value: "\(from)"), URLQueryItem(name: "to", value: "\(to)"), URLQueryItem(name: "token", value: apiKey)])
+        var request = URLRequest(url: url); request.httpMethod = "GET"
+        let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+        let result = try ProviderHTTP.decode(FinnhubCandles.self, data: data, provider: providerID)
         guard result.s == "ok" else { throw FinancialError.invalidData("Finnhub: \(result.s)") }
+        guard let timestamps = result.t, let opens = result.o, let highs = result.h, let lows = result.l, let closes = result.c,
+              timestamps.count == opens.count, opens.count == highs.count, highs.count == lows.count, lows.count == closes.count else {
+            throw FinancialError.invalidResponse("\(providerID) candle arrays have inconsistent lengths")
+        }
         var bars: [OHLCV] = []
-        for i in 0..<min(result.t?.count ?? 0, result.o?.count ?? 0) {
-            bars.append(OHLCV(symbol: symbol, open: result.o![i], high: result.h![i], low: result.l![i], close: result.c![i], volume: 0, timestamp: Date(timeIntervalSince1970: Double(result.t![i]))))
+        for i in timestamps.indices {
+            bars.append(OHLCV(symbol: symbol, open: opens[i], high: highs[i], low: lows[i], close: closes[i], volume: 0, timestamp: Date(timeIntervalSince1970: Double(timestamps[i]))))
         }
         return bars
     }
 
     public func fetchCompanyProfile(symbol: String) async throws -> CompanyProfile {
-        let url = URL(string: "\(baseURL)/stock/profile2?symbol=\(symbol)&token=\(apiKey)")!
-        let (data, _) = try await session.data(from: url)
-        let p = try JSONDecoder().decode(FinnhubProfile.self, from: data)
+        let url = try ProviderHTTP.makeURL(base: "\(baseURL)/stock/profile2", queryItems: [URLQueryItem(name: "symbol", value: symbol), URLQueryItem(name: "token", value: apiKey)])
+        var request = URLRequest(url: url); request.httpMethod = "GET"
+        let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+        let p = try ProviderHTTP.decode(FinnhubProfile.self, data: data, provider: providerID)
         return CompanyProfile(symbol: symbol, name: p.name, exchange: p.exchange, sector: p.finnhubIndustry, marketCap: p.marketCapitalization * 1_000_000, country: p.country, currency: p.currency, website: p.weburl)
     }
 
@@ -56,9 +64,10 @@ public actor FinnhubProvider: FinancialProvider {
         for sym in symbols.prefix(3) {
             let from = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-7 * 86400))
             let to = ISO8601DateFormatter().string(from: Date())
-            let url = URL(string: "\(baseURL)/company-news?symbol=\(sym)&from=\(from)&to=\(to)&token=\(apiKey)")!
-            let (data, _) = try await session.data(from: url)
-            let items = (try? JSONDecoder().decode([FinnhubNewsItem].self, from: data)) ?? []
+            let url = try ProviderHTTP.makeURL(base: "\(baseURL)/company-news", queryItems: [URLQueryItem(name: "symbol", value: sym), URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to), URLQueryItem(name: "token", value: apiKey)])
+            var request = URLRequest(url: url); request.httpMethod = "GET"
+            let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+            let items = try ProviderHTTP.decode([FinnhubNewsItem].self, data: data, provider: providerID)
             for item in items.prefix(5) {
                 results.append(NewsArticle(title: item.headline, summary: item.summary, source: item.source, url: item.url, publishedAt: Date(timeIntervalSince1970: Double(item.datetime)), relatedSymbols: [sym]))
             }

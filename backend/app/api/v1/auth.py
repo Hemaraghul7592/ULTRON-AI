@@ -4,7 +4,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.database import get_session
+from app.core.config import get_settings
 from app.core.security import decode_access_token
+from app.core.exceptions import ForbiddenHTTP
 from app.schemas.auth import TokenResponse, UserCreate, UserLogin
 from app.services.auth_service import AuthService
 
@@ -27,6 +29,14 @@ async def verify_token(
             detail="Invalid token: missing user_id",
         )
     return payload
+
+
+async def require_admin(user: dict = Depends(verify_token)) -> dict:
+    settings = get_settings()
+    user_id = str(user.get("user_id", ""))
+    if user.get("role") != "admin" or user_id not in settings.ADMIN_USER_IDS:
+        raise ForbiddenHTTP("Administrator permission required")
+    return user
 
 
 @router.post("/login", response_model=TokenResponse)

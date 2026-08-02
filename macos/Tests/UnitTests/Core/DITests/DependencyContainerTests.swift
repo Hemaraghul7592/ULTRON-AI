@@ -127,7 +127,7 @@ private struct DependentService {
             factory: { _ in TestService(value: "cached") }
         )
         let service = TestService(value: "instance")
-        var record = ServiceRecord(registration: reg, index: 1, cachedInstance: service)
+        let record = ServiceRecord(registration: reg, index: 1, cachedInstance: service)
 
         #expect(record.cachedInstance != nil)
         let retrieved = record.cachedInstance as? TestService
@@ -486,7 +486,7 @@ private final class MockResolver: Resolver {
             _ = try await container._resolve(TestService.self)
             Issue.record("Expected .factoryFailed error")
         } catch let error as ContainerError {
-            if case .factoryFailed(let typeName, let underlying) = error {
+            if case .factoryFailed(_, let underlying) = error {
                 let nsError = underlying as NSError
                 #expect(nsError.domain == "test")
                 #expect(nsError.code == 42)

@@ -146,7 +146,7 @@ import Testing
         #expect(order.values == ["start:First", "start:Second", "start:Third"])
     }
 
-    @Test("Duplicate registration executes hook once per registration")
+    @Test("Duplicate registration executes hook once")
     func testDuplicateRegistration() async throws {
         let order = ExecutionOrder()
         let sequence = StartupSequence()
@@ -157,7 +157,7 @@ import Testing
 
         try await sequence.execute()
 
-        #expect(order.values == ["start:Dupe", "start:Dupe"])
+        #expect(order.values == ["start:Dupe"])
     }
 
     @Test("Batch registration works correctly")
@@ -188,14 +188,17 @@ import Testing
         do {
             try await sequence.execute()
             Issue.record("Expected startup sequence to throw")
+        } catch let error as StartupSequence.StartupError {
+            if case .hookFailures(let errors) = error {
+                #expect(errors.count == 1)
+            }
         } catch {
-            let nsError = error as NSError
-            #expect(nsError.domain == "ULTRONTests")
+            Issue.record("Unexpected error: \(error)")
         }
     }
 
-    @Test("Startup sequence stops at first failure — later hooks not called")
-    func testStartupStopsAtFirstFailure() async {
+    @Test("Startup sequence continues after failure and aggregates errors")
+    func testStartupContinuesAfterFailure() async {
         let order = ExecutionOrder()
         let sequence = StartupSequence()
 
@@ -204,11 +207,11 @@ import Testing
 
         do {
             try await sequence.execute()
-        } catch {
-            // Expected — the second hook should never have been called.
-        }
+        } catch let error as StartupSequence.StartupError {
+            if case .hookFailures(let errors) = error { #expect(errors.count == 1) }
+        } catch { Issue.record("Unexpected error: \(error)") }
 
-        #expect(order.values.isEmpty)
+        #expect(order.values == ["start:NeverCalled"])
     }
 
     @Test("Empty startup sequence does not throw")
@@ -300,7 +303,7 @@ import Testing
         #expect(order.values == ["stop:X", "stop:Y"])
     }
 
-    @Test("Duplicate shutdown hooks execute once per registration")
+    @Test("Duplicate shutdown hooks execute once")
     func testShutdownDuplicateRegistration() async {
         let order = ExecutionOrder()
         let sequence = ShutdownSequence()
@@ -311,7 +314,7 @@ import Testing
 
         await sequence.execute()
 
-        #expect(order.values == ["stop:ShutdownDupe", "stop:ShutdownDupe"])
+        #expect(order.values == ["stop:ShutdownDupe"])
     }
 
     @Test("Shutdown covers all registered hooks regardless of errors")

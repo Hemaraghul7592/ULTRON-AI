@@ -112,7 +112,7 @@ class PluginManager:
                 return {"plugin": plugin_name, **health}
             except Exception as e:
                 self._statuses[plugin_name] = PluginStatus.ERROR
-                return {"plugin": plugin_name, "status": PluginStatus.ERROR, "error": str(e)}
+                return {"plugin": plugin_name, "status": PluginStatus.ERROR, "error": "Plugin health check failed"}
         else:
             results: dict[str, Any] = {
                 "healthy": 0,
@@ -137,13 +137,14 @@ class PluginManager:
                     results["unavailable"] += 1
                     results["plugins"][plugin.name] = {
                         "status": PluginStatus.ERROR,
-                        "error": str(e),
+                        "error": "Plugin health check failed",
                     }
             return results
 
     async def execute_tool(
         self,
         tool_name: str,
+        user_id: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         plugin_name = self._find_plugin_for_tool(tool_name)
@@ -167,6 +168,8 @@ class PluginManager:
                     plugin_name=plugin_name,
                 )
 
+            if user_id is not None:
+                kwargs["user_id"] = user_id
             result = await tool.execute(**kwargs)
             self._statuses[plugin_name] = PluginStatus.AVAILABLE
             return success_response(
@@ -184,10 +187,11 @@ class PluginManager:
     async def execute_tool_safe(
         self,
         tool_name: str,
+        user_id: str | None = None,
         **kwargs: Any,
     ) -> dict[str, Any]:
         try:
-            return await self.execute_tool(tool_name, **kwargs)
+            return await self.execute_tool(tool_name, user_id=user_id, **kwargs)
         except PluginNotFoundError as e:
             return error_response(e, tool_name=tool_name)
         except PluginAuthError as e:

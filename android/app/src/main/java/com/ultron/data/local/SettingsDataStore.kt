@@ -16,6 +16,7 @@ private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(na
 
 class SettingsDataStore @Inject constructor(
     private val context: Context,
+    private val secureTokenStore: SecureTokenStore,
 ) {
     private object Keys {
         val SERVER_URL = stringPreferencesKey("server_url")
@@ -28,7 +29,6 @@ class SettingsDataStore @Inject constructor(
         val DEFAULT_MODEL = stringPreferencesKey("default_model")
         val DEFAULT_PROVIDER = stringPreferencesKey("default_provider")
         val ONBOARDING_COMPLETE = booleanPreferencesKey("onboarding_complete")
-        val ACCESS_TOKEN = stringPreferencesKey("access_token")
     }
 
     val serverUrl: Flow<String> = context.dataStore.data.map { it[Keys.SERVER_URL] ?: ApiConfig.DEFAULT_BASE_URL }
@@ -41,7 +41,7 @@ class SettingsDataStore @Inject constructor(
     val defaultModel: Flow<String> = context.dataStore.data.map { it[Keys.DEFAULT_MODEL] ?: "llama-3.3-70b-versatile" }
     val defaultProvider: Flow<String> = context.dataStore.data.map { it[Keys.DEFAULT_PROVIDER] ?: "groq" }
     val onboardingComplete: Flow<Boolean> = context.dataStore.data.map { it[Keys.ONBOARDING_COMPLETE] ?: false }
-    val accessToken: Flow<String> = context.dataStore.data.map { it[Keys.ACCESS_TOKEN] ?: "" }
+    val accessToken: Flow<String> = secureTokenStore.token
 
     suspend fun setServerUrl(url: String) {
         context.dataStore.edit { it[Keys.SERVER_URL] = url }
@@ -84,6 +84,6 @@ class SettingsDataStore @Inject constructor(
     }
 
     suspend fun setAccessToken(token: String) {
-        context.dataStore.edit { it[Keys.ACCESS_TOKEN] = token }
+        secureTokenStore.set(token)
     }
 }

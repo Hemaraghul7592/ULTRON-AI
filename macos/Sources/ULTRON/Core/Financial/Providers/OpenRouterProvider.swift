@@ -11,7 +11,7 @@ public actor OpenRouterProvider: FinancialProvider {
     private let session: URLSession
 
     public init(apiKey: String? = nil) {
-        self.apiKey = apiKey ?? APIConfiguration.shared.openRouterKey
+        self.apiKey = apiKey ?? SecretManager.shared.openRouterKey
         session = URLSession(configuration: .ephemeral)
     }
 

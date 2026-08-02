@@ -108,14 +108,14 @@ import Testing
 
     @Test("Engine search") func testEngineSearch() async {
         let engine = SEBIEngine(logger: Logger(configuration: .init(minimumLevel: .error)))
-        await engine.ingest(SEBIFiling(company: "TCS", symbol: "TCS", category: .quarterlyResult, title: "Results", parsedContent: "revenue growth"))
+        _ = await engine.ingest(SEBIFiling(company: "TCS", symbol: "TCS", category: .quarterlyResult, title: "Results", parsedContent: "revenue growth"))
         #expect(await engine.search(keyword: "revenue").count == 1)
     }
 
     @Test("Engine filing stats") func testEngineStats() async {
         let engine = SEBIEngine(logger: Logger(configuration: .init(minimumLevel: .error)))
-        await engine.ingest(SEBIFiling(company: "A", symbol: "A", category: .quarterlyResult, title: "Q1"))
-        await engine.ingest(SEBIFiling(company: "B", symbol: "B", category: .dividend, title: "Div"))
+        _ = await engine.ingest(SEBIFiling(company: "A", symbol: "A", category: .quarterlyResult, title: "Q1"))
+        _ = await engine.ingest(SEBIFiling(company: "B", symbol: "B", category: .dividend, title: "Div"))
         let stats = await engine.filingStats()
         #expect(!stats.isEmpty)
     }
@@ -123,16 +123,16 @@ import Testing
     @Test("Engine timeline data") func testEngineTimeline() async {
         let engine = SEBIEngine(logger: Logger(configuration: .init(minimumLevel: .error)))
         let now = Date()
-        await engine.ingest(SEBIFiling(company: "TCS", symbol: "TCS", category: .quarterlyResult, title: "Q4", date: now))
-        await engine.ingest(SEBIFiling(company: "INFY", symbol: "INFY", category: .annualReport, title: "AR", date: now.addingTimeInterval(-86400)))
+        _ = await engine.ingest(SEBIFiling(company: "TCS", symbol: "TCS", category: .quarterlyResult, title: "Q4", date: now))
+        _ = await engine.ingest(SEBIFiling(company: "INFY", symbol: "INFY", category: .annualReport, title: "AR", date: now.addingTimeInterval(-86400)))
         let timeline = await engine.timelineData(from: now.addingTimeInterval(-100000), to: now.addingTimeInterval(1))
         #expect(timeline.count == 2)
     }
 
     @Test("Engine relevant to portfolio") func testEnginePortfolio() async {
         let engine = SEBIEngine(logger: Logger(configuration: .init(minimumLevel: .error)))
-        await engine.ingest(SEBIFiling(company: "TCS", symbol: "TCS", category: .dividend, title: "Dividend"))
-        await engine.ingest(SEBIFiling(company: "INFY", symbol: "INFY", category: .quarterlyResult, title: "Q3"))
+        _ = await engine.ingest(SEBIFiling(company: "TCS", symbol: "TCS", category: .dividend, title: "Dividend"))
+        _ = await engine.ingest(SEBIFiling(company: "INFY", symbol: "INFY", category: .quarterlyResult, title: "Q3"))
         let relevant = await engine.relevantToPortfolio(symbols: ["TCS"])
         #expect(relevant.count == 1)
     }

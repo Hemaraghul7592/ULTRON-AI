@@ -11,6 +11,7 @@ from app.ai.prompt_builder import PromptBuilder
 from app.ai.service import AIService
 from app.ai.tool_executor import ToolExecutor
 from app.core.config import get_settings
+from app.core.exceptions import NotFoundException
 from app.core.logging import get_logger
 from app.memory.service import MemoryService
 from app.repositories.conversation_repo import ConversationRepository
@@ -53,6 +54,9 @@ class ChatService:
 
         history = []
         if request.conversation_id:
+            conversation = await self.conversation_repo.get(conversation_id, user_id)
+            if conversation is None:
+                raise NotFoundException("Conversation", conversation_id)
             messages = await self.conversation_repo.get_recent_messages(
                 conversation_id, user_id, limit=20
             )
@@ -101,7 +105,7 @@ class ChatService:
                         arguments=tc["arguments"],
                     )
                 )
-                exec_result = await self.tool_executor.execute(tc)
+                exec_result = await self.tool_executor.execute(tc, user_id=user_id)
                 tool_results.append(
                     ToolResult(
                         tool_call_id=exec_result["tool_call_id"],
@@ -194,6 +198,9 @@ class ChatService:
 
         history = []
         if request.conversation_id:
+            conversation = await self.conversation_repo.get(conversation_id, user_id)
+            if conversation is None:
+                raise NotFoundException("Conversation", conversation_id)
             messages = await self.conversation_repo.get_recent_messages(
                 conversation_id, user_id, limit=20
             )

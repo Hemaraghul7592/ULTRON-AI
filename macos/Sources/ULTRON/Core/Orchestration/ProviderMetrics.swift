@@ -13,6 +13,16 @@ public struct ProviderMetrics: Sendable {
     public var successfulRequests: Int = 0
     public var failedRequests: Int = 0
 
+    // MARK: - Routing
+
+    public var selectedCount: Int = 0
+    public var skippedCount: Int = 0
+    public var capabilityMismatchCount: Int = 0
+    public var healthFailureCount: Int = 0
+    public var circuitOpenCount: Int = 0
+    public var successfulFailoverCount: Int = 0
+    public var finalFailureCount: Int = 0
+
     // MARK: - Consecutive Tracking
 
     public var consecutiveFailures: Int = 0
@@ -73,6 +83,14 @@ public struct ProviderMetrics: Sendable {
         lastFailureAt = Date()
         lastErrorMessage = error
     }
+
+    public mutating func recordSelected() { selectedCount += 1 }
+    public mutating func recordSkipped() { skippedCount += 1 }
+    public mutating func recordCapabilityMismatch() { capabilityMismatchCount += 1 }
+    public mutating func recordHealthFailure() { healthFailureCount += 1 }
+    public mutating func recordCircuitOpen() { circuitOpenCount += 1 }
+    public mutating func recordSuccessfulFailover() { successfulFailoverCount += 1 }
+    public mutating func recordFinalFailure() { finalFailureCount += 1 }
 
     public mutating func enterCooldown(until: Date) {
         cooldownUntil = until

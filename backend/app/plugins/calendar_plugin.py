@@ -82,7 +82,7 @@ class CalendarListTool(BaseTool):
                 results.append(line)
             return "\n".join(results)
         except Exception as e:
-            return f"Calendar error: {e}"
+            return "Calendar operation failed"
 
     async def close(self) -> None:
         if self._client:
@@ -154,7 +154,7 @@ class CalendarCreateTool(BaseTool):
             data = resp.json()
             return f"Created event: {data.get('summary', summary)} at {data.get('htmlLink', '')}"
         except Exception as e:
-            return f"Calendar create error: {e}"
+            return "Calendar creation failed"
 
     async def close(self) -> None:
         if self._client:

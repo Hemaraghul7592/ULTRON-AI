@@ -106,7 +106,7 @@ public actor Logger {
             level: level,
             message: message,
             subsystem: configuration.subsystem,
-            metadata: metadata,
+            metadata: SecretManager.redactedMetadata(metadata),
             sourceFile: configuration.captureSourceLocation ? sourceFile : "",
             sourceFunction: configuration.captureSourceLocation ? sourceFunction : "",
             sourceLine: configuration.captureSourceLocation ? sourceLine : 0,

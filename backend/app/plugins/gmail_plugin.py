@@ -74,7 +74,7 @@ class GmailSearchTool(BaseTool):
                     results.append(f"- {subject} from {sender}")
             return "\n".join(results)
         except Exception as e:
-            return f"Gmail search error: {e}"
+            return "Gmail search failed"
 
     async def close(self) -> None:
         if self._client:
@@ -131,7 +131,7 @@ class GmailReadTool(BaseTool):
             body = self._extract_body(msg.get("payload", {}))
             return f"From: {sender}\nDate: {date}\nSubject: {subject}\n\n{body[:5000]}"
         except Exception as e:
-            return f"Gmail read error: {e}"
+            return "Gmail read failed"
 
     def _extract_body(self, payload: dict) -> str:
         if "body" in payload and payload["body"].get("data"):

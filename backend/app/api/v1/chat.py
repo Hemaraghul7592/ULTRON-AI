@@ -23,8 +23,8 @@ def _get_pm_from_request(http_request: Request) -> PluginManager | None:
 @router.post("", response_model=ChatResponse)
 async def chat(
     body: ChatRequest,
+    http_request: Request,
     user: dict = Depends(verify_token),
-    http_request: Request = Depends(lambda r: r),
 ) -> ChatResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -40,8 +40,8 @@ async def chat(
 @router.post("/stream")
 async def chat_stream(
     body: ChatRequest,
+    http_request: Request,
     user: dict = Depends(verify_token),
-    http_request: Request = Depends(lambda r: r),
 ) -> StreamingResponse:
     user_id = user["user_id"]
     session_factory = get_session()

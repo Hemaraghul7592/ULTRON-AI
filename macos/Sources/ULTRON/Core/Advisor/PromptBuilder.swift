@@ -33,6 +33,20 @@ public struct PromptBuilder: Sendable {
             for n in request.news.prefix(3) { context += "- \(n.title) (\(n.source))\n" }
         }
 
+        if !request.technicalData.isEmpty {
+            context += "\nTECHNICAL DATA:\n"
+            for (key, value) in request.technicalData.sorted(by: { $0.key < $1.key }) {
+                context += "- \(key): \(String(describing: value))\n"
+            }
+        }
+
+        if !request.fundamentalData.isEmpty {
+            context += "\nFUNDAMENTAL DATA:\n"
+            for (key, value) in request.fundamentalData.sorted(by: { $0.key < $1.key }) {
+                context += "- \(key): \(String(describing: value))\n"
+            }
+        }
+
         if !request.economicContext.isEmpty { context += "\nECONOMIC CONTEXT:\n\(request.economicContext)\n" }
 
         var historyText = ""

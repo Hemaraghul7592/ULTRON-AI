@@ -6,15 +6,15 @@ from pydantic import BaseModel, Field
 
 
 class ConversationCreate(BaseModel):
-    title: str | None = None
-    model: str | None = None
-    system_prompt: str | None = None
+    title: str | None = Field(default=None, max_length=255)
+    model: str | None = Field(default=None, max_length=100)
+    system_prompt: str | None = Field(default=None, max_length=10000)
 
 
 class ConversationUpdate(BaseModel):
-    title: str | None = None
-    model: str | None = None
-    system_prompt: str | None = None
+    title: str | None = Field(default=None, max_length=255)
+    model: str | None = Field(default=None, max_length=100)
+    system_prompt: str | None = Field(default=None, max_length=10000)
 
 
 class MessageCreate(BaseModel):

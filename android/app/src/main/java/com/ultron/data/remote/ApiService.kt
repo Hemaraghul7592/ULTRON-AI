@@ -9,6 +9,17 @@ import retrofit2.http.PATCH
 import retrofit2.http.Path
 import retrofit2.http.Query
 
+data class AuthRequest(
+    val username: String,
+    val password: String,
+)
+
+data class AuthResponse(
+    val access_token: String,
+    val token_type: String = "bearer",
+    val expires_in: Int,
+)
+
 data class ChatRequest(
     val message: String,
     val conversation_id: String? = null,
@@ -151,6 +162,12 @@ data class DashboardResponse(
 )
 
 interface ApiService {
+    @POST("auth/login")
+    suspend fun login(@Body request: AuthRequest): Response<AuthResponse>
+
+    @POST("auth/register")
+    suspend fun register(@Body request: AuthRequest): Response<AuthResponse>
+
     @POST("chat")
     suspend fun chat(@Body request: ChatRequest): Response<ChatResponse>
 

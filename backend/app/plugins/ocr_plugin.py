@@ -80,7 +80,7 @@ class OCRSpaceTool(BaseTool):
 
             return "\n".join(texts)[:10000]
         except Exception as e:
-            return f"OCR error: {e}"
+            return "OCR failed"
 
 
 class ImageReadTool(BaseTool):
@@ -145,7 +145,7 @@ class ImageReadTool(BaseTool):
             texts = [r.get("ParsedText", "") for r in parsed if r.get("ParsedText")]
             return "\n".join(texts)[:10000]
         except Exception as e:
-            return f"Image read error: {e}"
+            return "Image read failed"
 
 
 class Plugin(BasePlugin):

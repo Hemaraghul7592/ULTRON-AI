@@ -205,7 +205,7 @@ private actor MockFinancialProvider: FinancialProvider {
             _ = try await engine.fetchQuote(symbol: "AAPL")
             Issue.record("Expected throw")
         } catch let e as FinancialError {
-            if case .symbolNotFound = e {} else { Issue.record("Wrong error: \(e)") }
+            if case .providerNotAvailable = e {} else { Issue.record("Wrong error: \(e)") }
         } catch { Issue.record("Unexpected: \(error)") }
     }
 

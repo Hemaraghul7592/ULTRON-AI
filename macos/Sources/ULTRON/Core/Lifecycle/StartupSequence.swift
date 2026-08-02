@@ -19,6 +19,13 @@
 @MainActor
 public final class StartupSequence {
 
+    public enum State: Equatable, Sendable {
+        case idle
+        case running
+        case completed
+        case failed
+    }
+
     // MARK: - State
 
     /// The list of registered hooks, sorted by (phase, priority, registration order).
@@ -26,6 +33,8 @@ public final class StartupSequence {
 
     /// The current phase during execution, for diagnostic purposes.
     public private(set) var currentPhase: StartupPhase = .configuration
+    public private(set) var state: State = .idle
+    private var executionTask: Task<Void, Error>?
 
     // MARK: - Registration
 
@@ -37,6 +46,7 @@ public final class StartupSequence {
     ///
     /// - Parameter hook: The hook to register.
     public func register(_ hook: any LifecycleHook) {
+        guard !hooks.contains(where: { $0.id == hook.id }) else { return }
         hooks.append(hook)
         sortHooks()
     }
@@ -44,7 +54,9 @@ public final class StartupSequence {
     /// Registers multiple hooks at once. Equivalent to calling
     /// `register(_:)` for each hook, then sorting once.
     public func register(_ newHooks: [any LifecycleHook]) {
-        hooks.append(contentsOf: newHooks)
+        for hook in newHooks where !hooks.contains(where: { $0.id == hook.id }) {
+            hooks.append(hook)
+        }
         sortHooks()
     }
 
@@ -70,9 +82,51 @@ public final class StartupSequence {
     ///
     /// - Throws: The error from the first hook that fails.
     public func execute() async throws {
-        for hook in hooks {
-            currentPhase = hook.phase
-            try await hook.onStartup()
+        if state == .completed { return }
+        if let executionTask {
+            try await executionTask.value
+            return
+        }
+        state = .running
+        let task = Task { @MainActor [weak self] in
+            guard let self else { return }
+            var failures: [Error] = []
+            for hook in hooks {
+                currentPhase = hook.phase
+                do {
+                    try await hook.onStartup()
+                } catch {
+                    failures.append(error)
+                }
+            }
+            if !failures.isEmpty { throw StartupError.hookFailures(failures) }
+        }
+        executionTask = task
+        do {
+            try await task.value
+            state = .completed
+            executionTask = nil
+        } catch {
+            state = .failed
+            executionTask = nil
+            throw error
+        }
+    }
+
+    public func resetAfterFailure() {
+        guard state == .failed else { return }
+        state = .idle
+        currentPhase = .configuration
+    }
+
+    public enum StartupError: Error, CustomStringConvertible {
+        case hookFailures([Error])
+
+        public var description: String {
+            switch self {
+            case .hookFailures(let errors):
+                "Startup failed in \(errors.count) hook(s): " + errors.map { $0.localizedDescription }.joined(separator: "; ")
+            }
         }
     }
 

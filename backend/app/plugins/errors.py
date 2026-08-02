@@ -81,9 +81,18 @@ def error_response(
 ) -> dict[str, Any]:
     normalized = normalize_error(error, plugin_name)
     error_type = type(normalized).__name__
+    public_messages = {
+        PluginNotFoundError: str(normalized),
+        PluginAuthError: "Plugin authorization failed",
+        PluginRateLimitError: "Plugin rate limit exceeded",
+        PluginTimeoutError: "Plugin timed out",
+        PluginUnavailableError: "Plugin unavailable",
+        PluginConfigError: "Plugin configuration error",
+        PluginExecutionError: "Tool execution failed",
+    }
     return {
         "success": False,
-        "error": str(normalized),
+        "error": public_messages.get(type(normalized), "Tool execution failed"),
         "error_type": error_type,
         "plugin": plugin_name,
         "tool": tool_name,

@@ -13,8 +13,8 @@ public actor HackerEarthProvider: FinancialProvider {
     private let session: URLSession
 
     public init(clientID: String? = nil, secret: String? = nil) {
-        self.clientID = clientID ?? APIConfiguration.shared.hackerEarthKey
-        self.secret = secret ?? APIConfiguration.shared.hackerEarthSecret
+        self.clientID = clientID ?? SecretManager.shared.hackerEarthKey
+        self.secret = secret ?? SecretManager.shared.hackerEarthSecret
         session = URLSession(configuration: .ephemeral)
     }
 

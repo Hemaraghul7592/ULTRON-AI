@@ -9,6 +9,10 @@ public struct ChartPoint: Sendable, Codable, Identifiable {
     public let secondary: Double?
     public let timestamp: Date?
 
+    private enum CodingKeys: String, CodingKey {
+        case label, value, secondary, timestamp
+    }
+
     public init(label: String, value: Double, secondary: Double? = nil, timestamp: Date? = nil) {
         self.label = label; self.value = value; self.secondary = secondary; self.timestamp = timestamp
     }
@@ -18,6 +22,10 @@ public struct CandlestickPoint: Sendable, Codable, Identifiable {
     public let id = UUID()
     public let label: String; public let timestamp: Date
     public let open: Double; public let high: Double; public let low: Double; public let close: Double; public let volume: Int64
+
+    private enum CodingKeys: String, CodingKey {
+        case label, timestamp, open, high, low, close, volume
+    }
     public init(label: String = "", timestamp: Date, open: Double, high: Double, low: Double, close: Double, volume: Int64 = 0) {
         self.label = label; self.timestamp = timestamp; self.open = open; self.high = high; self.low = low; self.close = close; self.volume = volume
     }
@@ -35,6 +43,10 @@ public struct ChartData: Sendable, Codable, Identifiable {
     public let points: [ChartPoint]; public let candlesticks: [CandlestickPoint]
     public let segments: [SegmentData]; public let xLabel: String; public let yLabel: String
 
+    private enum CodingKeys: String, CodingKey {
+        case title, type, points, candlesticks, segments, xLabel, yLabel
+    }
+
     public init(title: String, type: ChartType = .line, points: [ChartPoint] = [], candlesticks: [CandlestickPoint] = [], segments: [SegmentData] = [], xLabel: String = "", yLabel: String = "") {
         self.title = title; self.type = type; self.points = points; self.candlesticks = candlesticks
         self.segments = segments; self.xLabel = xLabel; self.yLabel = yLabel
@@ -50,6 +62,10 @@ public struct SegmentData: Sendable, Codable {
 
 public struct Dashboard: Sendable, Codable, Identifiable {
     public let id = UUID(); public let title: String; public let charts: [ChartData]; public let timestamp: Date
+
+    private enum CodingKeys: String, CodingKey {
+        case title, charts, timestamp
+    }
     public init(title: String, charts: [ChartData] = [], timestamp: Date = Date()) { self.title = title; self.charts = charts; self.timestamp = timestamp }
 }
 

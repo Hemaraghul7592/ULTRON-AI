@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.api.v1.auth import verify_token
 from app.core.logging import get_logger
@@ -34,18 +34,41 @@ async def get_tool_definitions(
 
 
 class ToolExecuteRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     name: str
-    arguments: dict = {}
+    arguments: dict = Field(default_factory=dict)
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, value: str) -> str:
+        value = value.strip()
+        if not value or len(value) > 200:
+            raise ValueError("Tool name must be between 1 and 200 characters")
+        return value
+
+    @field_validator("arguments")
+    @classmethod
+    def reject_caller_identity(cls, value: dict) -> dict:
+        forbidden = {"user_id", "userId", "user", "owner_id", "ownerId"}
+        if forbidden.intersection(value):
+            raise ValueError("Caller identity must come from authentication")
+        return value
 
 
 @router.post("/execute")
 async def execute_tool(
     request: ToolExecuteRequest,
     pm: PluginManager | None = Depends(_get_plugin_manager),
+    user: dict = Depends(verify_token),
 ) -> dict:
     if pm is None:
         raise HTTPException(status_code=503, detail="Plugin manager not initialized")
-    return await pm.execute_tool_safe(request.name, **request.arguments)
+    return await pm.execute_tool_safe(
+        request.name,
+        user_id=str(user["user_id"]),
+        **request.arguments,
+    )
 
 
 @router.get("/plugins")

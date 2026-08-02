@@ -11,16 +11,18 @@ public actor OllamaProvider: FinancialProvider {
     private let session: URLSession
 
     public init(endpoint: String? = nil) {
-        self.endpoint = endpoint ?? APIConfiguration.shared.ollamaEndpoint
-        session = URLSession(configuration: .ephemeral)
+        self.init(endpoint: endpoint ?? SecretManager.shared.ollamaEndpoint, session: URLSession(configuration: .ephemeral))
     }
+
+    init(endpoint: String, session: URLSession) { self.endpoint = endpoint; self.session = session }
 
     public func initialize() async throws {}
     public func healthCheck() async -> HealthStatus {
         guard let url = URL(string: "\(endpoint)/api/tags") else { return .unhealthy }
         do {
             let (_, resp) = try await session.data(from: url)
-            return (resp as? HTTPURLResponse)?.statusCode == 200 ? .healthy : .unhealthy
+            guard let status = (resp as? HTTPURLResponse)?.statusCode, (200...299).contains(status) else { return .unhealthy }
+            return .healthy
         } catch { return .unhealthy }
     }
     public func shutdown() async { session.invalidateAndCancel() }

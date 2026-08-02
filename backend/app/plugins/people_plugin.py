@@ -80,7 +80,7 @@ class PeopleSearchTool(BaseTool):
                 output.append(line)
             return "\n".join(output)
         except Exception as e:
-            return f"Contacts search error: {e}"
+            return "Contacts search failed"
 
     async def close(self) -> None:
         if self._client:
@@ -150,7 +150,7 @@ class PeopleProfileTool(BaseTool):
                 output.append(f"Photo: {photo_url}")
             return "\n".join(output) if output else "No profile information found"
         except Exception as e:
-            return f"Profile error: {e}"
+            return "Profile lookup failed"
 
     async def close(self) -> None:
         if self._client:

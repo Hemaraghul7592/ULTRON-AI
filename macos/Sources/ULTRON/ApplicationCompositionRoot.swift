@@ -7,7 +7,13 @@ import Foundation
 @MainActor
 public final class ApplicationCompositionRoot {
 
+    public enum Error: Swift.Error, CustomStringConvertible {
+        case notReady
+        public var description: String { "Application services are not ready." }
+    }
+
     public let container: DependencyContainer
+    public private(set) var isReady = false
 
     public init() {
         self.container = DependencyContainer()
@@ -38,9 +44,20 @@ public final class ApplicationCompositionRoot {
         shutdown: ShutdownSequence
     ) {
         let hook = ProviderLifecycleHook(container: container)
+        let persistenceHook = PersistenceLifecycleHook(container: container)
         startup.register(hook)
+        startup.register(persistenceHook)
         shutdown.register(hook)
+        shutdown.register(persistenceHook)
     }
+
+    public func resolve<Service>(_ type: Service.Type) async throws -> Service {
+        guard isReady else { throw Error.notReady }
+        return try await ContainerResolver(container: container).resolve(type)
+    }
+
+    public func markReady() { isReady = true }
+    public func markFailed() { isReady = false }
 
     private func registerConfiguration() {
         container.register(Configuration.self) { _ in Configuration() }
@@ -76,8 +93,11 @@ public final class ApplicationCompositionRoot {
     private func registerRepositories() {
         container.register(SEBIRepository.self) { _ in SEBIRepository() }
         container.register(InMemoryStorage.self) { _ in InMemoryStorage() }
+        container.register(FilePortfolioStorage.self) { _ in FilePortfolioStorage() }
         container.register(InMemoryAlertStorage.self) { _ in InMemoryAlertStorage() }
+        container.register(FileAlertStorage.self) { _ in FileAlertStorage() }
         container.register(AlertManager.self) { _ in AlertManager() }
+        container.register(ConversationMemory.self) { _ in ConversationMemory() }
     }
 
     private func registerCaches() {
@@ -144,10 +164,12 @@ public final class ApplicationCompositionRoot {
             FundamentalAnalysisEngine(config: try await resolver.resolve(FAConfig.self))
         }
         container.register(PortfolioEngine.self) { resolver in
-            PortfolioEngine(
-                storage: try await resolver.resolve(InMemoryStorage.self),
+            let engine = PortfolioEngine(
+                storage: try await resolver.resolve(FilePortfolioStorage.self),
                 logger: try await resolver.resolve(Logger.self)
             )
+            await engine.restorePersistedState()
+            return engine
         }
         container.register(AIAdvisorEngine.self) { resolver in
             let primary = try await resolver.resolve(OpenRouterAdapter.self)
@@ -155,6 +177,7 @@ public final class ApplicationCompositionRoot {
             return AIAdvisorEngine(
                 primary: primary,
                 fallback: fallback,
+                memory: try await resolver.resolve(ConversationMemory.self),
                 logger: try await resolver.resolve(Logger.self)
             )
         }
@@ -162,11 +185,13 @@ public final class ApplicationCompositionRoot {
             VisualizationEngine(logger: try await resolver.resolve(Logger.self))
         }
         container.register(AlertEngine.self) { resolver in
-            AlertEngine(
+            let engine = AlertEngine(
                 manager: try await resolver.resolve(AlertManager.self),
-                storage: try await resolver.resolve(InMemoryAlertStorage.self),
+                storage: try await resolver.resolve(FileAlertStorage.self),
                 logger: try await resolver.resolve(Logger.self)
             )
+            await engine.restorePersistedState()
+            return engine
         }
         container.register(SEBIEngine.self) { resolver in
             SEBIEngine(logger: try await resolver.resolve(Logger.self))
@@ -182,6 +207,54 @@ public final class ApplicationCompositionRoot {
             let provider = try await resolver.resolve(FinnhubProvider.self)
             orchestrator.register(provider, configuration: ProviderConfig(providerID: provider.providerID))
             return orchestrator
+        }
+        container.register(DashboardViewModel.self) { resolver in
+            DashboardViewModel(
+                portfolioEngine: try await resolver.resolve(PortfolioEngine.self),
+                financialEngine: try await resolver.resolve(FinancialEngine.self),
+                alertEngine: try await resolver.resolve(AlertEngine.self),
+                visualizationEngine: try await resolver.resolve(VisualizationEngine.self),
+                advisorEngine: try await resolver.resolve(AIAdvisorEngine.self)
+            )
+        }
+        container.register(PortfolioWorkspaceViewModel.self) { resolver in
+            PortfolioWorkspaceViewModel(
+                portfolioEngine: try await resolver.resolve(PortfolioEngine.self),
+                financialEngine: try await resolver.resolve(FinancialEngine.self),
+                visualizationEngine: try await resolver.resolve(VisualizationEngine.self),
+                advisorEngine: try await resolver.resolve(AIAdvisorEngine.self)
+            )
+        }
+        container.register(MarketWorkspaceViewModel.self) { resolver in
+            MarketWorkspaceViewModel(
+                financialEngine: try await resolver.resolve(FinancialEngine.self),
+                technicalEngine: try await resolver.resolve(TechnicalAnalysisEngine.self),
+                fundamentalEngine: try await resolver.resolve(FundamentalAnalysisEngine.self),
+                visualizationEngine: try await resolver.resolve(VisualizationEngine.self),
+                advisorEngine: try await resolver.resolve(AIAdvisorEngine.self)
+            )
+        }
+        container.register(ResearchWorkspaceViewModel.self) { resolver in
+            ResearchWorkspaceViewModel(
+                financialEngine: try await resolver.resolve(FinancialEngine.self),
+                fundamentalEngine: try await resolver.resolve(FundamentalAnalysisEngine.self),
+                technicalEngine: try await resolver.resolve(TechnicalAnalysisEngine.self),
+                visualizationEngine: try await resolver.resolve(VisualizationEngine.self),
+                advisorEngine: try await resolver.resolve(AIAdvisorEngine.self),
+                portfolioEngine: try await resolver.resolve(PortfolioEngine.self)
+            )
+        }
+        container.register(AIWorkspaceViewModel.self) { resolver in
+            AIWorkspaceViewModel(
+                advisorEngine: try await resolver.resolve(AIAdvisorEngine.self),
+                financialEngine: try await resolver.resolve(FinancialEngine.self),
+                portfolioEngine: try await resolver.resolve(PortfolioEngine.self),
+                technicalEngine: try await resolver.resolve(TechnicalAnalysisEngine.self),
+                fundamentalEngine: try await resolver.resolve(FundamentalAnalysisEngine.self),
+                visualizationEngine: try await resolver.resolve(VisualizationEngine.self),
+                alertEngine: try await resolver.resolve(AlertEngine.self),
+                conversationMemory: try await resolver.resolve(ConversationMemory.self)
+            )
         }
     }
 }
@@ -200,6 +273,17 @@ private struct ProviderLifecycleHook: LifecycleHook {
         let resolver = ContainerResolver(container: container)
         let providers = try await resolver.resolve([any ServiceProvider].self)
         let logger = try await resolver.resolve(Logger.self)
+        let financialEngine = try await resolver.resolve(FinancialEngine.self)
+        let missingProviderConfiguration = SecretKey.allCases
+            .filter { key in
+                key != .ollamaEndpoint && SecretManager.shared.value(for: key).isEmpty
+            }
+            .map(\.rawValue)
+        if !missingProviderConfiguration.isEmpty {
+            await logger.warning("Optional provider configuration is missing", metadata: [
+                "providersWithoutConfiguration": missingProviderConfiguration.joined(separator: ",")
+            ])
+        }
         for provider in providers {
             try await provider.initialize()
             let status = await provider.healthCheck()
@@ -212,6 +296,13 @@ private struct ProviderLifecycleHook: LifecycleHook {
             } else {
                 await logger.warning("Provider startup completed", metadata: metadata)
             }
+            if let financialProvider = provider as? any FinancialProvider {
+                await financialEngine.registerProvider(financialProvider)
+                financialEngine.updateRegistry(
+                    for: financialProvider,
+                    capabilities: financialProvider.financialCapabilities
+                )
+            }
         }
     }
 
@@ -220,6 +311,28 @@ private struct ProviderLifecycleHook: LifecycleHook {
         guard let providers = try? await resolver.resolve([any ServiceProvider].self) else { return }
         for provider in providers.reversed() {
             await provider.shutdown()
+        }
+    }
+}
+
+@MainActor
+private struct PersistenceLifecycleHook: LifecycleHook {
+    let phase: StartupPhase = .applicationState
+    let priority = 10
+    let label = "Persistence Flush"
+    private let container: DependencyContainer
+
+    init(container: DependencyContainer) { self.container = container }
+
+    func onStartup() async throws {}
+
+    func onShutdown() async {
+        let resolver = ContainerResolver(container: container)
+        if let portfolio = try? await resolver.resolve(PortfolioEngine.self) {
+            await portfolio.flushPersistence()
+        }
+        if let alerts = try? await resolver.resolve(AlertEngine.self) {
+            await alerts.flushPersistence()
         }
     }
 }

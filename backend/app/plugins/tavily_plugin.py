@@ -83,7 +83,7 @@ class TavilySearchTool(BaseTool):
                 output.append("\n(Results from cache)")
             return "\n".join(output)
         except Exception as e:
-            return f"Tavily search error: {e}"
+            return "Tavily search failed"
 
 
 class TavilyAnswerTool(BaseTool):
@@ -166,7 +166,7 @@ class TavilyAnswerTool(BaseTool):
                 output.append("\n(Results from cache)")
             return "\n".join(output)
         except Exception as e:
-            return f"Tavily answer error: {e}"
+            return "Tavily answer failed"
 
 
 class Plugin(PluginInterface):
@@ -233,7 +233,7 @@ class Plugin(PluginInterface):
         except Exception as e:
             return {
                 "status": PluginStatus.UNAVAILABLE,
-                "message": str(e),
+                    "message": "Tavily operation failed",
                 "last_check": time.time(),
             }
 

@@ -11,10 +11,32 @@ public final class PortfolioEngine {
     private var watchlists: [Watchlist] = []
     private let storage: PortfolioStorage
     private let logger: Logger
+    private var restorationTask: Task<Void, Never>?
+    private var pendingSave: Task<Void, Never>?
+    private var lastSavedFingerprint: Data?
 
     public init(storage: PortfolioStorage, logger: Logger) {
         self.storage = storage
         self.logger = logger
+        restorationTask = Task { @MainActor [weak self] in
+            await self?.loadPersistedState()
+        }
+    }
+
+    /// Waits for the automatic initialization restore to complete.
+    public func restorePersistedState() async {
+        if let restorationTask {
+            await restorationTask.value
+            self.restorationTask = nil
+        } else {
+            await loadPersistedState()
+        }
+    }
+
+    /// Waits for any queued save to complete. The UI never needs to call this.
+    public func flushPersistence() async {
+        await restorationTask?.value
+        await pendingSave?.value
     }
 
     // MARK: - Portfolios
@@ -22,12 +44,33 @@ public final class PortfolioEngine {
     public func createPortfolio(name: String, description: String = "", cash: Double = 0) -> Portfolio {
         let p = Portfolio(name: name, description: description, cashBalance: cash)
         portfolios.append(p)
+        scheduleSaveIfChanged()
         return p
     }
 
     public func getPortfolio(id: String) -> Portfolio? { portfolios.first { $0.id == id } }
     public func getAllPortfolios() -> [Portfolio] { portfolios }
-    public func deletePortfolio(id: String) { portfolios.removeAll { $0.id == id } }
+    public func deletePortfolio(id: String) {
+        let previousCount = portfolios.count
+        portfolios.removeAll { $0.id == id }
+        if portfolios.count != previousCount { scheduleSaveIfChanged() }
+    }
+
+    public func renamePortfolio(id: String, name: String, description: String? = nil) {
+        guard let idx = portfolios.firstIndex(where: { $0.id == id }) else { return }
+        portfolios[idx].name = name
+        if let description { portfolios[idx].description = description }
+        portfolios[idx].updatedAt = Date()
+        scheduleSaveIfChanged()
+    }
+
+    public func updatePortfolioMetadata(id: String, description: String? = nil, currency: String? = nil) {
+        guard let idx = portfolios.firstIndex(where: { $0.id == id }) else { return }
+        if let description { portfolios[idx].description = description }
+        if let currency { portfolios[idx].currency = currency }
+        portfolios[idx].updatedAt = Date()
+        scheduleSaveIfChanged()
+    }
 
     // MARK: - Transactions
 
@@ -77,18 +120,24 @@ public final class PortfolioEngine {
         p.transactions.append(txn)
         p.updatedAt = Date()
         portfolios[idx] = p
+        scheduleSaveIfChanged()
     }
 
     /// Updates current prices for holdings matching the given quotes.
     public func updatePrices(quotes: [String: Double]) {
+        var changed = false
         for i in portfolios.indices {
             for j in portfolios[i].holdings.indices {
                 if let price = quotes[portfolios[i].holdings[j].symbol] {
-                    portfolios[i].holdings[j].currentPrice = price
+                    if portfolios[i].holdings[j].currentPrice != price {
+                        portfolios[i].holdings[j].currentPrice = price
+                        changed = true
+                    }
                 }
             }
-            portfolios[i].updatedAt = Date()
+            if changed { portfolios[i].updatedAt = Date() }
         }
+        if changed { scheduleSaveIfChanged() }
     }
 
     // MARK: - Summary
@@ -113,6 +162,7 @@ public final class PortfolioEngine {
     public func createWatchlist(name: String) -> Watchlist {
         let w = Watchlist(name: name)
         watchlists.append(w)
+        scheduleSaveIfChanged()
         return w
     }
 
@@ -120,15 +170,48 @@ public final class PortfolioEngine {
         guard let idx = watchlists.firstIndex(where: { $0.id == watchlistID }) else { throw PortfolioError.notFound(watchlistID) }
         guard !watchlists[idx].symbols.contains(where: { $0.symbol == symbol }) else { throw PortfolioError.duplicateSymbol(symbol) }
         watchlists[idx].symbols.append(WatchlistItem(symbol: symbol))
+        scheduleSaveIfChanged()
     }
 
     public func removeFromWatchlist(watchlistID: String, symbol: String) {
         guard let idx = watchlists.firstIndex(where: { $0.id == watchlistID }) else { return }
+        let count = watchlists[idx].symbols.count
         watchlists[idx].symbols.removeAll { $0.symbol == symbol }
+        if watchlists[idx].symbols.count != count { scheduleSaveIfChanged() }
     }
 
     public func getWatchlist(id: String) -> Watchlist? { watchlists.first { $0.id == id } }
     public func getAllWatchlists() -> [Watchlist] { watchlists }
+
+    private func loadPersistedState() async {
+        guard let envelope: PortfolioPersistenceEnvelope = try? await storage.load(forKey: "portfolio-state") else {
+            lastSavedFingerprint = fingerprint(for: PortfolioPersistenceEnvelope(portfolios: portfolios, watchlists: watchlists))
+            return
+        }
+        portfolios = envelope.portfolios
+        watchlists = envelope.watchlists
+        lastSavedFingerprint = fingerprint(for: envelope)
+    }
+
+    private func scheduleSaveIfChanged() {
+        let snapshot = PortfolioPersistenceEnvelope(portfolios: portfolios, watchlists: watchlists)
+        let currentFingerprint = fingerprint(for: snapshot)
+        guard currentFingerprint != lastSavedFingerprint else { return }
+        lastSavedFingerprint = currentFingerprint
+        let previous = pendingSave
+        pendingSave = Task { [storage, logger] in
+            await previous?.value
+            do {
+                try await storage.save(snapshot, forKey: "portfolio-state")
+            } catch {
+                await logger.error("Portfolio persistence failed", metadata: ["error": String(describing: error)])
+            }
+        }
+    }
+
+    private func fingerprint(for snapshot: PortfolioPersistenceEnvelope) -> Data? {
+        try? JSONEncoder().encode(snapshot)
+    }
 }
 
 // MARK: - Storage Protocol

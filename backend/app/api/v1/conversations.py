@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Path, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.auth import verify_token
@@ -39,7 +39,7 @@ async def list_conversations(
         repo = ConversationRepository(session)
         conversations, total = await repo.list_all(user_id=user_id, page=page, page_size=page_size)
         conv_ids = [c.id for c in conversations]
-        message_counts = await repo.get_message_counts(conv_ids)
+        message_counts = await repo.get_message_counts(conv_ids, user_id=user_id)
         return ConversationListResponse(
             conversations=[
                 ConversationResponse(
@@ -81,7 +81,7 @@ async def create_conversation(
 
 @router.get("/{conversation_id}", response_model=ConversationDetailResponse)
 async def get_conversation(
-    conversation_id: str, user: dict = Depends(verify_token)
+    conversation_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)
 ) -> ConversationDetailResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -118,8 +118,8 @@ async def get_conversation(
 
 @router.patch("/{conversation_id}", response_model=ConversationResponse)
 async def update_conversation(
-    conversation_id: str,
     data: ConversationUpdate,
+    conversation_id: str = Path(..., min_length=1, max_length=36),
     user: dict = Depends(verify_token),
 ) -> ConversationResponse:
     user_id = user["user_id"]
@@ -145,7 +145,7 @@ async def update_conversation(
 
 
 @router.delete("/{conversation_id}", status_code=204)
-async def delete_conversation(conversation_id: str, user: dict = Depends(verify_token)) -> None:
+async def delete_conversation(conversation_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)) -> None:
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -160,8 +160,8 @@ async def delete_conversation(conversation_id: str, user: dict = Depends(verify_
 
 @router.post("/{conversation_id}/messages", response_model=MessageResponse, status_code=201)
 async def add_message(
-    conversation_id: str,
     data: MessageCreate,
+    conversation_id: str = Path(..., min_length=1, max_length=36),
     user: dict = Depends(verify_token),
 ) -> MessageResponse:
     user_id = user["user_id"]

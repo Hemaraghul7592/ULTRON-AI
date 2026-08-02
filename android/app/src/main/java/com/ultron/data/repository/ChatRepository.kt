@@ -57,7 +57,8 @@ class ChatRepository @Inject constructor(
             )
 
             if (response.isSuccessful) {
-                val body = response.body()!!
+                val body = response.body()
+                    ?: return@withContext Result.failure(IllegalStateException("Empty chat response"))
                 val convId = body.conversation_id.ifEmpty { actualConversationId }
 
                 messageDao.insert(
@@ -77,7 +78,7 @@ class ChatRepository @Inject constructor(
 
                 Result.success(Pair(body.message, convId))
             } else {
-                Result.failure(Exception("API error: ${response.code()} ${response.message()}"))
+                Result.failure(Exception("The chat request failed (${response.code()})"))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -98,7 +99,9 @@ class ChatRepository @Inject constructor(
         try {
             val response = apiService.getConversation(id)
             if (response.isSuccessful) {
-                Result.success(response.body()!!)
+                val body = response.body()
+                    ?: return@withContext Result.failure(IllegalStateException("Empty conversation response"))
+                Result.success(body)
             } else {
                 Result.failure(Exception("Failed to load conversation"))
             }

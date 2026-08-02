@@ -9,11 +9,13 @@ public actor NewsAPIProvider: FinancialProvider {
 
     private let apiKey: String
     private let session: URLSession
+    private let baseURL: String
 
     public init(apiKey: String? = nil) {
-        self.apiKey = apiKey ?? APIConfiguration.shared.newsAPIKey
-        session = URLSession(configuration: .ephemeral)
+        self.init(apiKey: apiKey ?? SecretManager.shared.newsAPIKey, session: URLSession(configuration: .ephemeral), baseURL: "https://newsapi.org/v2")
     }
+
+    init(apiKey: String, session: URLSession, baseURL: String = "https://newsapi.org/v2") { self.apiKey = apiKey; self.session = session; self.baseURL = baseURL }
 
     public func initialize() async throws {}
     public func healthCheck() async -> HealthStatus { apiKey.isEmpty ? .unhealthy : .healthy }
@@ -28,10 +30,10 @@ public actor NewsAPIProvider: FinancialProvider {
         guard !apiKey.isEmpty else { return [] }
         let query = symbols.joined(separator: " OR ")
         let from = ISO8601DateFormatter().string(from: Date().addingTimeInterval(-7 * 86400))
-        let url = URL(string: "https://newsapi.org/v2/everything?q=\(query)&from=\(from)&sortBy=publishedAt&pageSize=10&apiKey=\(apiKey)")!
-        let encoded = url.absoluteString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? url.absoluteString
-        let (data, _) = try await session.data(from: URL(string: encoded) ?? url)
-        let result = try JSONDecoder().decode(NewsAPIResponse.self, from: data)
+        let url = try ProviderHTTP.makeURL(base: "\(baseURL)/everything", queryItems: [URLQueryItem(name: "q", value: query), URLQueryItem(name: "from", value: from), URLQueryItem(name: "sortBy", value: "publishedAt"), URLQueryItem(name: "pageSize", value: "10"), URLQueryItem(name: "apiKey", value: apiKey)])
+        var request = URLRequest(url: url); request.httpMethod = "GET"
+        let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
+        let result = try ProviderHTTP.decode(NewsAPIResponse.self, data: data, provider: providerID)
         return result.articles.map { a in
             NewsArticle(title: a.title, summary: a.description ?? "", source: a.source.name, url: a.url, publishedAt: ISO8601DateFormatter().date(from: a.publishedAt) ?? Date(), relatedSymbols: symbols)
         }

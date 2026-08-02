@@ -2,6 +2,18 @@ import Foundation
 
 /// Maintains conversation history for context-aware responses.
 public actor ConversationMemory {
+    public struct Turn: Sendable {
+        public let userEntryID: String
+        public let assistantEntryID: String
+
+        public init(userEntryID: String, assistantEntryID: String) {
+            self.userEntryID = userEntryID
+            self.assistantEntryID = assistantEntryID
+        }
+    }
+
+    public static let pendingAssistantMessage = "ULTRON is preparing a response."
+
     private var entries: [ConversationEntry] = []
     private let maxEntries: Int
 
@@ -12,9 +24,28 @@ public actor ConversationMemory {
         if entries.count > maxEntries { entries.removeFirst(entries.count - maxEntries) }
     }
 
+    public func beginTurn(question: String) -> Turn {
+        let user = ConversationEntry(role: .user, content: question)
+        let assistant = ConversationEntry(role: .assistant, content: Self.pendingAssistantMessage)
+        entries.append(user)
+        entries.append(assistant)
+        trimToLimit()
+        return Turn(userEntryID: user.id, assistantEntryID: assistant.id)
+    }
+
+    public func update(id: String, content: String) {
+        guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
+        let entry = entries[index]
+        entries[index] = ConversationEntry(id: entry.id, role: entry.role, content: content, timestamp: entry.timestamp, referencedSymbols: entry.referencedSymbols, referencedPortfolio: entry.referencedPortfolio)
+    }
+
     public func recent(_ count: Int = 10) -> [ConversationEntry] { Array(entries.suffix(count)) }
     public func clear() { entries.removeAll() }
     public var count: Int { entries.count }
+
+    private func trimToLimit() {
+        if entries.count > maxEntries { entries.removeFirst(entries.count - maxEntries) }
+    }
 }
 
 /// Generates structured recommendations from portfolio analysis.

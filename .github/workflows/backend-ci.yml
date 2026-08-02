@@ -1,0 +1,38 @@
+name: Backend CI
+
+on:
+  push:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+  pull_request:
+    paths: ["backend/**", ".github/workflows/backend-ci.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install pinned dependencies
+        run: python -m pip install --requirement requirements-dev.lock
+      - name: Run tests
+        run: python -m pytest -q
+      - name: Run lint
+        run: python -m ruff check app tests
+      - name: Build production image
+        run: docker build --tag ultron-backend:${{ github.sha }} .
+      - name: Upload deployment assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-deployment-${{ github.sha }}
+          path: |
+            backend/Dockerfile
+            backend/docker-compose.yml
+            backend/requirements.lock

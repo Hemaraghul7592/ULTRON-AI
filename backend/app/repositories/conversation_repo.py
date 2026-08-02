@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.conversation import Conversation, Message
+from app.core.exceptions import NotFoundException
 from app.schemas.conversation import ConversationCreate, MessageCreate
 
 
@@ -80,6 +81,9 @@ class ConversationRepository:
         user_id: str,
         model: str | None = None,
     ) -> Message:
+        conversation = await self.get(conversation_id, user_id)
+        if conversation is None:
+            raise NotFoundException("Conversation", conversation_id)
         message = Message(
             conversation_id=conversation_id,
             role=data.role,
@@ -87,9 +91,7 @@ class ConversationRepository:
             model=model,
         )
         self.session.add(message)
-        conversation = await self.get(conversation_id, user_id)
-        if conversation:
-            conversation.updated_at = datetime.now(UTC)
+        conversation.updated_at = datetime.now(UTC)
         await self.session.flush()
         return message
 
@@ -102,19 +104,27 @@ class ConversationRepository:
     ) -> list[Message]:
         result = await self.session.execute(
             select(Message)
-            .where(Message.conversation_id == conversation_id)
+            .join(Conversation, Conversation.id == Message.conversation_id)
+            .where(
+                Message.conversation_id == conversation_id,
+                Conversation.user_id == user_id,
+            )
             .order_by(Message.created_at.asc())
             .offset(offset)
             .limit(limit),
         )
         return list(result.scalars().all())
 
-    async def get_message_counts(self, conversation_ids: list[str]) -> dict[str, int]:
+    async def get_message_counts(self, conversation_ids: list[str], user_id: str) -> dict[str, int]:
         if not conversation_ids:
             return {}
         result = await self.session.execute(
             select(Message.conversation_id, func.count(Message.id))
-            .where(Message.conversation_id.in_(conversation_ids))
+            .join(Conversation, Conversation.id == Message.conversation_id)
+            .where(
+                Message.conversation_id.in_(conversation_ids),
+                Conversation.user_id == user_id,
+            )
             .group_by(Message.conversation_id),
         )
         return {row[0]: row[1] for row in result.all()}
@@ -127,7 +137,11 @@ class ConversationRepository:
     ) -> list[Message]:
         subq = (
             select(Message)
-            .where(Message.conversation_id == conversation_id)
+            .join(Conversation, Conversation.id == Message.conversation_id)
+            .where(
+                Message.conversation_id == conversation_id,
+                Conversation.user_id == user_id,
+            )
             .order_by(Message.created_at.desc())
             .limit(limit)
         ).subquery()

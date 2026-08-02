@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
-from app.api.v1.auth import verify_token
+from app.api.v1.auth import require_admin, verify_token
 from app.core.database import get_session
 from app.observability.dashboard import DashboardService
 from app.observability.metrics import MetricsService
@@ -22,7 +22,7 @@ async def get_dashboard(user: dict = Depends(verify_token)) -> dict:
 
 
 @router.get("/metrics")
-async def get_metrics(limit: int = 50) -> list[dict]:
+async def get_metrics(limit: int = Query(50, ge=1, le=500), _: dict = Depends(require_admin)) -> list[dict]:
     session_factory = get_session()
     async with session_factory() as session:
         metrics = MetricsService(session)
@@ -41,7 +41,7 @@ async def get_metrics(limit: int = 50) -> list[dict]:
 
 
 @router.get("/metrics/latency")
-async def get_latency(hours: int = 24) -> dict:
+async def get_latency(hours: int = Query(24, ge=1, le=168), _: dict = Depends(require_admin)) -> dict:
     session_factory = get_session()
     async with session_factory() as session:
         metrics = MetricsService(session)
@@ -49,7 +49,7 @@ async def get_latency(hours: int = 24) -> dict:
 
 
 @router.get("/metrics/tokens")
-async def get_token_usage(hours: int = 24) -> dict:
+async def get_token_usage(hours: int = Query(24, ge=1, le=168), _: dict = Depends(require_admin)) -> dict:
     session_factory = get_session()
     async with session_factory() as session:
         metrics = MetricsService(session)

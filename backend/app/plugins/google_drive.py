@@ -73,7 +73,7 @@ class GoogleDriveSearchTool(BaseTool):
                 )
             return "\n".join(results)
         except Exception as e:
-            return f"Drive search error: {e}"
+            return "Drive search failed"
 
     async def close(self) -> None:
         if self._client:
@@ -145,7 +145,7 @@ class GoogleDriveReadTool(BaseTool):
             content = resp.text
             return f"File: {meta.get('name', file_id)}\n\n{content[:10000]}"
         except Exception as e:
-            return f"File read error: {e}"
+            return "File read failed"
 
     async def close(self) -> None:
         if self._client:

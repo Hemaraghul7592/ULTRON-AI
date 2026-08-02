@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 import Foundation
 
 /// The application delegate for ULTRON.
@@ -18,6 +19,21 @@ import Foundation
 /// when all hooks complete. `applicationWillTerminate` is reserved for
 /// synchronous cleanup only.
 @MainActor
+public final class ApplicationLifecycleState: ObservableObject {
+    public enum Phase: Equatable, Sendable {
+        case idle
+        case starting(StartupPhase)
+        case ready
+        case failed(String)
+        case shuttingDown
+        case terminated
+    }
+
+    @Published public private(set) var phase: Phase = .idle
+    func update(_ phase: Phase) { self.phase = phase }
+}
+
+@MainActor
 public final class AppDelegate: NSObject, NSApplicationDelegate {
 
     /// The composition root owns the application container and all service
@@ -33,6 +49,8 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// The ordered shutdown sequence. Hooks execute in reverse priority
     /// order when the application terminates.
     public let shutdownSequence = ShutdownSequence()
+    public let lifecycleState = ApplicationLifecycleState()
+    private var startupTask: Task<Void, Never>?
 
     public override init() {
         compositionRoot = ApplicationCompositionRoot()
@@ -48,6 +66,7 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// all hooks finish. If any hook throws, the app transitions to
     /// an error state rather than presenting its UI.
     public func applicationWillFinishLaunching(_ notification: Notification) {
+        beginStartup()
     }
 
     /// Called after the application has finished launching.
@@ -56,14 +75,12 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// This is intentionally structured so that startup failures
     /// can be handled before any windows appear.
     public func applicationDidFinishLaunching(_ notification: Notification) {
-        Task { @MainActor in
-            do {
-                try await startupSequence.execute()
-                markStartupComplete()
-            } catch {
-                handleStartupFailure(error)
-            }
-        }
+    }
+
+    public func retryStartup() {
+        guard case .failed = lifecycleState.phase else { return }
+        startupSequence.resetAfterFailure()
+        beginStartup()
     }
 
     /// Called when the application is asked to terminate.
@@ -72,9 +89,11 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
     /// and replies to the termination request once all hooks complete.
     /// This is Apple's recommended pattern for async termination.
     public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+        lifecycleState.update(.shuttingDown)
         Task {
             await shutdownSequence.execute()
             await MainActor.run {
+                self.lifecycleState.update(.terminated)
                 sender.reply(toApplicationShouldTerminate: true)
             }
         }
@@ -111,16 +130,24 @@ public final class AppDelegate: NSObject, NSApplicationDelegate {
         didStartSuccessfully = true
     }
 
+    private func beginStartup() {
+        guard startupTask == nil, lifecycleState.phase != .ready, lifecycleState.phase != .shuttingDown else { return }
+        lifecycleState.update(.starting(.configuration))
+        startupTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            do {
+                try await startupSequence.execute()
+                compositionRoot.markReady()
+                markStartupComplete()
+                lifecycleState.update(.ready)
+            } catch {
+                compositionRoot.markFailed()
+                lifecycleState.update(.failed(error.localizedDescription))
+            }
+            startupTask = nil
+        }
+    }
+
     /// Handles a startup failure by presenting an error and offering
     /// the user the option to terminate the application.
-    private func handleStartupFailure(_ error: Error) {
-        // Future: Present a recovery UI. For now, log and terminate.
-        let alert = NSAlert()
-        alert.messageText = "ULTRON failed to start"
-        alert.informativeText = error.localizedDescription
-        alert.alertStyle = .critical
-        alert.addButton(withTitle: "Quit")
-        alert.runModal()
-        NSApplication.shared.terminate(nil)
-    }
 }

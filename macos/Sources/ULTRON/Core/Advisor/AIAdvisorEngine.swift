@@ -12,6 +12,8 @@ public final class AIAdvisorEngine {
     private let promptBuilder: PromptBuilder
     private let memory: ConversationMemory
     private let logger: Logger
+    private var latestTurn: ConversationMemory.Turn?
+    private var promptsByTurn: [String: (system: String, user: String)] = [:]
 
     public init(
         primary: any LLMProvider,
@@ -29,25 +31,71 @@ public final class AIAdvisorEngine {
 
     /// Processes a financial question and returns an advisor response.
     public func ask(_ request: AdvisorRequest) async -> AdvisorResponse {
+        do {
+            return try await askCancellable(request)
+        } catch {
+            return fallbackResponse()
+        }
+    }
+
+    public func askCancellable(_ request: AdvisorRequest) async throws -> AdvisorResponse {
+        try await perform(request, turn: nil)
+    }
+
+    public func retryCancellable(_ request: AdvisorRequest) async throws -> AdvisorResponse {
+        try await perform(request, turn: nil, promptSource: latestTurn)
+    }
+
+    private func perform(_ request: AdvisorRequest, turn existingTurn: ConversationMemory.Turn?, promptSource: ConversationMemory.Turn? = nil) async throws -> AdvisorResponse {
+        try Task.checkCancellation()
         let history = await memory.recent(10)
-
-        var provider: any LLMProvider
-        if await primaryProvider.isAvailable { provider = primaryProvider }
-        else if await fallbackProvider.isAvailable { provider = fallbackProvider }
-        else { return fallbackResponse(history: history) }
-
-        let (systemPrompt, userPrompt) = promptBuilder.build(request, conversationHistory: history)
+        let turn: ConversationMemory.Turn
+        if let existingTurn {
+            turn = existingTurn
+        } else {
+            turn = await memory.beginTurn(question: request.question)
+        }
+        latestTurn = turn
+        let prompts: (system: String, user: String)
+        if let sourceTurn = existingTurn ?? promptSource, let cached = promptsByTurn[sourceTurn.assistantEntryID] {
+            prompts = cached
+        } else {
+            prompts = promptBuilder.build(request, conversationHistory: history)
+            promptsByTurn[turn.assistantEntryID] = prompts
+        }
 
         do {
-            let raw = try await provider.generate(prompt: userPrompt, systemPrompt: systemPrompt)
-            let response = parseResponse(raw, provider: provider.providerName)
-            await memory.add(role: .user, content: request.question)
-            await memory.add(role: .assistant, content: response.summary)
+            let result = try await generateWithFallback(prompt: prompts.user, systemPrompt: prompts.system)
+            let response = parseResponse(result.text, provider: result.provider)
+            await memory.update(id: turn.assistantEntryID, content: response.summary)
             return response
+        } catch is CancellationError {
+            await memory.update(id: turn.assistantEntryID, content: "The AI request was cancelled.")
+            throw CancellationError()
         } catch {
-            await logger.warning("LLM generation failed, using fallback", metadata: ["error": String(describing: error)])
-            return fallbackResponse(history: history)
+            await memory.update(id: turn.assistantEntryID, content: "The AI request failed. Please try again.")
+            await logger.warning("LLM generation failed", metadata: ["error": String(describing: error)])
+            return fallbackResponse()
         }
+    }
+
+    private func generateWithFallback(prompt: String, systemPrompt: String) async throws -> (text: String, provider: String) {
+        var primaryAttempted = false
+        if await primaryProvider.isAvailable {
+            primaryAttempted = true
+            do {
+                return (try await primaryProvider.generate(prompt: prompt, systemPrompt: systemPrompt), primaryProvider.providerName)
+            } catch is CancellationError {
+                throw CancellationError()
+            } catch {
+                await logger.warning("Primary LLM failed, trying fallback", metadata: ["error": String(describing: error)])
+            }
+        }
+
+        if (!primaryAttempted || primaryProvider.providerID != fallbackProvider.providerID), await fallbackProvider.isAvailable {
+            return (try await fallbackProvider.generate(prompt: prompt, systemPrompt: systemPrompt), fallbackProvider.providerName)
+        }
+        throw LLMError.unavailable("No AI provider is available")
     }
 
     /// Generates recommendations based on portfolio data.
@@ -59,7 +107,11 @@ public final class AIAdvisorEngine {
     public func getHistory() async -> [ConversationEntry] { await memory.recent() }
 
     /// Clears conversation history.
-    public func clearHistory() async { await memory.clear() }
+    public func clearHistory() async {
+        await memory.clear()
+        latestTurn = nil
+        promptsByTurn.removeAll()
+    }
 
     /// Health check for all providers.
     public func healthCheck() async -> (primary: Bool, fallback: Bool) {
@@ -84,7 +136,7 @@ public final class AIAdvisorEngine {
         return AdvisorResponse(summary: summary, analysis: analysis, risks: risks, opportunities: opportunities, supportingData: "", confidence: 0.7, suggestedActions: actions, provider: provider)
     }
 
-    private func fallbackResponse(history: [ConversationEntry]) -> AdvisorResponse {
+    private func fallbackResponse() -> AdvisorResponse {
         AdvisorResponse(
             summary: "I'm currently unable to access my AI providers. Please try again shortly.",
             risks: [], opportunities: [],

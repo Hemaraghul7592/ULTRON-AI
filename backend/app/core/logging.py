@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import logging
+import re
 import sys
+from collections.abc import Mapping
+from typing import Any
 
 import structlog
 
@@ -22,17 +25,42 @@ SENSITIVE_KEYS = {
     "secret_key",
     "encryption_key",
     "credentials",
+    "prompt",
+    "content",
+    "conversation",
+    "email",
+    "username",
+    "user_id",
+    "query",
+    "error",
+    "detail",
+    "traceback",
 }
+
+_BEARER_PATTERN = re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+")
+_SECRET_PATTERN = re.compile(
+    r"(?i)\b(api[_-]?key|access[_-]?token|refresh[_-]?token|secret|password)\s*[:=]\s*[^\s,;]+"
+)
+
+
+def _sanitize_value(key: str, value: Any) -> Any:
+    normalized = key.lower().replace("-", "_").replace(" ", "_")
+    if normalized in SENSITIVE_KEYS:
+        return "***REDACTED***"
+    if isinstance(value, Mapping):
+        return {str(k): _sanitize_value(str(k), v) for k, v in value.items()}
+    if isinstance(value, list | tuple):
+        return [_sanitize_value(key, item) for item in value]
+    if isinstance(value, str):
+        value = _BEARER_PATTERN.sub("Bearer ***REDACTED***", value)
+        value = _SECRET_PATTERN.sub(lambda match: f"{match.group(1)}=***REDACTED***", value)
+        if len(value) > 500:
+            value = value[:500] + "...[truncated]"
+    return value
 
 
 def sanitize_event_dict(logger: logging.Logger, method_name: str, event_dict: dict) -> dict:
-    for key in list(event_dict.keys()):
-        lower_key = key.lower().replace("-", "_").replace(" ", "_")
-        if lower_key in SENSITIVE_KEYS:
-            event_dict[key] = "***REDACTED***"
-        elif isinstance(event_dict[key], str) and len(event_dict[key]) > 500:
-            event_dict[key] = event_dict[key][:500] + "...[truncated]"
-    return event_dict
+    return {str(key): _sanitize_value(str(key), value) for key, value in event_dict.items()}
 
 
 def setup_logging() -> None:

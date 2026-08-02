@@ -8,8 +8,11 @@ import com.ultron.data.local.ConversationDao
 import com.ultron.data.local.MemoryDao
 import com.ultron.data.local.MessageDao
 import com.ultron.data.local.SettingsDataStore
+import com.ultron.data.local.SecureTokenStore
 import com.ultron.data.remote.ApiConfig
 import com.ultron.data.remote.ApiService
+import com.ultron.data.remote.AuthorizationInterceptor
+import com.ultron.data.remote.SessionAuthenticator
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -28,16 +31,22 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideOkHttpClient(): OkHttpClient {
+    fun provideOkHttpClient(
+        authorizationInterceptor: AuthorizationInterceptor,
+        sessionAuthenticator: SessionAuthenticator,
+    ): OkHttpClient {
         val logging = HttpLoggingInterceptor().apply {
-            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.HEADERS
+            level = if (BuildConfig.DEBUG) HttpLoggingInterceptor.Level.BASIC
             else HttpLoggingInterceptor.Level.NONE
         }
         return OkHttpClient.Builder()
+            .addInterceptor(authorizationInterceptor)
             .addInterceptor(logging)
-            .connectTimeout(60, TimeUnit.SECONDS)
-            .readTimeout(120, TimeUnit.SECONDS)
-            .writeTimeout(60, TimeUnit.SECONDS)
+            .authenticator(sessionAuthenticator)
+            .retryOnConnectionFailure(true)
+            .connectTimeout(20, TimeUnit.SECONDS)
+            .readTimeout(60, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
             .build()
     }
 
@@ -45,7 +54,7 @@ object AppModule {
     @Singleton
     fun provideRetrofit(client: OkHttpClient): Retrofit {
         return Retrofit.Builder()
-            .baseUrl("${ApiConfig.DEFAULT_BASE_URL}/${ApiConfig.API_PATH}")
+            .baseUrl("${ApiConfig.validateBaseUrl(ApiConfig.DEFAULT_BASE_URL)}/${ApiConfig.API_PATH}")
             .client(client)
             .addConverterFactory(GsonConverterFactory.create())
             .build()
@@ -65,7 +74,7 @@ object AppModule {
             AppDatabase::class.java,
             "ultron.db"
         )
-            .fallbackToDestructiveMigration()
+            .addMigrations(AppDatabase.MIGRATION_1_2)
             .build()
     }
 
@@ -80,7 +89,10 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideSettingsDataStore(@ApplicationContext context: Context): SettingsDataStore {
-        return SettingsDataStore(context)
+    fun provideSettingsDataStore(
+        @ApplicationContext context: Context,
+        secureTokenStore: SecureTokenStore,
+    ): SettingsDataStore {
+        return SettingsDataStore(context, secureTokenStore)
     }
 }

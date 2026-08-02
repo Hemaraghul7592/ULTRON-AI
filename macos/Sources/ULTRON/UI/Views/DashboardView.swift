@@ -1,81 +1,142 @@
 import SwiftUI
 
-/// Main dashboard showing portfolio summary, market data, alerts and AI insights.
+/// Premium dashboard surface. All data is supplied by `DashboardViewModel`.
 public struct DashboardView: View {
-    @State private var portfolioValue = 0.0
-    @State private var marketSummary = "Loading..."
+    @StateObject private var viewModel: DashboardViewModel
 
-    public init() {}
+    public init(viewModel: DashboardViewModel) {
+        _viewModel = StateObject(wrappedValue: viewModel)
+    }
 
     public var body: some View {
-        ScrollView {
-            VStack(spacing: 16) {
-                HStack(spacing: 12) {
-                    StatCard(title: "Portfolio Value", value: "$\(String(format: "%.0f", portfolioValue))", icon: "briefcase", color: .blue)
-                    StatCard(title: "Market Status", value: marketSummary, icon: "chart.line.uptrend.xyaxis", color: .green)
-                    StatCard(title: "Active Alerts", value: "3", icon: "bell.badge", color: .orange)
-                    StatCard(title: "AI Insights", value: "2 new", icon: "brain.head.profile", color: .purple)
-                }
-                .padding(.horizontal)
+        VStack(alignment: .leading, spacing: 24) {
+            DashboardHeader(
+                marketStatus: viewModel.state.marketStatus,
+                lastUpdated: viewModel.state.lastUpdated,
+                isRefreshing: viewModel.loadingState == .loading,
+                onRefresh: refresh
+            )
 
-                HStack(alignment: .top, spacing: 16) {
-                    VStack(alignment: .leading) {
-                        Text("Recent Activity").font(.headline)
-                        Divider()
-                        RecentActivityRow(title: "Portfolio reviewed", detail: "2 recommendations", time: "5m ago")
-                        RecentActivityRow(title: "Market update", detail: "NIFTY +1.2%", time: "15m ago")
-                        RecentActivityRow(title: "SEBI filing", detail: "TCS Q4 Results", time: "1h ago")
-                        RecentActivityRow(title: "Alert triggered", detail: "AAPL RSI > 70", time: "2h ago")
-                    }
-                    .frame(maxWidth: .infinity)
-
-                    VStack(alignment: .leading) {
-                        Text("AI Recommendations").font(.headline)
-                        Divider()
-                        RecommendationCard(symbol: "TCS", action: "Increase", reason: "Strong fundamentals, promoter buying", confidence: 82)
-                        RecommendationCard(symbol: "INFY", action: "Hold", reason: "Fair valuation, steady growth", confidence: 65)
-                    }
-                    .frame(maxWidth: .infinity)
+            Group {
+                switch viewModel.loadingState {
+                case .idle, .loading:
+                    dashboardGrid
+                case .loaded:
+                    dashboardGrid
+                case .failed:
+                    dashboardGrid
                 }
-                .padding(.horizontal)
             }
         }
-    }
-}
-
-public struct StatCard: View {
-    let title: String; let value: String; let icon: String; let color: Color
-    public init(title: String, value: String, icon: String, color: Color) { self.title = title; self.value = value; self.icon = icon; self.color = color }
-    public var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack { Image(systemName: icon).foregroundColor(color); Spacer() }
-            Text(value).font(.title2).fontWeight(.bold)
-            Text(title).font(.caption).foregroundColor(.secondary)
+        .padding(.horizontal, 28)
+        .padding(.vertical, 24)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .background(Color.black.opacity(0.94))
+        .task {
+            guard viewModel.loadingState == .idle else { return }
+            await viewModel.loadDashboard()
         }
-        .padding()
-        .background(RoundedRectangle(cornerRadius: 12).fill(.background).shadow(radius: 1))
-    }
-}
-
-public struct RecentActivityRow: View {
-    let title: String; let detail: String; let time: String
-    public init(title: String, detail: String, time: String) { self.title = title; self.detail = detail; self.time = time }
-    public var body: some View {
-        HStack { VStack(alignment: .leading) { Text(title).font(.subheadline); Text(detail).font(.caption).foregroundColor(.secondary) }; Spacer(); Text(time).font(.caption).foregroundColor(.secondary) }
-        .padding(.vertical, 4)
-    }
-}
-
-public struct RecommendationCard: View {
-    let symbol: String; let action: String; let reason: String; let confidence: Int
-    public init(symbol: String, action: String, reason: String, confidence: Int) { self.symbol = symbol; self.action = action; self.reason = reason; self.confidence = confidence }
-    public var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack { Text(symbol).font(.headline); Spacer(); Text("\(confidence)%").font(.caption).foregroundColor(.green) }
-            Text(action).font(.subheadline).fontWeight(.semibold).foregroundColor(action == "Increase" ? .green : .orange)
-            Text(reason).font(.caption).foregroundColor(.secondary)
+        .toolbar {
+            ToolbarItem {
+                Button(action: refresh) {
+                    Label("Refresh dashboard", systemImage: "arrow.clockwise")
+                }
+                .disabled(viewModel.loadingState == .loading)
+                .accessibilityIdentifier("dashboard.toolbar.refresh")
+            }
         }
-        .padding(10)
-        .background(RoundedRectangle(cornerRadius: 8).fill(.background).shadow(radius: 0.5))
+        .preferredColorScheme(.dark)
+        .accessibilityIdentifier("dashboard.view")
+    }
+
+    private var dashboardGrid: some View {
+        ScrollView {
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 310, maximum: 560), spacing: 16)],
+                alignment: .leading,
+                spacing: 16
+            ) {
+                PortfolioSummaryCard(
+                    summary: viewModel.state.selectedPortfolioSummary,
+                    state: cardState(hasContent: viewModel.state.selectedPortfolioSummary != nil)
+                )
+
+                MarketOverviewCard(
+                    status: viewModel.state.marketStatus,
+                    state: cardState(hasContent: viewModel.state.marketStatus == .available)
+                )
+
+                PortfolioAllocationCard(
+                    chart: viewModel.state.portfolioAllocation,
+                    state: cardState(hasContent: viewModel.state.portfolioAllocation != nil)
+                )
+
+                AlertCard(
+                    alerts: viewModel.state.activeAlerts,
+                    state: cardState(hasContent: !viewModel.state.activeAlerts.isEmpty)
+                )
+
+                NewsCard(
+                    articles: viewModel.state.latestFinancialNews,
+                    state: cardState(hasContent: !viewModel.state.latestFinancialNews.isEmpty)
+                )
+
+                AIInsightCard(
+                    insight: viewModel.state.aiDailyInsight,
+                    state: cardState(hasContent: viewModel.state.aiDailyInsight != nil)
+                )
+
+                WatchlistCard(
+                    watchlists: viewModel.state.watchlists,
+                    state: cardState(hasContent: !viewModel.state.watchlists.isEmpty)
+                )
+
+                PerformanceChartCard(
+                    chart: viewModel.state.recentPortfolioPerformance,
+                    state: cardState(hasContent: viewModel.state.recentPortfolioPerformance != nil)
+                )
+
+                QuickActionsCard(state: cardState(hasContent: true), onRefresh: refresh)
+            }
+            .animation(.easeInOut(duration: 0.24), value: viewModel.loadingState)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private func cardState(hasContent: Bool) -> DashboardCardState {
+        switch viewModel.loadingState {
+        case .idle, .loading:
+            .loading
+        case .loaded:
+            hasContent ? .loaded : .empty
+        case .failed(let message):
+            .failed(message)
+        }
+    }
+
+    private func refresh() {
+        Task { await viewModel.refresh() }
     }
 }
+
+#if DEBUG
+#Preview("Dashboard - Loading") {
+    DashboardView(viewModel: DashboardPreviewFactory.make(state: .loading))
+        .frame(width: 1024, height: 760)
+}
+
+#Preview("Dashboard - Loaded") {
+    DashboardView(viewModel: DashboardPreviewFactory.make(state: .loaded))
+        .frame(width: 1280, height: 800)
+}
+
+#Preview("Dashboard - Empty") {
+    DashboardView(viewModel: DashboardPreviewFactory.make(state: .empty))
+        .frame(width: 1440, height: 900)
+}
+
+#Preview("Dashboard - Error") {
+    DashboardView(viewModel: DashboardPreviewFactory.make(state: .failed("Preview error")))
+        .frame(width: 800, height: 600)
+}
+#endif

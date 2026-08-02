@@ -80,7 +80,7 @@ class NotionSearchTool(BaseTool):
                 output.append(f"- [{obj_type}] {title}")
             return "\n".join(output)
         except Exception as e:
-            return f"Notion search error: {e}"
+            return "Notion search failed"
 
 
 class NotionReadPageTool(BaseTool):
@@ -148,7 +148,7 @@ class NotionReadPageTool(BaseTool):
                 return "Page is empty or contains no text blocks"
             return "\n".join(content[:100])
         except Exception as e:
-            return f"Notion read error: {e}"
+            return "Notion read failed"
 
 
 class Plugin(BasePlugin):

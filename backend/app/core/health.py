@@ -21,7 +21,7 @@ async def check_database() -> dict[str, Any]:
         return {"status": "healthy"}
     except Exception as e:
         logger.error("health_db_failed", error=str(e))
-        return {"status": "unhealthy", "detail": str(e)}
+        return {"status": "unhealthy", "detail": "Database health check failed"}
 
 
 async def check_redis() -> dict[str, Any]:
@@ -37,7 +37,7 @@ async def check_redis() -> dict[str, Any]:
         return {"status": "healthy"}
     except Exception as e:
         logger.warning("health_redis_failed", error=str(e))
-        return {"status": "unhealthy", "detail": str(e)}
+        return {"status": "unhealthy", "detail": "Redis health check failed"}
 
 
 async def get_health() -> dict[str, Any]:
