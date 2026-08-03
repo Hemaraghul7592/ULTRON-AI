@@ -12,11 +12,11 @@ public protocol Resolver: AnyObject {
     /// - Returns: The resolved service instance.
     /// - Throws: `ContainerError` if the type is not registered or
     ///   a circular dependency is detected.
-    func resolve<Service>(_ type: Service.Type) async throws -> Service
+    func resolve<Service: Sendable>(_ type: Service.Type) async throws -> Service
 
     /// Resolves a registered service, returning nil if not found.
     ///
     /// - Parameter type: The type to resolve.
     /// - Returns: The resolved service instance, or nil if not registered.
-    func resolveIfRegistered<Service>(_ type: Service.Type) async -> Service?
+    func resolveIfRegistered<Service: Sendable>(_ type: Service.Type) async -> Service?
 }
