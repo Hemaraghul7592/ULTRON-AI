@@ -51,33 +51,33 @@ public actor RBIProvider: FinancialProvider {
 
     // MARK: - RBI-Specific Methods
 
-    nonisolated public func fetchCPI(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchCPI(startDate: String? = nil, endDate: String? = nil) async throws -> RBIJSONResponse {
         try await fetch(endpoint + "/cpi" + dateParams(start: startDate, end: endDate))
     }
 
-    nonisolated public func fetchWPI(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchWPI(startDate: String? = nil, endDate: String? = nil) async throws -> RBIJSONResponse {
         try await fetch(endpoint + "/wpi" + dateParams(start: startDate, end: endDate))
     }
 
-    nonisolated public func fetchExchangeRate(currency: String = "USD", startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchExchangeRate(currency: String = "USD", startDate: String? = nil, endDate: String? = nil) async throws -> RBIJSONResponse {
         try await fetch(endpoint + "/exchange-rate/\(currency)" + dateParams(start: startDate, end: endDate))
     }
 
-    nonisolated public func fetchMonetaryPolicy(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchMonetaryPolicy(startDate: String? = nil, endDate: String? = nil) async throws -> RBIJSONResponse {
         try await fetch(endpoint + "/monetary-policy" + dateParams(start: startDate, end: endDate))
     }
 
-    nonisolated public func fetchGDP(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchGDP(startDate: String? = nil, endDate: String? = nil) async throws -> RBIJSONResponse {
         try await fetch(endpoint + "/gdp" + dateParams(start: startDate, end: endDate))
     }
 
-    nonisolated public func listSeries() async throws -> [String: Any] {
+    nonisolated public func listSeries() async throws -> RBIJSONResponse {
         try await fetch(endpoint + "/series")
     }
 
     // MARK: - Helpers
 
-    private nonisolated func fetch(_ urlString: String) async throws -> [String: Any] {
+    private nonisolated func fetch(_ urlString: String) async throws -> RBIJSONResponse {
         guard let url = URL(string: urlString) else { throw FinancialError.invalidData("Invalid URL") }
         var request = URLRequest(url: url); request.httpMethod = "GET"
         let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
@@ -85,7 +85,7 @@ public actor RBIProvider: FinancialProvider {
             guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any] else {
                 throw FinancialError.decodingFailed("\(providerID) response is not an object")
             }
-            return json
+            return RBIJSONResponse(value: json)
         } catch let error as FinancialError {
             throw error
         } catch {
@@ -109,5 +109,13 @@ public actor RBIProvider: FinancialProvider {
         } catch {
             return false
         }
+    }
+}
+
+public struct RBIJSONResponse: @unchecked Sendable {
+    public let value: [String: Any]
+
+    public init(value: [String: Any]) {
+        self.value = value
     }
 }
