@@ -26,11 +26,11 @@ final class ContainerResolver: Resolver {
 
     // MARK: - Resolver
 
-    func resolve<Service>(_ type: Service.Type) async throws -> Service {
+    func resolve<Service: Sendable>(_ type: Service.Type) async throws -> Service {
         try await container._resolve(type)
     }
 
-    func resolveIfRegistered<Service>(_ type: Service.Type) async -> Service? {
+    func resolveIfRegistered<Service: Sendable>(_ type: Service.Type) async -> Service? {
         await container._resolveIfRegistered(type)
     }
 }
