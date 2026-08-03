@@ -18,9 +18,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build debug
-        run: swift build
+        run: swift build -Xswiftc -strict-concurrency=complete
       - name: Run tests
-        run: swift test
+        run: swift test -Xswiftc -strict-concurrency=complete
       - name: Build release
         run: swift build -c release
       - name: Check diff whitespace
