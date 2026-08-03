@@ -6,6 +6,15 @@ from app.models.metric import Metric
 from app.models.task import Job, JobStatus, Task
 from app.models.token import TokenUsage
 from app.models.user import User
+from app.operations.infrastructure.db.models import (
+    UaesDiagnosticPack,
+    UaesEvent,
+    UaesHealthComponent,
+    UaesHealthSnapshot,
+    UaesIncident,
+    UaesIncidentEvidence,
+    UaesMetric,
+)
 
 __all__ = [
     "Conversation",
@@ -21,4 +30,11 @@ __all__ = [
     "Metric",
     "User",
     "GoogleToken",
+    "UaesHealthSnapshot",
+    "UaesHealthComponent",
+    "UaesIncident",
+    "UaesIncidentEvidence",
+    "UaesMetric",
+    "UaesDiagnosticPack",
+    "UaesEvent",
 ]

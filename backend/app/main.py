@@ -15,7 +15,7 @@ from app.api.v1.tasks import router as tasks_router
 from app.api.v1.tools import router as tools_router
 from app.api.v1.voice import router as voice_router
 from app.core.config import get_settings
-from app.core.database import Base, close_db, init_db
+from app.core.database import Base, close_db, get_session, init_db
 from app.core.health import check_database, get_health
 from app.core.logging import get_logger, setup_logging
 from app.middleware.error_handler import ErrorHandlerMiddleware
@@ -23,6 +23,10 @@ from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.request_id import RequestIDMiddleware
 from app.middleware.request_logger import RequestLoggerMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
+from app.operations.api.router import router as operations_router
+from app.operations.core.event_bus import InProcessEventBus
+from app.operations.core.runtime import OperationsRuntime
+from app.operations.infrastructure.db import models as _uaes_models  # noqa: F401
 
 settings = get_settings()
 _logger = get_logger(__name__)
@@ -97,6 +101,11 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
     scheduler = SchedService()
     reminders = ReminderEngine()
 
+    application.state.uaes_runtime = OperationsRuntime(
+        event_bus=InProcessEventBus(),
+        session_factory=get_session(),
+    )
+
     application.state.search_service = search_service
     application.state.file_service = file_service
     application.state.voice_service = voice_service
@@ -151,6 +160,7 @@ app.include_router(google_auth_router, prefix="/api/v1")
 app.include_router(voice_router, prefix="/api/v1")
 app.include_router(tools_router, prefix="/api/v1")
 app.include_router(observability_router, prefix="/api/v1")
+app.include_router(operations_router, prefix="/api/v1")
 
 
 @app.get("/")
