@@ -6,7 +6,7 @@
 ///
 /// The container wraps each `ServiceRegistration` in a `ServiceRecord`
 /// to add runtime state (singleton cache, registration index).
-public struct ServiceRegistration {
+public struct ServiceRegistration: Sendable {
 
     // MARK: - Properties
 
@@ -25,7 +25,7 @@ public struct ServiceRegistration {
     /// The factory closure that constructs an instance of the service.
     /// Receives a `Resolver` so the service can resolve its own
     /// dependencies during construction.
-    public let factory: (any Resolver) async throws -> Any
+    public let factory: @MainActor @Sendable (any Resolver) async throws -> Any
 
     // MARK: - Initialization
 
@@ -40,7 +40,7 @@ public struct ServiceRegistration {
         serviceType: ObjectIdentifier,
         typeName: String,
         lifetime: ServiceLifetime,
-        factory: @escaping (any Resolver) async throws -> Any
+        factory: @escaping @MainActor @Sendable (any Resolver) async throws -> Any
     ) {
         self.serviceType = serviceType
         self.typeName = typeName

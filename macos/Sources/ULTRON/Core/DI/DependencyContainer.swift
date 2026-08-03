@@ -71,11 +71,11 @@ public final class DependencyContainer {
     public func register<Service>(
         _ type: Service.Type,
         lifetime: ServiceLifetime = .singleton,
-        factory: @escaping (any Resolver) async throws -> Service
+        factory: @escaping @MainActor @Sendable (any Resolver) async throws -> Service
     ) {
         let oid = ObjectIdentifier(type)
         let typeName = String(describing: Service.self)
-        let wrappedFactory: (any Resolver) async throws -> Any = { resolver in
+        let wrappedFactory: @MainActor @Sendable (any Resolver) async throws -> Any = { resolver in
             try await factory(resolver) as Any
         }
         let registration = ServiceRegistration(
@@ -184,7 +184,7 @@ public final class DependencyContainer {
     /// - Throws: `ContainerError` — either re-thrown from the factory
     ///   or wrapping a factory failure.
     private func executeFactory(
-        _ factory: (any Resolver) async throws -> Any,
+        _ factory: @MainActor @Sendable (any Resolver) async throws -> Any,
         serviceType: ObjectIdentifier,
         typeName: String
     ) async throws -> Any {

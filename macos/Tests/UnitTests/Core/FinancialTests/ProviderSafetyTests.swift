@@ -10,7 +10,7 @@ private final class ProviderURLProtocol: URLProtocol {
     }
 
     private static let lock = NSLock()
-    private static var currentMode: Mode = .response(status: 200, body: Data())
+    nonisolated(unsafe) private static var currentMode: Mode = .response(status: 200, body: Data())
 
     static func setMode(_ mode: Mode) {
         lock.lock(); defer { lock.unlock() }

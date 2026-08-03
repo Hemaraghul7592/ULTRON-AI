@@ -51,33 +51,33 @@ public actor RBIProvider: FinancialProvider {
 
     // MARK: - RBI-Specific Methods
 
-    public func fetchCPI(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchCPI(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
         try await fetch(endpoint + "/cpi" + dateParams(start: startDate, end: endDate))
     }
 
-    public func fetchWPI(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchWPI(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
         try await fetch(endpoint + "/wpi" + dateParams(start: startDate, end: endDate))
     }
 
-    public func fetchExchangeRate(currency: String = "USD", startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchExchangeRate(currency: String = "USD", startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
         try await fetch(endpoint + "/exchange-rate/\(currency)" + dateParams(start: startDate, end: endDate))
     }
 
-    public func fetchMonetaryPolicy(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchMonetaryPolicy(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
         try await fetch(endpoint + "/monetary-policy" + dateParams(start: startDate, end: endDate))
     }
 
-    public func fetchGDP(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
+    nonisolated public func fetchGDP(startDate: String? = nil, endDate: String? = nil) async throws -> [String: Any] {
         try await fetch(endpoint + "/gdp" + dateParams(start: startDate, end: endDate))
     }
 
-    public func listSeries() async throws -> [String: Any] {
+    nonisolated public func listSeries() async throws -> [String: Any] {
         try await fetch(endpoint + "/series")
     }
 
     // MARK: - Helpers
 
-    private func fetch(_ urlString: String) async throws -> [String: Any] {
+    private nonisolated func fetch(_ urlString: String) async throws -> [String: Any] {
         guard let url = URL(string: urlString) else { throw FinancialError.invalidData("Invalid URL") }
         var request = URLRequest(url: url); request.httpMethod = "GET"
         let data = try await ProviderHTTP.data(from: request, session: session, provider: providerID)
@@ -93,7 +93,7 @@ public actor RBIProvider: FinancialProvider {
         }
     }
 
-    private func dateParams(start: String?, end: String?) -> String {
+    private nonisolated func dateParams(start: String?, end: String?) -> String {
         var params: [String] = []
         if let s = start { params.append("start_date=\(s)") }
         if let e = end { params.append("end_date=\(e)") }

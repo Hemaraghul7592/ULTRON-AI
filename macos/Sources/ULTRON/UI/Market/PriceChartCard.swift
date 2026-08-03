@@ -1,16 +1,17 @@
 import Charts
 import SwiftUI
 
+@MainActor
 public struct PriceChartCard: View {
     let chart: ChartData?
     let range: MarketChartRange
     let state: DashboardCardState
-    let onSelectRange: (MarketChartRange) -> Void
+    let onSelectRange: @MainActor @Sendable (MarketChartRange) -> Void
 
     public var body: some View {
         DashboardCard(title: "Price Chart", subtitle: "Native VisualizationEngine chart data", icon: "chart.xyaxis.line", tint: .cyan, state: state) {
             VStack(alignment: .leading, spacing: 12) {
-                Picker("Range", selection: Binding(get: { range }, set: onSelectRange)) {
+                Picker("Range", selection: Binding(get: { range }, set: { onSelectRange($0) })) {
                     ForEach(MarketChartRange.allCases, id: \.self) { Text($0.rawValue).tag($0) }
                 }
                 .pickerStyle(.segmented)

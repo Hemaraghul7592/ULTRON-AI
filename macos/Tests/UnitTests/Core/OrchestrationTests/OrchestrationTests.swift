@@ -63,20 +63,31 @@ private actor MockProvider: ServiceProvider {
         #expect(r == "ok")
     }
     @Test("Retries then succeeds") func testRetrySuccess() async throws {
-        final class Counter { var value = 0 }
+        actor Counter {
+            var value = 0
+            func increment() -> Int { value += 1; return value }
+            func currentValue() -> Int { value }
+        }
         let c = Counter()
         let r = try await RetryEngine().execute(with: .standard) {
-            c.value += 1; if c.value < 3 { throw NSError(domain: "t", code: 1) }; return "ok"
+            if await c.increment() < 3 { throw NSError(domain: "t", code: 1) }; return "ok"
         }
         #expect(r == "ok")
-        #expect(c.value == 3)
+        #expect(await c.currentValue() == 3)
     }
     @Test("Exhausted throws") func testExhausted() async {
-        final class Counter { var value = 0 }
+        actor Counter {
+            var value = 0
+            func increment() -> Int { value += 1; return value }
+            func currentValue() -> Int { value }
+        }
         let c = Counter()
         do {
-            _ = try await RetryEngine().execute(with: .fast) { () -> String in c.value += 1; throw NSError(domain: "t", code: 1) }
-        } catch { #expect(c.value == 2) }
+            _ = try await RetryEngine().execute(with: .fast) { () -> String in
+                _ = await c.increment()
+                throw NSError(domain: "t", code: 1)
+            }
+        } catch { #expect(await c.currentValue() == 2) }
     }
 }
 

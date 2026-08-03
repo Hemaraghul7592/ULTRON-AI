@@ -4,6 +4,7 @@
 /// This prevents the service locator anti-pattern by ensuring that
 /// services cannot register new types or inspect container state.
 /// They can only resolve their declared dependencies.
+@MainActor
 public protocol Resolver: AnyObject {
 
     /// Resolves a registered service, throwing if not found.

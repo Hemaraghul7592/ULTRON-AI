@@ -60,13 +60,13 @@ public final class SecretManager: @unchecked Sendable {
     ) {
         var resolved: [SecretKey: String] = [:]
         for key in SecretKey.allCases {
-            let candidates = [
+            let candidates: [String?] = [
                 environment[key.rawValue],
                 keychainLookup(key),
                 localValues[key.rawValue],
                 exampleValues[key.rawValue]
             ]
-            resolved[key] = candidates.compactMap { value in
+            resolved[key] = candidates.compactMap { (value: String?) -> String? in
                 guard let value, !Self.isPlaceholder(value) else { return nil }
                 return value
             }.first ?? ""

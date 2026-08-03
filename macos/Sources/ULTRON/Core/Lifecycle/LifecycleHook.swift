@@ -33,7 +33,8 @@
 /// `StartupSequence` and `ShutdownSequence`. The protocol does not
 /// require `Sendable` conformance because hooks never leave the
 /// main actor's isolation domain.
-public protocol LifecycleHook: Identifiable {
+@MainActor
+public protocol LifecycleHook {
 
     /// The startup phase this hook belongs to.
     /// Phases execute in `StartupPhase.allCases` order.
@@ -46,6 +47,9 @@ public protocol LifecycleHook: Identifiable {
 
     /// A human-readable label for logging and diagnostics.
     var label: String { get }
+
+    /// Stable hook identity used for duplicate registration checks.
+    var id: String { get }
 
     /// Called during application startup.
     /// Throwing prevents the app from completing its launch sequence.
