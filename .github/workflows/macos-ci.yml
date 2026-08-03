@@ -17,6 +17,8 @@ jobs:
         working-directory: macos
     steps:
       - uses: actions/checkout@v4
+      - name: Show Swift version
+        run: swift --version
       - name: Build debug
         run: swift build
       - name: Run tests
