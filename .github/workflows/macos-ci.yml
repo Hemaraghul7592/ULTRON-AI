@@ -49,6 +49,13 @@ jobs:
             cat swift-test.log
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+          python3 - <<'PY'
+          from pathlib import Path
+          for line in Path("swift-test.log").read_text(errors="replace").splitlines():
+              lowered = line.lower()
+              if "failed" in lowered or "error" in lowered or "issue" in lowered:
+                  print(f"::error title=Swift test diagnostic::{line[:1000]}")
+          PY
       - name: Fail when tests fail
         if: steps.tests.outcome == 'failure'
         run: exit 1
