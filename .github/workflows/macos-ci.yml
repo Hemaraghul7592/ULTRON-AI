@@ -29,7 +29,31 @@ jobs:
       - name: Build debug
         run: swift build -Xswiftc -strict-concurrency=complete
       - name: Run tests
-        run: swift test --no-parallel -Xswiftc -strict-concurrency=complete
+        id: tests
+        run: |
+          set +e
+          swift test --no-parallel -Xswiftc -strict-concurrency=complete 2>&1 | tee swift-test.log
+          exit_code=${PIPESTATUS[0]}
+          echo "exit_code=${exit_code}" >> "$GITHUB_OUTPUT"
+          exit 0
+      - name: Upload test diagnostics
+        if: steps.tests.outputs.exit_code != '0'
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-test-diagnostics-${{ github.sha }}
+          path: macos/swift-test.log
+      - name: Publish test diagnostics
+        if: steps.tests.outputs.exit_code != '0'
+        run: |
+          {
+            echo "## macOS Swift test output"
+            echo '```text'
+            cat swift-test.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Fail when tests fail
+        if: steps.tests.outputs.exit_code != '0'
+        run: exit 1
       - name: Build release
         run: swift build -c release
       - name: Check diff whitespace
