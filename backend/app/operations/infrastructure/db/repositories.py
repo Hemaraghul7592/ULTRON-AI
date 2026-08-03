@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.operations.application.ports import (
@@ -13,7 +14,6 @@ from app.operations.application.ports import (
 )
 from app.operations.domain.enums import IncidentStatus
 from app.operations.domain.events import DomainEvent, event_from_dict
-from app.operations.domain.models import DiagnosticPack, HealthSnapshot, Incident, MetricSample
 from app.operations.infrastructure.db.models import (
     UaesDiagnosticPack,
     UaesEvent,
@@ -21,6 +21,11 @@ from app.operations.infrastructure.db.models import (
     UaesIncident,
     UaesMetric,
 )
+
+if TYPE_CHECKING:
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    from app.operations.domain.models import DiagnosticPack, HealthSnapshot, Incident, MetricSample
 
 
 class SQLAlchemyHealthRepository(HealthRepository):

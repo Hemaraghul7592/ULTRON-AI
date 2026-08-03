@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
-import pytest
-from httpx import AsyncClient
+import pytest  # noqa: TC002
+from httpx import AsyncClient  # noqa: TC002
 
 
 @pytest.mark.asyncio

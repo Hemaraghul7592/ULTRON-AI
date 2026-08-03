@@ -5,7 +5,7 @@ from typing import Any, Self
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from app.operations.domain.enums import ComponentType, EnvironmentType, MetricType
+from app.operations.domain.enums import ComponentType, EnvironmentType, MetricType  # noqa: TC001
 
 
 class DomainModel(BaseModel):

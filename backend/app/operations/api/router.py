@@ -10,7 +10,7 @@ from app.operations.api.schemas import (
     IncidentCollectionResponse,
     MetricsCollectionResponse,
 )
-from app.operations.core.runtime import OperationsRuntime
+from app.operations.core.runtime import OperationsRuntime  # noqa: TC001
 from app.operations.infrastructure.db.repositories import (
     SQLAlchemyDiagnosticRepository,
     SQLAlchemyHealthRepository,
@@ -23,8 +23,8 @@ router = APIRouter(prefix="/operations", tags=["operations"])
 
 @router.get("/health", response_model=HealthOverviewResponse)
 async def get_health(
-    _: dict = Depends(verify_token),
-    runtime: OperationsRuntime = Depends(get_operations_runtime),
+    _: dict = Depends(verify_token),  # noqa: B008
+    runtime: OperationsRuntime = Depends(get_operations_runtime),  # noqa: B008
 ) -> HealthOverviewResponse:
     session_factory = runtime.session_factory
     async with session_factory() as session:
@@ -35,8 +35,8 @@ async def get_health(
 
 @router.get("/incidents", response_model=IncidentCollectionResponse)
 async def get_incidents(
-    _: dict = Depends(verify_token),
-    runtime: OperationsRuntime = Depends(get_operations_runtime),
+    _: dict = Depends(verify_token),  # noqa: B008
+    runtime: OperationsRuntime = Depends(get_operations_runtime),  # noqa: B008
 ) -> IncidentCollectionResponse:
     session_factory = runtime.session_factory
     async with session_factory() as session:
@@ -47,8 +47,8 @@ async def get_incidents(
 
 @router.get("/metrics", response_model=MetricsCollectionResponse)
 async def get_metrics(
-    _: dict = Depends(verify_token),
-    runtime: OperationsRuntime = Depends(get_operations_runtime),
+    _: dict = Depends(verify_token),  # noqa: B008
+    runtime: OperationsRuntime = Depends(get_operations_runtime),  # noqa: B008
 ) -> MetricsCollectionResponse:
     session_factory = runtime.session_factory
     async with session_factory() as session:
@@ -59,8 +59,8 @@ async def get_metrics(
 
 @router.get("/diagnostics", response_model=DiagnosticsCollectionResponse)
 async def get_diagnostics(
-    _: dict = Depends(verify_token),
-    runtime: OperationsRuntime = Depends(get_operations_runtime),
+    _: dict = Depends(verify_token),  # noqa: B008
+    runtime: OperationsRuntime = Depends(get_operations_runtime),  # noqa: B008
 ) -> DiagnosticsCollectionResponse:
     session_factory = runtime.session_factory
     async with session_factory() as session:
