@@ -40,6 +40,15 @@ jobs:
         with:
           name: macos-test-diagnostics-${{ github.sha }}
           path: macos/swift-test.log
+      - name: Publish test diagnostics
+        if: steps.tests.outcome == 'failure'
+        run: |
+          {
+            echo "## macOS Swift test output"
+            echo '```text'
+            cat swift-test.log
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Fail when tests fail
         if: steps.tests.outcome == 'failure'
         run: exit 1
