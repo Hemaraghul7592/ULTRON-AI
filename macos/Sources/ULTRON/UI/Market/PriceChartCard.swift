@@ -1,11 +1,12 @@
 import Charts
 import SwiftUI
 
+@MainActor
 public struct PriceChartCard: View {
     let chart: ChartData?
     let range: MarketChartRange
     let state: DashboardCardState
-    let onSelectRange: (MarketChartRange) -> Void
+    let onSelectRange: @Sendable (MarketChartRange) -> Void
 
     public var body: some View {
         DashboardCard(title: "Price Chart", subtitle: "Native VisualizationEngine chart data", icon: "chart.xyaxis.line", tint: .cyan, state: state) {
