@@ -6,7 +6,7 @@ from uuid import uuid4
 
 from pydantic import Field
 
-from app.operations.domain.enums import EventType
+from app.operations.domain.enums import ComponentType, EventType, HealthStatus
 from app.operations.domain.models import (
     ComponentHealth,  # noqa: TC001
     DiagnosticPack,  # noqa: TC001
@@ -39,6 +39,27 @@ class ComponentDegraded(DomainEvent):
     event_type: EventType = EventType.COMPONENT_DEGRADED
     component: ComponentHealth
     reason: str | None = None
+
+
+class HealthCheckStarted(DomainEvent):
+    event_type: EventType = EventType.HEALTH_CHECK_STARTED
+    component_type: ComponentType
+    component_name: str
+
+
+class HealthCheckCompleted(DomainEvent):
+    event_type: EventType = EventType.HEALTH_CHECK_COMPLETED
+    component_type: ComponentType
+    component_name: str
+    status: HealthStatus
+    score: float
+    message: str
+
+
+class ComponentStatus(DomainEvent):
+    event_type: EventType = EventType.COMPONENT_HEALTHY
+    component: ComponentHealth
+    previous_status: HealthStatus | None = None
 
 
 class IncidentCreated(DomainEvent):
@@ -77,6 +98,13 @@ def event_from_dict(data: dict[str, Any]) -> DomainEvent:
     event_type = EventType(data["event_type"])
     event_map: dict[EventType, type[DomainEvent]] = {
         EventType.HEALTH_SNAPSHOT_RECORDED: HealthSnapshotRecorded,
+        EventType.HEALTH_CHECK_STARTED: HealthCheckStarted,
+        EventType.HEALTH_CHECK_COMPLETED: HealthCheckCompleted,
+        EventType.COMPONENT_HEALTHY: ComponentStatus,
+        EventType.COMPONENT_WARNING: ComponentStatus,
+        EventType.COMPONENT_CRITICAL: ComponentStatus,
+        EventType.COMPONENT_OFFLINE: ComponentStatus,
+        EventType.COMPONENT_NOT_CONFIGURED: ComponentStatus,
         EventType.COMPONENT_DEGRADED: ComponentDegraded,
         EventType.INCIDENT_CREATED: IncidentCreated,
         EventType.INCIDENT_RESOLVED: IncidentResolved,

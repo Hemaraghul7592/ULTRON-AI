@@ -3,8 +3,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
+    from datetime import datetime  # noqa: TC001
+
+    from app.operations.domain.enums import ComponentType  # noqa: TC001
     from app.operations.domain.events import DomainEvent
-    from app.operations.domain.models import DiagnosticPack, HealthSnapshot, Incident, MetricSample
+    from app.operations.domain.models import (  # noqa: TC001
+        DiagnosticPack,
+        HealthSnapshot,
+        Incident,
+        MetricSample,
+    )
 
 
 @runtime_checkable
@@ -48,6 +56,25 @@ class DiagnosticRepository(Protocol):
 @runtime_checkable
 class KnowledgeRepository(Protocol):
     async def list_recent(self, limit: int = 100) -> list[dict[str, str]]: ...
+
+
+@runtime_checkable
+class MonitoringRepository(Protocol):
+    async def record_snapshot(self, snapshot: HealthSnapshot) -> HealthSnapshot: ...
+
+    async def list_snapshots(self, limit: int = 100) -> list[HealthSnapshot]: ...
+
+    async def latest_snapshot(self) -> HealthSnapshot | None: ...
+
+    async def latest_for_component(
+        self, component_type: ComponentType, component_name: str, limit: int = 50
+    ) -> list[HealthSnapshot]: ...
+
+    async def snapshots_by_component(
+        self, component_type: ComponentType, component_name: str, limit: int = 50
+    ) -> list[HealthSnapshot]: ...
+
+    async def delete_older_than(self, cutoff: datetime) -> int: ...
 
 
 @runtime_checkable

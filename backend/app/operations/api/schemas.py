@@ -103,6 +103,26 @@ class HealthOverviewResponse(BaseModel):
         )
 
 
+class ComponentHistoryResponse(BaseModel):
+    component_type: ComponentType
+    component_name: str
+    snapshots: list[HealthSnapshotResponse] = Field(default_factory=list)
+    total: int = 0
+
+    @classmethod
+    def from_domain(cls, snapshots: list[HealthSnapshot]) -> ComponentHistoryResponse:
+        if not snapshots:
+            return cls(component_type="", component_name="")
+        last_components = snapshots[-1].components
+        first_comp = last_components[0] if last_components else None
+        return cls(
+            component_type=first_comp.component_type if first_comp else "",
+            component_name=first_comp.component_name if first_comp else "",
+            snapshots=[HealthSnapshotResponse.from_domain(s) for s in snapshots],
+            total=len(snapshots),
+        )
+
+
 class IncidentResponse(BaseModel):
     incident_id: str
     timestamp: datetime

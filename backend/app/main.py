@@ -106,6 +106,10 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         session_factory=get_session(),
     )
 
+    from app.operations.monitoring.setup import setup_monitoring
+
+    await setup_monitoring(application.state.uaes_runtime)
+
     application.state.search_service = search_service
     application.state.file_service = file_service
     application.state.voice_service = voice_service
@@ -119,6 +123,11 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     yield
 
+    if (
+        hasattr(application.state, "uaes_runtime")
+        and application.state.uaes_runtime.monitoring_scheduler
+    ):
+        await application.state.uaes_runtime.monitoring_scheduler.stop()
     if hasattr(application.state, "scheduler"):
         await application.state.scheduler.stop()
     if hasattr(application.state, "plugin_manager"):

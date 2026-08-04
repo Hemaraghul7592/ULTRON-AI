@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import selectinload
 
 from app.operations.application.ports import (
@@ -11,8 +11,9 @@ from app.operations.application.ports import (
     HealthRepository,
     IncidentRepository,
     MetricsRepository,
+    MonitoringRepository,
 )
-from app.operations.domain.enums import IncidentStatus
+from app.operations.domain.enums import ComponentType, IncidentStatus
 from app.operations.domain.events import DomainEvent, event_from_dict
 from app.operations.infrastructure.db.models import (
     UaesDiagnosticPack,
@@ -23,12 +24,19 @@ from app.operations.infrastructure.db.models import (
 )
 
 if TYPE_CHECKING:
+    from datetime import datetime  # noqa: TC001
+
     from sqlalchemy.ext.asyncio import AsyncSession
 
-    from app.operations.domain.models import DiagnosticPack, HealthSnapshot, Incident, MetricSample
+    from app.operations.domain.models import (
+        DiagnosticPack,
+        HealthSnapshot,
+        Incident,
+        MetricSample,
+    )
 
 
-class SQLAlchemyHealthRepository(HealthRepository):
+class SQLAlchemyHealthRepository(HealthRepository, MonitoringRepository):
     def __init__(self, session: AsyncSession) -> None:
         self.session = session
 
@@ -56,6 +64,46 @@ class SQLAlchemyHealthRepository(HealthRepository):
         )
         row = result.scalars().first()
         return None if row is None else row.to_domain()
+
+    async def latest_for_component(
+        self,
+        component_type: ComponentType,
+        component_name: str,
+        limit: int = 50,
+    ) -> list[HealthSnapshot]:
+        from app.operations.infrastructure.db.models import UaesHealthComponent
+
+        comp_alias = UaesHealthComponent
+        subq = (
+            select(comp_alias.snapshot_id)
+            .where(comp_alias.component_type == component_type)
+            .where(comp_alias.component_name == component_name)
+            .order_by(comp_alias.observed_at.desc())
+            .limit(limit)
+            .subquery()
+        )
+        result = await self.session.execute(
+            select(UaesHealthSnapshot)
+            .options(selectinload(UaesHealthSnapshot.components))
+            .where(UaesHealthSnapshot.id.in_(subq))
+            .order_by(UaesHealthSnapshot.collected_at.desc())
+            .limit(limit),
+        )
+        return [row.to_domain() for row in result.scalars().all()]
+
+    async def snapshots_by_component(
+        self,
+        component_type: ComponentType,
+        component_name: str,
+        limit: int = 50,
+    ) -> list[HealthSnapshot]:
+        return await self.latest_for_component(component_type, component_name, limit)
+
+    async def delete_older_than(self, cutoff: datetime) -> int:
+        result = await self.session.execute(
+            delete(UaesHealthSnapshot).where(UaesHealthSnapshot.collected_at < cutoff),
+        )
+        return result.rowcount
 
 
 class SQLAlchemyIncidentRepository(IncidentRepository):

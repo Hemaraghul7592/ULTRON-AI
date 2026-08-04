@@ -8,6 +8,7 @@ class HealthStatus(StrEnum):
     WARNING = "warning"
     CRITICAL = "critical"
     OFFLINE = "offline"
+    NOT_CONFIGURED = "not_configured"
 
 
 class IncidentSeverity(StrEnum):
@@ -36,6 +37,7 @@ class ComponentType(StrEnum):
     MEMORY = "memory"
     DISK = "disk"
     API = "api"
+    NETWORK = "network"
 
 
 class EnvironmentType(StrEnum):
@@ -70,6 +72,13 @@ class EvidenceType(StrEnum):
 
 class EventType(StrEnum):
     HEALTH_SNAPSHOT_RECORDED = "health_snapshot_recorded"
+    HEALTH_CHECK_STARTED = "health_check_started"
+    HEALTH_CHECK_COMPLETED = "health_check_completed"
+    COMPONENT_HEALTHY = "component_healthy"
+    COMPONENT_WARNING = "component_warning"
+    COMPONENT_CRITICAL = "component_critical"
+    COMPONENT_OFFLINE = "component_offline"
+    COMPONENT_NOT_CONFIGURED = "component_not_configured"
     COMPONENT_DEGRADED = "component_degraded"
     INCIDENT_CREATED = "incident_created"
     INCIDENT_RESOLVED = "incident_resolved"
