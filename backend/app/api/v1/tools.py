@@ -18,7 +18,7 @@ def _get_plugin_manager(request: Request) -> PluginManager | None:
 
 
 @router.get("")
-async def list_tools(pm: PluginManager | None = Depends(_get_plugin_manager)) -> list[dict]:
+async def list_tools(pm: PluginManager | None = Depends(_get_plugin_manager)) -> list[dict]:  # noqa: B008 FastAPI Depends() convention
     if pm is None:
         return []
     return pm.get_all_tools()
@@ -26,7 +26,7 @@ async def list_tools(pm: PluginManager | None = Depends(_get_plugin_manager)) ->
 
 @router.get("/definitions")
 async def get_tool_definitions(
-    pm: PluginManager | None = Depends(_get_plugin_manager),
+    pm: PluginManager | None = Depends(_get_plugin_manager),  # noqa: B008 FastAPI Depends() convention
 ) -> list[dict]:
     if pm is None:
         return []
@@ -59,8 +59,8 @@ class ToolExecuteRequest(BaseModel):
 @router.post("/execute")
 async def execute_tool(
     request: ToolExecuteRequest,
-    pm: PluginManager | None = Depends(_get_plugin_manager),
-    user: dict = Depends(verify_token),
+    pm: PluginManager | None = Depends(_get_plugin_manager),  # noqa: B008 FastAPI Depends() convention
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     if pm is None:
         raise HTTPException(status_code=503, detail="Plugin manager not initialized")
@@ -72,14 +72,14 @@ async def execute_tool(
 
 
 @router.get("/plugins")
-async def list_plugins(pm: PluginManager | None = Depends(_get_plugin_manager)) -> dict:
+async def list_plugins(pm: PluginManager | None = Depends(_get_plugin_manager)) -> dict:  # noqa: B008 FastAPI Depends() convention
     if pm is None:
         return {"plugins": [], "total": 0}
     return pm.get_stats()
 
 
 @router.get("/health")
-async def plugins_health(pm: PluginManager | None = Depends(_get_plugin_manager)) -> dict:
+async def plugins_health(pm: PluginManager | None = Depends(_get_plugin_manager)) -> dict:  # noqa: B008 FastAPI Depends() convention
     if pm is None:
         return {"status": "not_initialized"}
     return await pm.health_check()
@@ -88,7 +88,7 @@ async def plugins_health(pm: PluginManager | None = Depends(_get_plugin_manager)
 @router.get("/health/{plugin_name}")
 async def plugin_health(
     plugin_name: str,
-    pm: PluginManager | None = Depends(_get_plugin_manager),
+    pm: PluginManager | None = Depends(_get_plugin_manager),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     if pm is None:
         raise HTTPException(status_code=503, detail="Plugin manager not initialized")
@@ -99,7 +99,7 @@ async def plugin_health(
 
 
 @router.get("/status")
-async def plugin_statuses(pm: PluginManager | None = Depends(_get_plugin_manager)) -> dict:
+async def plugin_statuses(pm: PluginManager | None = Depends(_get_plugin_manager)) -> dict:  # noqa: B008 FastAPI Depends() convention
     if pm is None:
         return {}
     return pm.get_all_statuses()

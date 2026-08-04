@@ -31,7 +31,7 @@ async def get_repo() -> AsyncSession:
 async def list_conversations(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> ConversationListResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -61,7 +61,7 @@ async def list_conversations(
 
 @router.post("", response_model=ConversationResponse, status_code=201)
 async def create_conversation(
-    data: ConversationCreate, user: dict = Depends(verify_token),
+    data: ConversationCreate, user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> ConversationResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -82,7 +82,7 @@ async def create_conversation(
 @router.get("/{conversation_id}", response_model=ConversationDetailResponse)
 async def get_conversation(
     conversation_id: str = Path(..., min_length=1, max_length=36),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> ConversationDetailResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -121,7 +121,7 @@ async def get_conversation(
 async def update_conversation(
     data: ConversationUpdate,
     conversation_id: str = Path(..., min_length=1, max_length=36),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> ConversationResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -148,7 +148,7 @@ async def update_conversation(
 @router.delete("/{conversation_id}", status_code=204)
 async def delete_conversation(
     conversation_id: str = Path(..., min_length=1, max_length=36),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> None:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -166,7 +166,7 @@ async def delete_conversation(
 async def add_message(
     data: MessageCreate,
     conversation_id: str = Path(..., min_length=1, max_length=36),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> MessageResponse:
     user_id = user["user_id"]
     session_factory = get_session()

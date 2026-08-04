@@ -38,7 +38,7 @@ async def list_memories(
     ),
     min_importance: float = Query(0.0, ge=0.0, le=1.0),
     include_archived: bool = Query(False),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> MemoryListResponse:
     user_id = user["user_id"]
     service, session = _get_service()
@@ -55,7 +55,7 @@ async def list_memories(
 
 
 @router.post("", response_model=MemoryResponse, status_code=201)
-async def create_memory(data: MemoryCreate, user: dict = Depends(verify_token)) -> MemoryResponse:
+async def create_memory(data: MemoryCreate, user: dict = Depends(verify_token)) -> MemoryResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -66,7 +66,7 @@ async def create_memory(data: MemoryCreate, user: dict = Depends(verify_token)) 
 
 @router.post("/search", response_model=MemorySearchResponse)
 async def search_memories(
-    data: MemorySearchRequest, user: dict = Depends(verify_token),
+    data: MemorySearchRequest, user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> MemorySearchResponse:
     user_id = user["user_id"]
     service, session = _get_service()
@@ -87,7 +87,7 @@ async def search_memories(
 
 
 @router.get("/stats")
-async def memory_stats(user: dict = Depends(verify_token)) -> dict:
+async def memory_stats(user: dict = Depends(verify_token)) -> dict:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -98,7 +98,7 @@ async def memory_stats(user: dict = Depends(verify_token)) -> dict:
 
 
 @router.get("/profile", response_model=MemoryResponse | None)
-async def get_profile_memory(user: dict = Depends(verify_token)) -> MemoryResponse | None:
+async def get_profile_memory(user: dict = Depends(verify_token)) -> MemoryResponse | None:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -106,7 +106,7 @@ async def get_profile_memory(user: dict = Depends(verify_token)) -> MemoryRespon
 
 
 @router.get("/preferences", response_model=list[MemoryResponse])
-async def get_preferences(user: dict = Depends(verify_token)) -> list[MemoryResponse]:
+async def get_preferences(user: dict = Depends(verify_token)) -> list[MemoryResponse]:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -114,7 +114,7 @@ async def get_preferences(user: dict = Depends(verify_token)) -> list[MemoryResp
 
 
 @router.get("/projects", response_model=list[MemoryResponse])
-async def get_project_memories(user: dict = Depends(verify_token)) -> list[MemoryResponse]:
+async def get_project_memories(user: dict = Depends(verify_token)) -> list[MemoryResponse]:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -126,7 +126,7 @@ async def get_project_memories(user: dict = Depends(verify_token)) -> list[Memor
 
 @router.get("/{memory_id}", response_model=MemoryResponse)
 async def get_memory(
-    memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token),
+    memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> MemoryResponse:
     user_id = user["user_id"]
     service, session = _get_service()
@@ -143,7 +143,7 @@ async def get_memory(
 async def update_memory(
     data: MemoryUpdate,
     memory_id: str = Path(..., min_length=1, max_length=36),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> MemoryResponse:
     user_id = user["user_id"]
     service, session = _get_service()
@@ -159,7 +159,7 @@ async def update_memory(
 
 @router.delete("/{memory_id}", status_code=204)
 async def delete_memory(
-    memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token),
+    memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> None:
     user_id = user["user_id"]
     service, session = _get_service()
@@ -173,7 +173,7 @@ async def delete_memory(
 
 
 @router.patch("/{memory_id}/archive", response_model=MemoryResponse)
-async def archive_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:
+async def archive_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -187,7 +187,7 @@ async def archive_memory(memory_id: str, user: dict = Depends(verify_token)) -> 
 
 
 @router.patch("/{memory_id}/restore", response_model=MemoryResponse)
-async def restore_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:
+async def restore_memory(memory_id: str, user: dict = Depends(verify_token)) -> MemoryResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -201,7 +201,7 @@ async def restore_memory(memory_id: str, user: dict = Depends(verify_token)) -> 
 
 
 @router.patch("/{memory_id}/promote")
-async def promote_memory(memory_id: str, user: dict = Depends(verify_token)) -> dict:
+async def promote_memory(memory_id: str, user: dict = Depends(verify_token)) -> dict:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:

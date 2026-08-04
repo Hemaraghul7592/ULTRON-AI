@@ -33,7 +33,7 @@ class DisconnectResponse(BaseModel):
 @router.get("/login")
 async def google_auth_login(
     request: Request,
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     settings = get_settings()
     if not settings.GOOGLE_CLIENT_ID or not settings.GOOGLE_CLIENT_SECRET:
@@ -134,7 +134,7 @@ async def google_auth_callback(
 @router.get("/status", response_model=StatusResponse)
 async def google_auth_status(
     request: Request,
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> StatusResponse:
     session_factory = get_session()
     async with session_factory() as session:
@@ -151,7 +151,7 @@ async def google_auth_status(
 @router.post("/disconnect", response_model=DisconnectResponse)
 async def google_auth_disconnect(
     request: Request,
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> DisconnectResponse:
     session_factory = get_session()
     async with session_factory() as session:

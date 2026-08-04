@@ -15,7 +15,7 @@ security = HTTPBearer(auto_error=False)
 
 
 async def verify_token(
-    credentials: HTTPAuthorizationCredentials | None = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     if credentials is None:
         raise HTTPException(
@@ -31,7 +31,7 @@ async def verify_token(
     return payload
 
 
-async def require_admin(user: dict = Depends(verify_token)) -> dict:
+async def require_admin(user: dict = Depends(verify_token)) -> dict:  # noqa: B008 FastAPI Depends() convention
     settings = get_settings()
     user_id = str(user.get("user_id", ""))
     if user.get("role") != "admin" or user_id not in settings.ADMIN_USER_IDS:
@@ -56,5 +56,5 @@ async def register(data: UserCreate) -> TokenResponse:
 
 
 @router.get("/verify")
-async def verify_auth(user: dict = Depends(verify_token)) -> dict:
+async def verify_auth(user: dict = Depends(verify_token)) -> dict:  # noqa: B008 FastAPI Depends() convention
     return {"authenticated": True, "user": user.get("sub", "unknown")}

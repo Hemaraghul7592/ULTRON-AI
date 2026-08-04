@@ -22,7 +22,7 @@ async def list_entities(
     entity_type: str | None = None,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> KnowledgeGraphResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -40,7 +40,7 @@ async def list_entities(
 
 
 @router.post("", response_model=EntityResponse, status_code=201)
-async def create_entity(data: EntityCreate, user: dict = Depends(verify_token)) -> EntityResponse:
+async def create_entity(data: EntityCreate, user: dict = Depends(verify_token)) -> EntityResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -60,7 +60,7 @@ async def create_entity(data: EntityCreate, user: dict = Depends(verify_token)) 
 async def search_entities(
     q: str = Query(..., min_length=1),
     limit: int = Query(10, ge=1, le=50),
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> list[dict]:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -77,7 +77,7 @@ async def search_entities(
 
 
 @router.get("/{entity_id}", response_model=EntityResponse)
-async def get_entity(entity_id: str, user: dict = Depends(verify_token)) -> EntityResponse:
+async def get_entity(entity_id: str, user: dict = Depends(verify_token)) -> EntityResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -92,7 +92,7 @@ async def get_entity(entity_id: str, user: dict = Depends(verify_token)) -> Enti
 
 @router.post("/relationships", response_model=RelationshipResponse, status_code=201)
 async def create_relationship(
-    data: RelationshipCreate, user: dict = Depends(verify_token),
+    data: RelationshipCreate, user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> RelationshipResponse:
     user_id = user["user_id"]
     session_factory = get_session()

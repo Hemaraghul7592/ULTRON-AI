@@ -15,7 +15,7 @@ async def list_tasks(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     status: str | None = None,
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> TaskListResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -33,7 +33,7 @@ async def list_tasks(
 
 
 @router.post("", response_model=TaskResponse, status_code=201)
-async def create_task(data: TaskCreate, user: dict = Depends(verify_token)) -> TaskResponse:
+async def create_task(data: TaskCreate, user: dict = Depends(verify_token)) -> TaskResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -44,7 +44,7 @@ async def create_task(data: TaskCreate, user: dict = Depends(verify_token)) -> T
 
 
 @router.get("/{task_id}", response_model=TaskResponse)
-async def get_task(task_id: str, user: dict = Depends(verify_token)) -> TaskResponse:
+async def get_task(task_id: str, user: dict = Depends(verify_token)) -> TaskResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -59,7 +59,7 @@ async def get_task(task_id: str, user: dict = Depends(verify_token)) -> TaskResp
 
 @router.patch("/{task_id}", response_model=TaskResponse)
 async def update_task(
-    task_id: str, data: TaskUpdate, user: dict = Depends(verify_token),
+    task_id: str, data: TaskUpdate, user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> TaskResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -75,7 +75,7 @@ async def update_task(
 
 
 @router.post("/{task_id}/complete", response_model=TaskResponse)
-async def complete_task(task_id: str, user: dict = Depends(verify_token)) -> TaskResponse:
+async def complete_task(task_id: str, user: dict = Depends(verify_token)) -> TaskResponse:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -90,7 +90,7 @@ async def complete_task(task_id: str, user: dict = Depends(verify_token)) -> Tas
 
 
 @router.delete("/{task_id}", status_code=204)
-async def delete_task(task_id: str, user: dict = Depends(verify_token)) -> None:
+async def delete_task(task_id: str, user: dict = Depends(verify_token)) -> None:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:

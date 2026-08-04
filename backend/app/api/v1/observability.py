@@ -13,7 +13,7 @@ router = APIRouter(
 
 
 @router.get("/dashboard")
-async def get_dashboard(user: dict = Depends(verify_token)) -> dict:
+async def get_dashboard(user: dict = Depends(verify_token)) -> dict:  # noqa: B008 FastAPI Depends() convention
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:
@@ -23,7 +23,7 @@ async def get_dashboard(user: dict = Depends(verify_token)) -> dict:
 
 @router.get("/metrics")
 async def get_metrics(
-    limit: int = Query(50, ge=1, le=500), _: dict = Depends(require_admin),
+    limit: int = Query(50, ge=1, le=500), _: dict = Depends(require_admin),  # noqa: B008 FastAPI Depends() convention
 ) -> list[dict]:
     session_factory = get_session()
     async with session_factory() as session:
@@ -44,7 +44,7 @@ async def get_metrics(
 
 @router.get("/metrics/latency")
 async def get_latency(
-    hours: int = Query(24, ge=1, le=168), _: dict = Depends(require_admin),
+    hours: int = Query(24, ge=1, le=168), _: dict = Depends(require_admin),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     session_factory = get_session()
     async with session_factory() as session:
@@ -54,7 +54,7 @@ async def get_latency(
 
 @router.get("/metrics/tokens")
 async def get_token_usage(
-    hours: int = Query(24, ge=1, le=168), _: dict = Depends(require_admin),
+    hours: int = Query(24, ge=1, le=168), _: dict = Depends(require_admin),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     session_factory = get_session()
     async with session_factory() as session:

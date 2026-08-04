@@ -26,7 +26,7 @@ def _get_voice_service(request: Request) -> VoiceService:
 
 @router.post("/stt")
 async def speech_to_text(
-    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service),
+    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service),  # noqa: B008 FastAPI Depends() convention
 ) -> VoiceResponse:
     result = await vs.transcribe(
         audio_data=request.audio_data,
@@ -43,7 +43,7 @@ async def speech_to_text(
 
 @router.post("/tts")
 async def text_to_speech(
-    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service),
+    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service),  # noqa: B008 FastAPI Depends() convention
 ) -> VoiceResponse:
     result = await vs.synthesize(
         text=request.text or "",
@@ -58,7 +58,7 @@ async def text_to_speech(
 @router.post("/session/create")
 async def create_voice_session(
     config: VoiceSessionConfig | None = None,
-    vs: VoiceService = Depends(_get_voice_service),
+    vs: VoiceService = Depends(_get_voice_service),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     session = await vs.create_session(language=config.language if config else "en-US")
     return {"session_id": session.session_id, "language": session.language}
@@ -68,7 +68,7 @@ async def create_voice_session(
 async def process_voice(
     session_id: str,
     request: VoiceRequest,
-    vs: VoiceService = Depends(_get_voice_service),
+    vs: VoiceService = Depends(_get_voice_service),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     return await vs.process(
         session_id=session_id,
@@ -82,20 +82,20 @@ async def process_voice(
 @router.delete("/session/{session_id}")
 async def close_voice_session(
     session_id: str,
-    vs: VoiceService = Depends(_get_voice_service),
+    vs: VoiceService = Depends(_get_voice_service),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     return {"closed": vs.close_session(session_id)}
 
 
 @router.get("/sessions")
 async def list_voice_sessions(
-    vs: VoiceService = Depends(_get_voice_service),
+    vs: VoiceService = Depends(_get_voice_service),  # noqa: B008 FastAPI Depends() convention
 ) -> list[dict]:
     return [s.to_dict() for s in vs.list_sessions()]
 
 
 @router.get("/health")
 async def voice_health(
-    vs: VoiceService = Depends(_get_voice_service),
+    vs: VoiceService = Depends(_get_voice_service),  # noqa: B008 FastAPI Depends() convention
 ) -> dict:
     return await vs.health_check()

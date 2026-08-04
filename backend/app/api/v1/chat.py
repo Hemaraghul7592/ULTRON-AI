@@ -24,7 +24,7 @@ def _get_pm_from_request(http_request: Request) -> PluginManager | None:
 async def chat(
     body: ChatRequest,
     http_request: Request,
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> ChatResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -41,7 +41,7 @@ async def chat(
 async def chat_stream(
     body: ChatRequest,
     http_request: Request,
-    user: dict = Depends(verify_token),
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> StreamingResponse:
     user_id = user["user_id"]
     session_factory = get_session()
