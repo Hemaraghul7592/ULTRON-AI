@@ -186,7 +186,7 @@ class PluginManager:
         except Exception as e:
             self._statuses[plugin_name] = PluginStatus.ERROR
             normalized = normalize_error(e, plugin_name)
-            raise normalized
+            raise normalized from e
 
     async def execute_tool_safe(
         self,

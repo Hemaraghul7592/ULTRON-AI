@@ -84,11 +84,11 @@ async def google_auth_callback(
 
     try:
         payload = decode_access_token(state)
-    except AuthenticationException:
+    except AuthenticationException as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired state parameter. Please start again from /api/v1/google/auth/login",
-        )
+        ) from e
 
     if payload.get("purpose") != "oauth_state":
         raise HTTPException(

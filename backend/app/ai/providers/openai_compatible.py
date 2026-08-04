@@ -122,7 +122,7 @@ class OpenAICompatibleProvider(AIProvider):
             )
             return result
         except httpx.HTTPStatusError as e:
-            raise self._map_http_error(e)
+            raise self._map_http_error(e) from e
         except httpx.RequestError as e:
             raise ProviderUnavailableException(provider=self.name, reason=str(e)) from e
 
