@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 import json
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator  # noqa: TC003
 from typing import Any
 
 import httpx

@@ -1,19 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from app.search.interface import SearchFeature, SearchMode, SearchProvider
-
-if TYPE_CHECKING:
-    from app.search.service import SearchService
+from app.search.service import SearchService
 
 _search_service: SearchService | None = None
 
 
 def get_search_service() -> SearchService:
     if _search_service is None:
-        from app.search.service import SearchService
-
         raise RuntimeError(
             "SearchService not initialized. Call init_search_service() during app startup.",
         )

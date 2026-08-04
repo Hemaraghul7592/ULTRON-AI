@@ -5,7 +5,7 @@ import builtins
 import time
 from typing import TYPE_CHECKING, Any
 
-from app.agent.context import AgentContext
+from app.agent.context import AgentContext  # noqa: TC001
 from app.agent.errors import DependencyError, ExecutionError, RecoveryError
 from app.core.logging import get_logger
 

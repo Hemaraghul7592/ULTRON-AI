@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from app.file_engine.interface import FileMetadata
+from app.file_engine.interface import FileMetadata  # noqa: TC001
 from app.file_engine.processors.base import Processor
 from app.file_engine.utils import AUDIO_EXTENSIONS
 

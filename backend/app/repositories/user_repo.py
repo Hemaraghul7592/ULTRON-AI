@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.models.user import User
-from app.schemas.auth import UserCreate
+from app.schemas.auth import UserCreate  # noqa: TC001
 
 
 class UserRepository:

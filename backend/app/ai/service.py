@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator  # noqa: TC003
 from typing import Any
 
 from app.ai.providers import AIProvider, GeminiProvider, GrokProvider, GroqProvider, OpenAIProvider

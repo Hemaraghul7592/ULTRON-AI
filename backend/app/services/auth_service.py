@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fastapi import HTTPException, status
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.core.config import get_settings
 from app.core.security import create_access_token, hash_password, verify_password

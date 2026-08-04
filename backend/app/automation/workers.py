@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import time
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine  # noqa: TC003
 from typing import Any
 
 from app.core.logging import get_logger

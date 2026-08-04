@@ -1,13 +1,13 @@
 from __future__ import annotations
 
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable  # noqa: TC003
 from typing import Any
 
 import structlog
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
-from starlette.responses import Response
+from starlette.requests import Request  # noqa: TC002
+from starlette.responses import Response  # noqa: TC002
 
 
 class RequestIDMiddleware(BaseHTTPMiddleware):

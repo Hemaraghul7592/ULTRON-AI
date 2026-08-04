@@ -7,7 +7,7 @@ from fastapi.responses import StreamingResponse
 
 from app.api.v1.auth import verify_token
 from app.core.database import get_session
-from app.plugins.manager import PluginManager
+from app.plugins.manager import PluginManager  # noqa: TC001
 from app.schemas.ai import ChatRequest, ChatResponse
 from app.services.chat_service import ChatService
 

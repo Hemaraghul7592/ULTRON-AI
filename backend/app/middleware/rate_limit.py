@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable  # noqa: TC003
 from typing import Any
 
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
+from starlette.requests import Request  # noqa: TC002
 from starlette.responses import JSONResponse
 
 from app.core.rate_limiter import get_auth_rate_limiter, get_rate_limiter

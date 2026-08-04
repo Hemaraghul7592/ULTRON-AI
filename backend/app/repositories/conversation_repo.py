@@ -3,12 +3,12 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 from sqlalchemy.orm import selectinload
 
 from app.core.exceptions import NotFoundException
 from app.models.conversation import Conversation, Message
-from app.schemas.conversation import ConversationCreate, MessageCreate
+from app.schemas.conversation import ConversationCreate, MessageCreate  # noqa: TC001
 
 
 class ConversationRepository:

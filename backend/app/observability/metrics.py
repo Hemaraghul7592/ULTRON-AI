@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.core.logging import get_logger
 from app.repositories.metric_repo import MetricRepository

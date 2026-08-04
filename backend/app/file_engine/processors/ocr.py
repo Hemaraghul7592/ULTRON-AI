@@ -3,7 +3,7 @@ from __future__ import annotations
 import base64
 from typing import Any
 
-from app.file_engine.interface import FileMetadata
+from app.file_engine.interface import FileMetadata  # noqa: TC001
 from app.file_engine.processors.base import Processor
 from app.file_engine.processors.pdf import PDF_EXTENSIONS
 from app.file_engine.utils import IMAGE_EXTENSIONS

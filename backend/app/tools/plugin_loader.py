@@ -5,7 +5,7 @@ from typing import Any
 
 from app.core.logging import get_logger
 from app.tools.base import BasePlugin
-from app.tools.router import ToolRouter
+from app.tools.router import ToolRouter  # noqa: TC001
 
 logger = get_logger(__name__)
 

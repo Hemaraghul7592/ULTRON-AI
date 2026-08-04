@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.core.config import get_settings
 from app.core.logging import get_logger
 from app.memory.embeddings import EmbeddingService
 from app.repositories.memory_repo import MemoryRepository
-from app.schemas.memory import MemoryCreate
+from app.schemas.memory import MemoryCreate  # noqa: TC001
 
 logger = get_logger(__name__)
 

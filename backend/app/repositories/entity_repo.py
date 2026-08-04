@@ -3,11 +3,11 @@ from __future__ import annotations
 import json
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.models.entity import Entity, Relationship
 from app.repositories.utils import escape_like
-from app.schemas.entity import EntityCreate, RelationshipCreate
+from app.schemas.entity import EntityCreate, RelationshipCreate  # noqa: TC001
 
 
 class EntityRepository:

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.logging import get_logger
-from app.sync.interface import SyncChange, SyncProvider, SyncResult
+from app.sync.interface import SyncChange, SyncProvider, SyncResult  # noqa: TC001
 from app.sync.manager import SyncManager
 
 logger = get_logger(__name__)

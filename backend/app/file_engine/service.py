@@ -14,7 +14,7 @@ from app.file_engine.errors import (
 from app.file_engine.interface import FileMetadata, StorageProvider
 from app.file_engine.models import StoredFile
 from app.file_engine.processors.audio import AudioProcessor
-from app.file_engine.processors.base import Processor
+from app.file_engine.processors.base import Processor  # noqa: TC001
 from app.file_engine.processors.image import ImageProcessor
 from app.file_engine.processors.ocr import OCRProcessor
 from app.file_engine.processors.pdf import PDFProcessor

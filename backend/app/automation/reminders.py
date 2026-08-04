@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Coroutine
+from collections.abc import Callable, Coroutine  # noqa: TC003
 from datetime import UTC, datetime
 from typing import Any
 

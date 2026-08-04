@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator  # noqa: TC003
 from typing import Any
 
 from app.ai.provider import AIProvider, AIProviderFactory

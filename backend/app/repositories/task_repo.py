@@ -3,10 +3,10 @@ from __future__ import annotations
 from datetime import UTC, datetime
 
 from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.models.task import Job, Task
-from app.schemas.task import TaskCreate
+from app.schemas.task import TaskCreate  # noqa: TC001
 
 
 class TaskRepository:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import abc
 from typing import Any
 
-from app.file_engine.interface import FileMetadata
+from app.file_engine.interface import FileMetadata  # noqa: TC001
 
 
 class Processor(abc.ABC):

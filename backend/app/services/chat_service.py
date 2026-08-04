@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import time
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator  # noqa: TC003
 from typing import TYPE_CHECKING
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession  # noqa: TC002
 
 from app.ai.context_builder import ContextBuilder
 from app.ai.prompt_builder import PromptBuilder

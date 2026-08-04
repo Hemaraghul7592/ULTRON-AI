@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from app.api.v1.auth import verify_token
 from app.core.logging import get_logger
-from app.plugins.manager import PluginManager
+from app.plugins.manager import PluginManager  # noqa: TC001
 
 router = APIRouter(prefix="/tools", tags=["tools"], dependencies=[Depends(verify_token)])
 logger = get_logger(__name__)

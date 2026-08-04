@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from app.agent.models import Task
+from app.agent.models import Task  # noqa: TC001
 
 
 class AgentContext:

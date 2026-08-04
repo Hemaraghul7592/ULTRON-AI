@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import time
-from collections.abc import Callable
+from collections.abc import Callable  # noqa: TC003
 from typing import Any
 
 from starlette.middleware.base import BaseHTTPMiddleware
-from starlette.requests import Request
+from starlette.requests import Request  # noqa: TC002
 
 from app.core.logging import get_logger
 

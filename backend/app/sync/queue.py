@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable  # noqa: TC003
 from typing import Any
 
 from app.core.logging import get_logger

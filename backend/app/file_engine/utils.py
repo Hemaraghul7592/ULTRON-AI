@@ -5,7 +5,7 @@ import os
 import re
 import tempfile
 import uuid
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator  # noqa: TC003
 from contextlib import asynccontextmanager
 from pathlib import Path
 
