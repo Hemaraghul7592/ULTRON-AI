@@ -16,7 +16,7 @@ class MemoryRepository:
         self.session = session
 
     async def create(
-        self, data: MemoryCreate, user_id: str, embedding: str | None = None
+        self, data: MemoryCreate, user_id: str, embedding: str | None = None,
     ) -> Memory:
         memory = Memory(
             user_id=user_id,
@@ -163,7 +163,7 @@ class MemoryRepository:
             select(Memory)
             .options(selectinload(Memory.tags))
             .where(
-                Memory.category == category, Memory.user_id == user_id, Memory.is_archived == False
+                Memory.category == category, Memory.user_id == user_id, Memory.is_archived == False,
             )  # noqa: E712
             .order_by(Memory.importance.desc())
             .limit(limit),

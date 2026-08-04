@@ -22,7 +22,7 @@ class TagResponse(BaseModel):
 class MemoryCreate(BaseModel):
     content: str = Field(..., min_length=1, max_length=50000)
     memory_type: str = Field(
-        default="short_term", pattern="^(short_term|long_term|episodic|semantic)$"
+        default="short_term", pattern="^(short_term|long_term|episodic|semantic)$",
     )
     category: str = Field(default="general", pattern=CATEGORY_PATTERN)
     importance: float = Field(default=0.5, ge=0.0, le=1.0)
@@ -34,7 +34,9 @@ class MemoryCreate(BaseModel):
 class MemoryUpdate(BaseModel):
     content: str | None = Field(default=None, min_length=1, max_length=50000)
     summary: str | None = Field(default=None, max_length=10000)
-    memory_type: str | None = Field(default=None, pattern="^(short_term|long_term|episodic|semantic)$")
+    memory_type: str | None = Field(
+        default=None, pattern="^(short_term|long_term|episodic|semantic)$",
+    )
     category: str | None = Field(default=None, pattern=CATEGORY_PATTERN)
     importance: float | None = Field(default=None, ge=0.0, le=1.0)
     is_archived: bool | None = None
@@ -69,7 +71,9 @@ class MemoryListResponse(BaseModel):
 
 class MemorySearchRequest(BaseModel):
     query: str = Field(..., min_length=1, max_length=1000)
-    memory_type: str | None = Field(default=None, pattern="^(short_term|long_term|episodic|semantic)$")
+    memory_type: str | None = Field(
+        default=None, pattern="^(short_term|long_term|episodic|semantic)$",
+    )
     category: str | None = Field(default=None, pattern=CATEGORY_PATTERN)
     limit: int = Field(default=10, ge=1, le=50)
     min_importance: float = Field(default=0.0, ge=0.0, le=1.0)

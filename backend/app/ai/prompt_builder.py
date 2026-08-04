@@ -59,7 +59,7 @@ class PromptBuilder:
                     {
                         "role": msg.get("role", "user"),
                         "content": msg.get("content", ""),
-                    }
+                    },
                 )
 
         if tool_results:
@@ -69,7 +69,7 @@ class PromptBuilder:
                         "role": "tool",
                         "content": f"Tool {tr['name']} result: {tr['result']}",
                         "tool_call_id": tr.get("tool_call_id", ""),
-                    }
+                    },
                 )
 
         messages.append({"role": "user", "content": user_message})
@@ -86,7 +86,7 @@ class PromptBuilder:
                     "role": "tool",
                     "content": result.get("result", ""),
                     "tool_call_id": result.get("tool_call_id", ""),
-                }
+                },
             )
         return messages
 

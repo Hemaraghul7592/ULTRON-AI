@@ -22,7 +22,7 @@ async def list_tasks(
     async with session_factory() as session:
         repo = TaskRepository(session)
         tasks, total = await repo.list_all(
-            user_id=user_id, page=page, page_size=page_size, status=status
+            user_id=user_id, page=page, page_size=page_size, status=status,
         )
         return TaskListResponse(
             tasks=[TaskResponse.model_validate(t) for t in tasks],
@@ -59,7 +59,7 @@ async def get_task(task_id: str, user: dict = Depends(verify_token)) -> TaskResp
 
 @router.patch("/{task_id}", response_model=TaskResponse)
 async def update_task(
-    task_id: str, data: TaskUpdate, user: dict = Depends(verify_token)
+    task_id: str, data: TaskUpdate, user: dict = Depends(verify_token),
 ) -> TaskResponse:
     user_id = user["user_id"]
     session_factory = get_session()

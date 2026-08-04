@@ -6,8 +6,8 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.models.conversation import Conversation, Message
 from app.core.exceptions import NotFoundException
+from app.models.conversation import Conversation, Message
 from app.schemas.conversation import ConversationCreate, MessageCreate
 
 
@@ -35,7 +35,7 @@ class ConversationRepository:
         return result.scalar_one_or_none()
 
     async def list_all(
-        self, user_id: str, page: int = 1, page_size: int = 20
+        self, user_id: str, page: int = 1, page_size: int = 20,
     ) -> tuple[list[Conversation], int]:
         query = select(Conversation).where(Conversation.user_id == user_id)
         count_result = await self.session.execute(

@@ -85,7 +85,7 @@ class AIProvider(abc.ABC):
                     "id": tc.get("id", ""),
                     "name": func.get("name", ""),
                     "arguments": args,
-                }
+                },
             )
 
         return {
@@ -222,7 +222,7 @@ class GroqProvider(AIProvider):
                                     "id": tc.get("id", ""),
                                     "name": func.get("name", ""),
                                     "arguments": func.get("arguments", ""),
-                                }
+                                },
                             )
                         finish = data.get("choices", [{}])[0].get("finish_reason")
                         yield {
@@ -285,7 +285,7 @@ class GeminiProvider(AIProvider):
                     "name": func.get("name", ""),
                     "description": func.get("description", ""),
                     "parameters": func.get("parameters", {}),
-                }
+                },
             )
         return [{"function_declarations": function_declarations}]
 
@@ -317,7 +317,7 @@ class GeminiProvider(AIProvider):
                         "id": f"gemini_{fc.get('name', '')}",
                         "name": fc.get("name", ""),
                         "arguments": fc.get("args", {}),
-                    }
+                    },
                 )
         usage = data.get("usageMetadata", {})
         return {

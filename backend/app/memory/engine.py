@@ -46,7 +46,7 @@ class MemoryEngine:
         min_importance: float = 0.0,
     ) -> list[dict[str, Any]]:
         text_results = await self.repo.search_by_content(
-            query, user_id=user_id, limit=limit * 2, memory_type=memory_type
+            query, user_id=user_id, limit=limit * 2, memory_type=memory_type,
         )
 
         query_embedding = await self.embedding_service.embed(query)
@@ -73,7 +73,7 @@ class MemoryEngine:
                     {
                         "memory": memory,
                         "score": combined_score,
-                    }
+                    },
                 )
 
         scored_results.sort(key=lambda x: x["score"], reverse=True)
@@ -129,10 +129,10 @@ class MemoryEngine:
 
     async def get_stats(self, user_id: str) -> dict[str, Any]:
         short_term, st_total = await self.repo.list_all(
-            user_id=user_id, page=1, page_size=1, memory_type="short_term"
+            user_id=user_id, page=1, page_size=1, memory_type="short_term",
         )
         long_term, lt_total = await self.repo.list_all(
-            user_id=user_id, page=1, page_size=1, memory_type="long_term"
+            user_id=user_id, page=1, page_size=1, memory_type="long_term",
         )
         return {
             "short_term_count": st_total,

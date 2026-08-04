@@ -48,7 +48,7 @@ class ChatService:
         conversation_id = request.conversation_id
         if not conversation_id:
             conv = await self.conversation_repo.create(
-                ConversationCreate(title=None), user_id=user_id
+                ConversationCreate(title=None), user_id=user_id,
             )
             conversation_id = conv.id
 
@@ -58,14 +58,14 @@ class ChatService:
             if conversation is None:
                 raise NotFoundException("Conversation", conversation_id)
             messages = await self.conversation_repo.get_recent_messages(
-                conversation_id, user_id, limit=20
+                conversation_id, user_id, limit=20,
             )
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
         if request.use_memory:
             memory_context = await self.memory_service.get_context_for_query(
-                request.message, user_id=user_id
+                request.message, user_id=user_id,
             )
 
         tools = None
@@ -103,7 +103,7 @@ class ChatService:
                         id=tc["id"],
                         name=tc["name"],
                         arguments=tc["arguments"],
-                    )
+                    ),
                 )
                 exec_result = await self.tool_executor.execute(tc, user_id=user_id)
                 tool_results.append(
@@ -113,7 +113,7 @@ class ChatService:
                         result=exec_result["result"],
                         success=exec_result["success"],
                         error=exec_result.get("error"),
-                    )
+                    ),
                 )
 
             messages.append(
@@ -121,7 +121,7 @@ class ChatService:
                     "role": "assistant",
                     "content": result.get("content", ""),
                     "tool_calls": result["tool_calls"],
-                }
+                },
             )
             for tr in tool_results:
                 messages.append(
@@ -129,7 +129,7 @@ class ChatService:
                         "role": "tool",
                         "content": tr.result,
                         "tool_call_id": tr.tool_call_id,
-                    }
+                    },
                 )
 
             result = await self.ai_service.chat(
@@ -192,7 +192,7 @@ class ChatService:
         conversation_id = request.conversation_id
         if not conversation_id:
             conv = await self.conversation_repo.create(
-                ConversationCreate(title=None), user_id=user_id
+                ConversationCreate(title=None), user_id=user_id,
             )
             conversation_id = conv.id
 
@@ -202,14 +202,14 @@ class ChatService:
             if conversation is None:
                 raise NotFoundException("Conversation", conversation_id)
             messages = await self.conversation_repo.get_recent_messages(
-                conversation_id, user_id, limit=20
+                conversation_id, user_id, limit=20,
             )
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
         if request.use_memory:
             memory_context = await self.memory_service.get_context_for_query(
-                request.message, user_id=user_id
+                request.message, user_id=user_id,
             )
 
         messages = self.prompt_builder.build_messages(

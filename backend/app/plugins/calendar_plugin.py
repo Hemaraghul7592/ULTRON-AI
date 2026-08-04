@@ -72,7 +72,7 @@ class CalendarListTool(BaseTool):
             results = [f"Upcoming events ({len(events)}):"]
             for event in events:
                 start = event.get("start", {}).get(
-                    "dateTime", event.get("start", {}).get("date", "")
+                    "dateTime", event.get("start", {}).get("date", ""),
                 )
                 summary = event.get("summary", "No title")
                 location = event.get("location", "")
@@ -81,7 +81,7 @@ class CalendarListTool(BaseTool):
                     line += f" @ {location}"
                 results.append(line)
             return "\n".join(results)
-        except Exception as e:
+        except Exception:
             return "Calendar operation failed"
 
     async def close(self) -> None:
@@ -153,7 +153,7 @@ class CalendarCreateTool(BaseTool):
             resp.raise_for_status()
             data = resp.json()
             return f"Created event: {data.get('summary', summary)} at {data.get('htmlLink', '')}"
-        except Exception as e:
+        except Exception:
             return "Calendar creation failed"
 
     async def close(self) -> None:

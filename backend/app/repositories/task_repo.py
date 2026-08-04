@@ -47,7 +47,7 @@ class TaskRepository:
             query = query.where(Task.status == status)
 
         count_result = await self.session.execute(
-            select(func.count()).select_from(query.subquery())
+            select(func.count()).select_from(query.subquery()),
         )
         total = count_result.scalar_one()
 

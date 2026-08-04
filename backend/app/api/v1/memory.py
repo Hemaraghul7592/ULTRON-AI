@@ -30,8 +30,12 @@ def _get_service():
 async def list_memories(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
-    memory_type: str | None = Query(default=None, pattern="^(short_term|long_term|episodic|semantic)$"),
-    category: str | None = Query(default=None, pattern="^(general|user_profile|preference|project|conversation)$"),
+    memory_type: str | None = Query(
+        default=None, pattern="^(short_term|long_term|episodic|semantic)$",
+    ),
+    category: str | None = Query(
+        default=None, pattern="^(general|user_profile|preference|project|conversation)$",
+    ),
     min_importance: float = Query(0.0, ge=0.0, le=1.0),
     include_archived: bool = Query(False),
     user: dict = Depends(verify_token),
@@ -62,7 +66,7 @@ async def create_memory(data: MemoryCreate, user: dict = Depends(verify_token)) 
 
 @router.post("/search", response_model=MemorySearchResponse)
 async def search_memories(
-    data: MemorySearchRequest, user: dict = Depends(verify_token)
+    data: MemorySearchRequest, user: dict = Depends(verify_token),
 ) -> MemorySearchResponse:
     user_id = user["user_id"]
     service, session = _get_service()
@@ -121,7 +125,9 @@ async def get_project_memories(user: dict = Depends(verify_token)) -> list[Memor
 
 
 @router.get("/{memory_id}", response_model=MemoryResponse)
-async def get_memory(memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)) -> MemoryResponse:
+async def get_memory(
+    memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token),
+) -> MemoryResponse:
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -152,7 +158,9 @@ async def update_memory(
 
 
 @router.delete("/{memory_id}", status_code=204)
-async def delete_memory(memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)) -> None:
+async def delete_memory(
+    memory_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token),
+) -> None:
     user_id = user["user_id"]
     service, session = _get_service()
     async with session:
@@ -200,7 +208,7 @@ async def promote_memory(memory_id: str, user: dict = Depends(verify_token)) -> 
         from app.schemas.memory import MemoryUpdate as MU
 
         memory = await service.update_memory(
-            memory_id, MU(memory_type="long_term"), user_id=user_id
+            memory_id, MU(memory_type="long_term"), user_id=user_id,
         )
         if memory is None:
             from app.core.exceptions import NotFoundExceptionHTTP

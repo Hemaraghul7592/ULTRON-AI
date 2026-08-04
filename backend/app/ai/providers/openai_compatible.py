@@ -78,7 +78,7 @@ class OpenAICompatibleProvider(AIProvider):
                     "id": tc.get("id", ""),
                     "name": func.get("name", ""),
                     "arguments": args,
-                }
+                },
             )
 
         return {
@@ -166,7 +166,7 @@ class OpenAICompatibleProvider(AIProvider):
                                     "id": tc.get("id", ""),
                                     "name": func.get("name", ""),
                                     "arguments": func.get("arguments", ""),
-                                }
+                                },
                             )
                         yield {
                             "content": content,

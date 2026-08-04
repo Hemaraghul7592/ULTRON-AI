@@ -79,7 +79,7 @@ class NotionSearchTool(BaseTool):
                     title = r.get("title", {}).get("plain_text", "Untitled")
                 output.append(f"- [{obj_type}] {title}")
             return "\n".join(output)
-        except Exception as e:
+        except Exception:
             return "Notion search failed"
 
 
@@ -147,7 +147,7 @@ class NotionReadPageTool(BaseTool):
             if not content:
                 return "Page is empty or contains no text blocks"
             return "\n".join(content[:100])
-        except Exception as e:
+        except Exception:
             return "Notion read failed"
 
 

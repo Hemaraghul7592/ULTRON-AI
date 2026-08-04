@@ -2,8 +2,8 @@ from app.file_engine.errors import (
     DuplicateFileError,
     FileError,
     FileNotFoundError,
-    InvalidFileTypeError,
     FilePermissionError,
+    InvalidFileTypeError,
     ProcessingError,
     StorageError,
 )

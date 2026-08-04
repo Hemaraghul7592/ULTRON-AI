@@ -17,7 +17,7 @@ from app.schemas.conversation import (
 )
 
 router = APIRouter(
-    prefix="/conversations", tags=["conversations"], dependencies=[Depends(verify_token)]
+    prefix="/conversations", tags=["conversations"], dependencies=[Depends(verify_token)],
 )
 
 
@@ -61,7 +61,7 @@ async def list_conversations(
 
 @router.post("", response_model=ConversationResponse, status_code=201)
 async def create_conversation(
-    data: ConversationCreate, user: dict = Depends(verify_token)
+    data: ConversationCreate, user: dict = Depends(verify_token),
 ) -> ConversationResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -81,7 +81,8 @@ async def create_conversation(
 
 @router.get("/{conversation_id}", response_model=ConversationDetailResponse)
 async def get_conversation(
-    conversation_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)
+    conversation_id: str = Path(..., min_length=1, max_length=36),
+    user: dict = Depends(verify_token),
 ) -> ConversationDetailResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -127,7 +128,7 @@ async def update_conversation(
     async with session_factory() as session:
         repo = ConversationRepository(session)
         conv = await repo.update(
-            conversation_id, data.model_dump(exclude_unset=True), user_id=user_id
+            conversation_id, data.model_dump(exclude_unset=True), user_id=user_id,
         )
         if not conv:
             from app.core.exceptions import NotFoundExceptionHTTP
@@ -145,7 +146,10 @@ async def update_conversation(
 
 
 @router.delete("/{conversation_id}", status_code=204)
-async def delete_conversation(conversation_id: str = Path(..., min_length=1, max_length=36), user: dict = Depends(verify_token)) -> None:
+async def delete_conversation(
+    conversation_id: str = Path(..., min_length=1, max_length=36),
+    user: dict = Depends(verify_token),
+) -> None:
     user_id = user["user_id"]
     session_factory = get_session()
     async with session_factory() as session:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Protocol, TYPE_CHECKING, runtime_checkable
+from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
     from app.operations.domain.events import DomainEvent

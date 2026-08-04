@@ -46,7 +46,7 @@ class TestMemoryRepository:
             repo = MemoryRepository(session)
             for i in range(5):
                 await repo.create(
-                    MemoryCreate(content=f"Memory {i}", category="general"), user_id="user-1"
+                    MemoryCreate(content=f"Memory {i}", category="general"), user_id="user-1",
                 )
 
             memories, total = await repo.list_all(user_id="user-1")
@@ -62,7 +62,7 @@ class TestMemoryRepository:
             repo = MemoryRepository(session)
             await repo.create(MemoryCreate(content="General", category="general"), user_id="user-1")
             await repo.create(
-                MemoryCreate(content="Profile", category="user_profile"), user_id="user-1"
+                MemoryCreate(content="Profile", category="user_profile"), user_id="user-1",
             )
 
             general_mems, g_total = await repo.list_all(user_id="user-1", category="general")
@@ -81,10 +81,10 @@ class TestMemoryRepository:
         async with session_factory() as session:
             repo = MemoryRepository(session)
             m1 = await repo.create(
-                MemoryCreate(content="Active", category="general"), user_id="user-1"
+                MemoryCreate(content="Active", category="general"), user_id="user-1",
             )
             m2 = await repo.create(
-                MemoryCreate(content="Archived", category="general"), user_id="user-1"
+                MemoryCreate(content="Archived", category="general"), user_id="user-1",
             )
             m2.is_archived = True
             await session.flush()
@@ -102,7 +102,7 @@ class TestMemoryRepository:
             repo = MemoryRepository(session)
             await repo.create(MemoryCreate(content="Active", category="general"), user_id="user-1")
             m2 = await repo.create(
-                MemoryCreate(content="Archived", category="general"), user_id="user-1"
+                MemoryCreate(content="Archived", category="general"), user_id="user-1",
             )
             m2.is_archived = True
             await session.flush()
@@ -118,7 +118,7 @@ class TestMemoryRepository:
         async with session_factory() as session:
             repo = MemoryRepository(session)
             memory = await repo.create(
-                MemoryCreate(content="Original", category="general"), user_id="user-1"
+                MemoryCreate(content="Original", category="general"), user_id="user-1",
             )
             updated = await repo.update(memory.id, {"content": "Updated"}, user_id="user-1")
             assert updated is not None
@@ -132,7 +132,7 @@ class TestMemoryRepository:
         async with session_factory() as session:
             repo = MemoryRepository(session)
             memory = await repo.create(
-                MemoryCreate(content="Tag test", tags=["a"]), user_id="user-1"
+                MemoryCreate(content="Tag test", tags=["a"]), user_id="user-1",
             )
             await repo.update(memory.id, {"tags": ["b", "c"]}, user_id="user-1")
             # Refresh to get updated tags
@@ -199,10 +199,10 @@ class TestMemoryRepository:
         async with session_factory() as session:
             repo = MemoryRepository(session)
             await repo.create(
-                MemoryCreate(content="Python rocks", category="general"), user_id="user-1"
+                MemoryCreate(content="Python rocks", category="general"), user_id="user-1",
             )
             await repo.create(
-                MemoryCreate(content="Python for ML", category="project"), user_id="user-1"
+                MemoryCreate(content="Python for ML", category="project"), user_id="user-1",
             )
 
             results = await repo.search_by_content("Python", user_id="user-1", category="project")
@@ -217,14 +217,14 @@ class TestMemoryRepository:
         async with session_factory() as session:
             repo = MemoryRepository(session)
             await repo.create(
-                MemoryCreate(content="Pref: dark mode", category="preference"), user_id="user-1"
+                MemoryCreate(content="Pref: dark mode", category="preference"), user_id="user-1",
             )
             await repo.create(
                 MemoryCreate(content="Pref: long responses", category="preference"),
                 user_id="user-1",
             )
             await repo.create(
-                MemoryCreate(content="General note", category="general"), user_id="user-1"
+                MemoryCreate(content="General note", category="general"), user_id="user-1",
             )
 
             results = await repo.get_by_category("preference", user_id="user-1")
@@ -392,10 +392,10 @@ class TestMemoryService:
         async with session_factory() as session:
             service = MemoryService(session)
             await service.create_memory(
-                MemoryCreate(content="General", category="general"), user_id="user-1"
+                MemoryCreate(content="General", category="general"), user_id="user-1",
             )
             await service.create_memory(
-                MemoryCreate(content="Pref", category="preference"), user_id="user-1"
+                MemoryCreate(content="Pref", category="preference"), user_id="user-1",
             )
 
             result = await service.list_memories(user_id="user-1", category="preference")
@@ -471,7 +471,7 @@ class TestMemoryService:
         async with session_factory() as session:
             service = MemoryService(session)
             created = await service.create_memory(
-                MemoryCreate(content="Archivable"), user_id="user-1"
+                MemoryCreate(content="Archivable"), user_id="user-1",
             )
 
             archived = await service.archive_memory(created.id, user_id="user-1")
@@ -535,13 +535,13 @@ class TestMemoryService:
         async with session_factory() as session:
             service = MemoryService(session)
             await service.create_memory(
-                MemoryCreate(content="A", category="general"), user_id="user-1"
+                MemoryCreate(content="A", category="general"), user_id="user-1",
             )
             await service.create_memory(
-                MemoryCreate(content="B", category="project"), user_id="user-1"
+                MemoryCreate(content="B", category="project"), user_id="user-1",
             )
             await service.create_memory(
-                MemoryCreate(content="C", category="project"), user_id="user-1"
+                MemoryCreate(content="C", category="project"), user_id="user-1",
             )
 
             created = await service.create_memory(MemoryCreate(content="D"), user_id="user-1")
@@ -764,13 +764,13 @@ class TestMemoryAPI:
     async def test_user_isolation_api(self, client):
         # Register two users
         r1 = await client.post(
-            "/api/v1/auth/register", json={"username": "user_one", "password": "Test1234!"}
+            "/api/v1/auth/register", json={"username": "user_one", "password": "Test1234!"},
         )
         token1 = r1.json()["access_token"]
         headers1 = {"Authorization": f"Bearer {token1}"}
 
         r2 = await client.post(
-            "/api/v1/auth/register", json={"username": "user_two", "password": "Test1234!"}
+            "/api/v1/auth/register", json={"username": "user_two", "password": "Test1234!"},
         )
         token2 = r2.json()["access_token"]
         headers2 = {"Authorization": f"Bearer {token2}"}

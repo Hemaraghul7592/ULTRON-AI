@@ -66,7 +66,7 @@ class GeminiProvider(AIProvider):
                     "name": func.get("name", ""),
                     "description": func.get("description", ""),
                     "parameters": func.get("parameters", {}),
-                }
+                },
             )
         return [{"function_declarations": function_declarations}]
 
@@ -89,7 +89,7 @@ class GeminiProvider(AIProvider):
                         "id": f"gemini_{fc.get('name', '')}",
                         "name": fc.get("name", ""),
                         "arguments": fc.get("args", {}),
-                    }
+                    },
                 )
         usage = data.get("usageMetadata", {})
         return {

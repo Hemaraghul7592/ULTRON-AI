@@ -57,7 +57,7 @@ async def chat_stream(
                         "content": chunk.content,
                         "done": chunk.done,
                         "finish_reason": chunk.finish_reason,
-                    }
+                    },
                 )
                 yield f"data: {data}\n\n"
             await session.commit()

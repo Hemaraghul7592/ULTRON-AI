@@ -229,7 +229,7 @@ class TestSyncManager:
 
     @pytest.mark.asyncio
     async def test_register_provider(
-        self, manager: SyncManager, provider: MockSyncProvider
+        self, manager: SyncManager, provider: MockSyncProvider,
     ) -> None:
         manager.register_provider(provider)
         assert manager.get_provider("test_provider") is provider
@@ -263,7 +263,7 @@ class TestSyncManager:
         provider.set_pull_changes([make_change("t", "1", SyncAction.UPDATE, {"val": 1})])
         manager.register_provider(provider)
         manager.track_change(
-            "test_provider", make_change("t", "1", SyncAction.CREATE, {"val": 0}, version=1)
+            "test_provider", make_change("t", "1", SyncAction.CREATE, {"val": 0}, version=1),
         )
         result = await manager.sync("test_provider")
         assert result["status"] == "completed"
@@ -355,7 +355,7 @@ class TestSyncService:
 
     @pytest.mark.asyncio
     async def test_health_check_specific(
-        self, service: SyncService, provider: MockSyncProvider
+        self, service: SyncService, provider: MockSyncProvider,
     ) -> None:
         service.register_provider(provider)
         result = await service.health_check("mock")

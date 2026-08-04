@@ -22,7 +22,11 @@ class AgentContext:
         self.created_at = time.time()
 
     def log(
-        self, task: Task, result: Any = None, error: str = "", duration_ms: float = 0.0,
+        self,
+        task: Task,
+        result: Any = None,
+        error: str = "",
+        duration_ms: float = 0.0,
     ) -> None:
         self.execution_log.append(
             {

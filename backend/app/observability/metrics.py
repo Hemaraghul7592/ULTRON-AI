@@ -33,7 +33,7 @@ class MetricsService:
                 unit="ms",
                 tags={"endpoint": endpoint, "method": method, "status": status_code},
                 source="api",
-            )
+            ),
         )
 
     async def record_ai_request(
@@ -52,7 +52,7 @@ class MetricsService:
                 unit="ms",
                 tags={"provider": provider, "model": model},
                 source="ai",
-            )
+            ),
         )
         await self.repo.record(
             MetricCreate(
@@ -61,7 +61,7 @@ class MetricsService:
                 unit="tokens",
                 tags={"provider": provider, "model": model},
                 source="ai",
-            )
+            ),
         )
         if cost_usd > 0:
             await self.repo.record(
@@ -71,7 +71,7 @@ class MetricsService:
                     unit="usd",
                     tags={"provider": provider, "model": model},
                     source="ai",
-                )
+                ),
             )
 
     async def record_error(
@@ -86,7 +86,7 @@ class MetricsService:
                 value=1.0,
                 tags={"type": error_type, "details": details or ""},
                 source=source,
-            )
+            ),
         )
 
     async def record_retry(self, provider: str, attempt: int) -> None:
@@ -96,7 +96,7 @@ class MetricsService:
                 value=1.0,
                 tags={"provider": provider, "attempt": str(attempt)},
                 source="ai",
-            )
+            ),
         )
 
     async def get_latency_percentiles(self, hours: int = 24) -> dict[str, float]:

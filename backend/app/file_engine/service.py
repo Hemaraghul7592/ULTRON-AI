@@ -166,7 +166,7 @@ class FileService:
     async def get_metadata(self, path: str) -> dict[str, Any]:
         try:
             return await self._storage.get_metadata(path)
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             raise
         except Exception as e:
             raise StorageError(message=f"Failed to get metadata: {e}", path=path) from e

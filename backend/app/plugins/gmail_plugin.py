@@ -73,7 +73,7 @@ class GmailSearchTool(BaseTool):
                     sender = headers.get("From", "Unknown")
                     results.append(f"- {subject} from {sender}")
             return "\n".join(results)
-        except Exception as e:
+        except Exception:
             return "Gmail search failed"
 
     async def close(self) -> None:
@@ -130,7 +130,7 @@ class GmailReadTool(BaseTool):
 
             body = self._extract_body(msg.get("payload", {}))
             return f"From: {sender}\nDate: {date}\nSubject: {subject}\n\n{body[:5000]}"
-        except Exception as e:
+        except Exception:
             return "Gmail read failed"
 
     def _extract_body(self, payload: dict) -> str:
@@ -138,7 +138,7 @@ class GmailReadTool(BaseTool):
             import base64
 
             return base64.urlsafe_b64decode(payload["body"]["data"]).decode(
-                "utf-8", errors="replace"
+                "utf-8", errors="replace",
             )
         parts = payload.get("parts", [])
         for part in parts:

@@ -31,7 +31,7 @@ class AIService:
             self._providers["gemini"] = GeminiProvider(api_key=settings.GEMINI_API_KEY)
         if settings.OPENAI_API_KEY:
             self._providers["openai"] = OpenAIProvider(
-                api_key=settings.OPENAI_API_KEY.get_secret_value()
+                api_key=settings.OPENAI_API_KEY.get_secret_value(),
             )
         if settings.GROK_API_KEY:
             self._providers["grok"] = GrokProvider(api_key=settings.GROK_API_KEY.get_secret_value())

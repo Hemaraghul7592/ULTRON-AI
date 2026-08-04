@@ -40,7 +40,7 @@ class MemoryService:
         return self._to_response(memory)
 
     async def update_memory(
-        self, memory_id: str, data: MemoryUpdate, user_id: str
+        self, memory_id: str, data: MemoryUpdate, user_id: str,
     ) -> MemoryResponse | None:
         update_dict = data.model_dump(exclude_unset=True)
         if not update_dict:
@@ -104,7 +104,7 @@ class MemoryService:
     # ── Category convenience ──────────────────────────────────
 
     async def get_by_category(
-        self, category: str, user_id: str, limit: int = 50
+        self, category: str, user_id: str, limit: int = 50,
     ) -> list[MemoryResponse]:
         memories = await self.repo.get_by_category(category, user_id=user_id, limit=limit)
         return [self._to_response(m) for m in memories]

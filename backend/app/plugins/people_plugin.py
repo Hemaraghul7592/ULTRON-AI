@@ -79,7 +79,7 @@ class PeopleSearchTool(BaseTool):
                     line += f" @ {org}"
                 output.append(line)
             return "\n".join(output)
-        except Exception as e:
+        except Exception:
             return "Contacts search failed"
 
     async def close(self) -> None:
@@ -149,7 +149,7 @@ class PeopleProfileTool(BaseTool):
             if photo_url:
                 output.append(f"Photo: {photo_url}")
             return "\n".join(output) if output else "No profile information found"
-        except Exception as e:
+        except Exception:
             return "Profile lookup failed"
 
     async def close(self) -> None:

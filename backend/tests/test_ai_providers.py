@@ -103,7 +103,7 @@ class TestOpenAICompatibleProvider:
                 "401",
                 request=MagicMock(),
                 response=mock_resp,
-            )
+            ),
         )
 
         with pytest.raises(AIAuthenticationException):
@@ -119,7 +119,7 @@ class TestOpenAICompatibleProvider:
                 "429",
                 request=MagicMock(),
                 response=mock_resp,
-            )
+            ),
         )
 
         with pytest.raises(AIRateLimitException):
@@ -135,7 +135,7 @@ class TestOpenAICompatibleProvider:
                 "400",
                 request=MagicMock(),
                 response=mock_resp,
-            )
+            ),
         )
 
         with pytest.raises(AIContextLengthException):
@@ -244,7 +244,7 @@ class TestGeminiProvider:
             [
                 {"role": "system", "content": "You are helpful"},
                 {"role": "user", "content": "Hello"},
-            ]
+            ],
         )
         assert system == "You are helpful"
         assert len(contents) == 1
@@ -268,7 +268,7 @@ class TestGeminiProvider:
                 "401",
                 request=MagicMock(),
                 response=mock_resp,
-            )
+            ),
         )
 
         with pytest.raises(AIAuthenticationException):
@@ -284,7 +284,7 @@ class TestGeminiProvider:
                 "429",
                 request=MagicMock(),
                 response=mock_resp,
-            )
+            ),
         )
 
         with pytest.raises(AIRateLimitException):
@@ -352,13 +352,13 @@ class TestAIService:
         failing.name = "failing"
         failing.is_available.return_value = True
         failing.chat = AsyncMock(
-            side_effect=AIServiceException(provider="failing", message="Error")
+            side_effect=AIServiceException(provider="failing", message="Error"),
         )
 
         service = AIService()
         service._providers = {"failing": failing, "test": mock_provider}
         result = await service.chat(
-            messages=[{"role": "user", "content": "Hi"}], fallback=["failing", "test"]
+            messages=[{"role": "user", "content": "Hi"}], fallback=["failing", "test"],
         )
         assert result["content"] == "test"
 
@@ -368,7 +368,7 @@ class TestAIService:
         failing.name = "failing"
         failing.is_available.return_value = True
         failing.chat = AsyncMock(
-            side_effect=AIServiceException(provider="failing", message="Error")
+            side_effect=AIServiceException(provider="failing", message="Error"),
         )
 
         service = AIService()

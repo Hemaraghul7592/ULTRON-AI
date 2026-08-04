@@ -110,9 +110,13 @@ class PluginManager:
                 health = await plugin.health_check()
                 self._statuses[plugin_name] = health.get("status", PluginStatus.AVAILABLE)
                 return {"plugin": plugin_name, **health}
-            except Exception as e:
+            except Exception:
                 self._statuses[plugin_name] = PluginStatus.ERROR
-                return {"plugin": plugin_name, "status": PluginStatus.ERROR, "error": "Plugin health check failed"}
+                return {
+                    "plugin": plugin_name,
+                    "status": PluginStatus.ERROR,
+                    "error": "Plugin health check failed",
+                }
         else:
             results: dict[str, Any] = {
                 "healthy": 0,
@@ -132,7 +136,7 @@ class PluginManager:
                     else:
                         results["degraded"] += 1
                     results["plugins"][plugin.name] = health
-                except Exception as e:
+                except Exception:
                     self._statuses[plugin.name] = PluginStatus.ERROR
                     results["unavailable"] += 1
                     results["plugins"][plugin.name] = {
@@ -173,7 +177,7 @@ class PluginManager:
             result = await tool.execute(**kwargs)
             self._statuses[plugin_name] = PluginStatus.AVAILABLE
             return success_response(
-                result=str(result), tool_name=tool_name, plugin_name=plugin_name
+                result=str(result), tool_name=tool_name, plugin_name=plugin_name,
             )
 
         except PluginError:

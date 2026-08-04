@@ -48,7 +48,7 @@ class EntityExtractor:
                     "name": name,
                     "type": entity_type,
                     "description": "Extracted from text",
-                }
+                },
             )
 
         patterns = [
@@ -66,7 +66,7 @@ class EntityExtractor:
                         "target": match[2],
                         "type": rel_type,
                         "weight": 0.7,
-                    }
+                    },
                 )
 
         return {
@@ -93,7 +93,7 @@ class EntityExtractor:
                     "importance": importance,
                     "type": memory_type,
                     "tags": tags,
-                }
+                },
             )
 
         return memories

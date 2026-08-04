@@ -3,8 +3,8 @@ from __future__ import annotations
 from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import create_access_token, hash_password, verify_password
 from app.core.config import get_settings
+from app.core.security import create_access_token, hash_password, verify_password
 from app.repositories.user_repo import UserRepository
 from app.schemas.auth import TokenResponse, UserCreate, UserLogin
 
@@ -28,7 +28,9 @@ class AuthService:
         hashed = hash_password(data.password)
         user = await self.user_repo.create(data, hashed)
         await self.session.commit()
-        token = create_access_token({"sub": user.username, "user_id": user.id, "role": self._role_for_user(user.id)})
+        token = create_access_token(
+            {"sub": user.username, "user_id": user.id, "role": self._role_for_user(user.id)},
+        )
         return TokenResponse(access_token=token, expires_in=86400)
 
     async def login(self, data: UserLogin) -> TokenResponse:
@@ -38,5 +40,7 @@ class AuthService:
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid credentials",
             )
-        token = create_access_token({"sub": user.username, "user_id": user.id, "role": self._role_for_user(user.id)})
+        token = create_access_token(
+            {"sub": user.username, "user_id": user.id, "role": self._role_for_user(user.id)},
+        )
         return TokenResponse(access_token=token, expires_in=86400)

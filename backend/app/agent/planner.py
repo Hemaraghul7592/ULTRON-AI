@@ -68,7 +68,10 @@ class Planner:
         self._context: dict[str, Any] = {}
 
     def plan(
-        self, user_message: str, user_id: str = "", conversation_id: str | None = None,
+        self,
+        user_message: str,
+        user_id: str = "",
+        conversation_id: str | None = None,
     ) -> TaskGraph:
         message_lower = user_message.lower().strip()
         intents = self._detect_intents(message_lower)

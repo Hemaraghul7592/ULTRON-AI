@@ -349,7 +349,7 @@ class TestSearchServiceTimeout:
                 return SearchResponse(results=[], total_results=0, query="", provider="slow")
 
         svc = SearchService(
-            provider=SlowProvider(), cache=SearchCache(default_ttl=60), timeout=0.01
+            provider=SlowProvider(), cache=SearchCache(default_ttl=60), timeout=0.01,
         )
         with pytest.raises(SearchProviderError, match="timed out"):
             await svc.search(SearchQuery(query="timeout test"))
@@ -365,12 +365,12 @@ class TestSearchIntegration:
         provider = FakeProvider(
             results=[
                 SearchResult(
-                    title="T1", url="https://a.com", source="a.com", snippet="Snippet 1", score=0.9
+                    title="T1", url="https://a.com", source="a.com", snippet="Snippet 1", score=0.9,
                 ),
                 SearchResult(
-                    title="T2", url="https://b.com", source="b.com", snippet="Snippet 2", score=0.8
+                    title="T2", url="https://b.com", source="b.com", snippet="Snippet 2", score=0.8,
                 ),
-            ]
+            ],
         )
         svc = SearchService(provider=provider, cache=SearchCache(default_ttl=300), timeout=10.0)
         response = await svc.search(SearchQuery(query="integration test"))
@@ -454,7 +454,7 @@ class TestSearchServiceCacheIntegration:
         provider = FakeProvider(
             results=[
                 SearchResult(
-                    title="R1", url="https://x.com", source="x.com", snippet="X", score=0.9
+                    title="R1", url="https://x.com", source="x.com", snippet="X", score=0.9,
                 ),
             ],
             answer="Answer text",
@@ -475,8 +475,8 @@ class TestSearchServiceCacheIntegration:
     async def test_cache_key_differs_by_mode(self) -> None:
         provider = FakeProvider(
             results=[
-                SearchResult(title="R", url="https://x.com", source="x.com", snippet="X", score=0.9)
-            ]
+                SearchResult(title="R", url="https://x.com", source="x.com", snippet="X", score=0.9),
+            ],
         )
         svc = SearchService(provider=provider, cache=SearchCache(default_ttl=60), timeout=10.0)
 
@@ -488,10 +488,10 @@ class TestSearchServiceCacheIntegration:
     async def test_deduplication_across_research_citations(self) -> None:
         results = [
             SearchResult(
-                title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9
+                title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9,
             ),
             SearchResult(
-                title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9
+                title="A", url="https://dup.com", source="dup.com", snippet="Dup", score=0.9,
             ),
         ]
         provider = FakeProvider(results=results, answer="Answer")

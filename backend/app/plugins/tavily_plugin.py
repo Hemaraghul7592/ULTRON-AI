@@ -82,7 +82,7 @@ class TavilySearchTool(BaseTool):
             if cached:
                 output.append("\n(Results from cache)")
             return "\n".join(output)
-        except Exception as e:
+        except Exception:
             return "Tavily search failed"
 
 
@@ -165,7 +165,7 @@ class TavilyAnswerTool(BaseTool):
             if cached:
                 output.append("\n(Results from cache)")
             return "\n".join(output)
-        except Exception as e:
+        except Exception:
             return "Tavily answer failed"
 
 
@@ -230,10 +230,10 @@ class Plugin(PluginInterface):
                 "message": provider_health.get("message", ""),
                 "last_check": time.time(),
             }
-        except Exception as e:
+        except Exception:
             return {
                 "status": PluginStatus.UNAVAILABLE,
-                    "message": "Tavily operation failed",
+                "message": "Tavily operation failed",
                 "last_check": time.time(),
             }
 

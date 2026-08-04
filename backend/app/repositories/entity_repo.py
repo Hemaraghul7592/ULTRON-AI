@@ -15,7 +15,7 @@ class EntityRepository:
         self.session = session
 
     async def create(
-        self, data: EntityCreate, user_id: str, embedding: str | None = None
+        self, data: EntityCreate, user_id: str, embedding: str | None = None,
     ) -> Entity:
         entity = Entity(
             user_id=user_id,
@@ -53,13 +53,13 @@ class EntityRepository:
             query = query.where(Entity.entity_type == entity_type)
 
         count_result = await self.session.execute(
-            select(func.count()).select_from(query.subquery())
+            select(func.count()).select_from(query.subquery()),
         )
         total = count_result.scalar_one()
 
         offset = (page - 1) * page_size
         result = await self.session.execute(
-            query.order_by(Entity.name).offset(offset).limit(page_size)
+            query.order_by(Entity.name).offset(offset).limit(page_size),
         )
         return list(result.scalars().all()), total
 

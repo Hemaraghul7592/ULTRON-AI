@@ -26,7 +26,7 @@ def _get_voice_service(request: Request) -> VoiceService:
 
 @router.post("/stt")
 async def speech_to_text(
-    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service)
+    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service),
 ) -> VoiceResponse:
     result = await vs.transcribe(
         audio_data=request.audio_data,
@@ -43,7 +43,7 @@ async def speech_to_text(
 
 @router.post("/tts")
 async def text_to_speech(
-    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service)
+    request: VoiceRequest, vs: VoiceService = Depends(_get_voice_service),
 ) -> VoiceResponse:
     result = await vs.synthesize(
         text=request.text or "",

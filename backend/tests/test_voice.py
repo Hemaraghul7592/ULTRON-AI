@@ -47,7 +47,7 @@ class TestProviderInterfaces:
                 return "test"
 
             async def transcribe(
-                self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav"
+                self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav",
             ) -> STTResult:
                 return STTResult(text="ok", provider=self.name)
 

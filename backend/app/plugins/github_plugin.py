@@ -64,7 +64,7 @@ class GitHubRepoTool(BaseTool):
                     f" [{lang}] Stars: {stars}",
                 )
             return "\n".join(results)
-        except Exception as e:
+        except Exception:
             return "GitHub operation failed"
 
 
@@ -133,7 +133,7 @@ class GitHubSearchTool(BaseTool):
                     f" Stars: {repo.get('stargazers_count', 0)}",
                 )
             return "\n".join(results)
-        except Exception as e:
+        except Exception:
             return "GitHub search failed"
 
 
@@ -192,7 +192,7 @@ class GitHubIssuesTool(BaseTool):
                     f"#{issue['number']}: {issue['title']}" + (f" [{labels}]" if labels else ""),
                 )
             return "\n".join(results)
-        except Exception as e:
+        except Exception:
             return "GitHub issue lookup failed"
 
 
@@ -264,7 +264,7 @@ class Plugin(PluginInterface):
                     "message": f"GitHub API returned {resp.status_code}",
                     "last_check": time.time(),
                 }
-        except Exception as e:
+        except Exception:
             return {
                 "status": PluginStatus.UNAVAILABLE,
                 "message": "GitHub operation failed",

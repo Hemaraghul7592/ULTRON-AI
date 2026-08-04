@@ -28,7 +28,7 @@ ALL_SCOPES = sorted(
         "https://www.googleapis.com/auth/userinfo.email",
         "https://www.googleapis.com/auth/userinfo.profile",
         *[s for scopes in SCOPES_BY_SERVICE.values() for s in scopes],
-    }
+    },
 )
 
 

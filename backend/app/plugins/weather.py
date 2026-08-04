@@ -173,7 +173,7 @@ class WeatherForecastTool(BaseTool):
                     f"{dt}: {temp}°C, {desc}, humidity {humidity}%, rain {rain}mm",
                 )
             return f"Forecast for {city}:\n" + "\n".join(forecasts)
-        except Exception as e:
+        except Exception:
             return "Forecast failed"
 
 

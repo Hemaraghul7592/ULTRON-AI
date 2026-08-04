@@ -3,10 +3,10 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
-from app.core.database import get_session
 from app.core.config import get_settings
-from app.core.security import decode_access_token
+from app.core.database import get_session
 from app.core.exceptions import ForbiddenHTTP
+from app.core.security import decode_access_token
 from app.schemas.auth import TokenResponse, UserCreate, UserLogin
 from app.services.auth_service import AuthService
 

@@ -44,7 +44,7 @@ class FakeTool(BaseTool):
 
 class FakePlugin(PluginInterface):
     def __init__(
-        self, name: str = "fake", version: str = "1.0.0", desc: str = "Fake plugin"
+        self, name: str = "fake", version: str = "1.0.0", desc: str = "Fake plugin",
     ) -> None:
         self._name = name
         self._version = version
@@ -447,7 +447,7 @@ class TestToolExecutorSync:
         executor.sync_from_plugin_manager(pm)
 
         result = await executor.execute(
-            {"id": "call_1", "name": "alpha_tool1", "arguments": {"x": "y"}}
+            {"id": "call_1", "name": "alpha_tool1", "arguments": {"x": "y"}},
         )
         assert result["success"] is True
         assert "alpha_tool1 executed" in result["result"]

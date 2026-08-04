@@ -72,7 +72,7 @@ class GoogleDriveSearchTool(BaseTool):
                     f"Modified: {f.get('modifiedTime', 'N/A')}",
                 )
             return "\n".join(results)
-        except Exception as e:
+        except Exception:
             return "Drive search failed"
 
     async def close(self) -> None:
@@ -144,7 +144,7 @@ class GoogleDriveReadTool(BaseTool):
             resp.raise_for_status()
             content = resp.text
             return f"File: {meta.get('name', file_id)}\n\n{content[:10000]}"
-        except Exception as e:
+        except Exception:
             return "File read failed"
 
     async def close(self) -> None:

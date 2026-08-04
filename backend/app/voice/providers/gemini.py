@@ -66,7 +66,9 @@ class GeminiSTTProvider(SpeechToTextProvider):
             )
         except Exception as e:
             logger.error("gemini_stt_failed", error=str(e))
-            raise SpeechRecognitionError(message=str(e), provider=self.name, original_error=e) from e
+            raise SpeechRecognitionError(
+                message=str(e), provider=self.name, original_error=e,
+            ) from e
 
     async def validate(self) -> bool:
         return bool(self._api_key)

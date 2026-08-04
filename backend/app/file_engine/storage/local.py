@@ -8,7 +8,8 @@ from app.file_engine.errors import FileNotFoundError, FilePermissionError
 from app.file_engine.interface import StorageProvider
 
 _DEFAULT_ROOT = os.path.join(
-    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "storage",
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "storage",
 )
 
 
