@@ -42,7 +42,9 @@ class ImageProcessor(Processor):
     def _get_dimensions(self, data: bytes) -> tuple[int, int] | None:
         if len(data) < 32:
             return None
-        try:
+        from contextlib import suppress
+
+        with suppress(Exception):
             if data.startswith(b"\x89PNG\r\n\x1a\n"):
                 import struct
 
@@ -59,9 +61,6 @@ class ImageProcessor(Processor):
                 return (w, h)
             if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
                 return self._webp_dimensions(data)
-        except Exception:
-            pass
-        return None
 
     def _jpeg_dimensions(self, data: bytes) -> tuple[int, int] | None:
         i = 2

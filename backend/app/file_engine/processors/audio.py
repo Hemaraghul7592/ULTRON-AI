@@ -40,9 +40,10 @@ class AudioProcessor(Processor):
         mime = metadata.mime_type
 
         if mime == "audio/wav" and len(data) > 44:
-            try:
-                import struct
+            import struct
+            from contextlib import suppress
 
+            with suppress(Exception):
                 sample_rate = struct.unpack("<I", data[24:28])[0]
                 channels = struct.unpack("<H", data[22:24])[0]
                 bits_per_sample = struct.unpack("<H", data[34:36])[0]
@@ -51,8 +52,6 @@ class AudioProcessor(Processor):
                     bytes_per_second = sample_rate * channels * (bits_per_sample // 8)
                     if bytes_per_second > 0:
                         return data_size / bytes_per_second
-            except Exception:
-                pass
 
         if mime == "audio/mpeg" and len(data) > 100:
             avg_bitrate = 128000

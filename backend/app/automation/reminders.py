@@ -114,7 +114,6 @@ class ReminderEngine:
         return now + timedelta(days=1)
 
     def get_pending(self) -> list[dict[str, Any]]:
-        now = datetime.now(UTC)
         return [
             {
                 "reminder_id": r.reminder_id,

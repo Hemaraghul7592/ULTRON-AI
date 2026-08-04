@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import struct
+from contextlib import suppress
 
 MAX_AUDIO_BYTES = 25 * 1024 * 1024
 MAX_AUDIO_BASE64 = 35 * 1024 * 1024
@@ -70,7 +71,7 @@ def get_audio_format(audio_data: bytes) -> str:
 
 def estimate_audio_duration(audio_data: bytes, fmt: str) -> float:
     if fmt == "wav" and len(audio_data) > 44:
-        try:
+        with suppress(Exception):
             sample_rate = struct.unpack("<I", audio_data[24:28])[0]
             channels = struct.unpack("<H", audio_data[22:24])[0]
             bits_per_sample = struct.unpack("<H", audio_data[34:36])[0]
@@ -79,8 +80,6 @@ def estimate_audio_duration(audio_data: bytes, fmt: str) -> float:
                 bytes_per_second = sample_rate * channels * (bits_per_sample // 8)
                 if bytes_per_second > 0:
                     return data_size / bytes_per_second
-        except Exception:
-            pass
     if fmt == "mp3":
         return len(audio_data) / (128 * 1000 / 8)
     return 0.0

@@ -23,13 +23,13 @@ class OCRProcessor(Processor):
         return OCR_EXTENSIONS
 
     async def process(self, data: bytes, metadata: FileMetadata) -> FileMetadata:
-        try:
+        from contextlib import suppress
+
+        with suppress(Exception):
             text = await self._run_ocr(data, metadata)
             if text:
                 metadata.ocr_text = text
                 metadata.extra["ocr_text_length"] = len(text)
-        except Exception:
-            pass
         return metadata
 
     async def extract_text(self, data: bytes, metadata: FileMetadata) -> str:

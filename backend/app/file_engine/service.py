@@ -214,8 +214,10 @@ class FileService:
     async def _find_by_hash(self, sha256: str) -> StoredFile | None:
         prefix = sha256[:4]
         files = await self._storage.list_files(prefix)
+        from contextlib import suppress
+
         for file_path in files:
-            try:
+            with suppress(Exception):
                 data = await self._storage.load(file_path)
                 if sha256_hash(data) == sha256:
                     ext = get_extension(file_path)
@@ -227,19 +229,17 @@ class FileService:
                         sha256=sha256,
                         storage_path=file_path,
                     )
-            except Exception:
-                continue
         return None
 
     async def health_check(self) -> dict[str, Any]:
         storage_ok = False
-        try:
+        from contextlib import suppress
+
+        with suppress(Exception):
             test_path = f".health_{int(time.time())}"
             await self._storage.save(test_path, b"health")
             storage_ok = True
             await self._storage.delete(test_path)
-        except Exception:
-            pass
         return {
             "storage": self._storage.name,
             "storage_ok": storage_ok,

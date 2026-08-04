@@ -11,7 +11,7 @@ from app.core.logging import get_logger
 logger = get_logger(__name__)
 
 AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
-TOKEN_URL = "https://oauth2.googleapis.com/token"
+TOKEN_URL = "https://oauth2.googleapis.com/token"  # noqa: S105
 SCOPES_BY_SERVICE: dict[str, list[str]] = {
     "drive": ["https://www.googleapis.com/auth/drive.readonly"],
     "gmail": [

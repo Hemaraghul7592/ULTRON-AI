@@ -44,7 +44,6 @@ class TextToSpeechService:
     ) -> dict[str, Any]:
         settings = get_settings()
         try:
-            voices = ["Arista", "Asteria", "Luna", "Stella", "Athena", "Perseus"]
             selected = voice_id or "Arista"
 
             response = await self.client.post(
@@ -89,7 +88,6 @@ class TextToSpeechService:
                     },
                 },
             }
-            voice_name = voice_id or "Kore"
             model = "gemini-2.0-flash-preview-tts"
             response = await self.client.post(
                 f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
