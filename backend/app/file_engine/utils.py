@@ -6,7 +6,7 @@ import re
 import tempfile
 import uuid
 from collections.abc import AsyncIterator  # noqa: TC003
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from app.file_engine.errors import InvalidFileTypeError
@@ -128,10 +128,8 @@ async def temp_file(suffix: str = "") -> AsyncIterator[Path]:
     try:
         yield Path(path)
     finally:
-        try:
+        with suppress(OSError):
             os.unlink(path)
-        except OSError:
-            pass
 
 
 def format_size(size: int) -> str:

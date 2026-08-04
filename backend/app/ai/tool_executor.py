@@ -48,14 +48,16 @@ class ToolExecutor:
             pm = self._plugin_manager
             if pm is None:
                 raise ToolExecutionException(
-                    tool_name=tool_name, message="PluginManager not available",
+                    tool_name=tool_name,
+                    message="PluginManager not available",
                 )
             user_id = kwargs.pop("user_id", None)
             result = await pm.execute_tool_safe(tool_name, user_id=user_id, **kwargs)
             if result.get("success"):
                 return result.get("result", "")
             raise ToolExecutionException(
-                tool_name=tool_name, message=result.get("error", "Unknown error"),
+                tool_name=tool_name,
+                message=result.get("error", "Unknown error"),
             )
 
         return handler
@@ -76,13 +78,16 @@ class ToolExecutor:
         return definitions
 
     async def execute(
-        self, tool_call: dict[str, Any], user_id: str | None = None,
+        self,
+        tool_call: dict[str, Any],
+        user_id: str | None = None,
     ) -> dict[str, Any]:
         name = tool_call.get("name", "")
         arguments = tool_call.get("arguments", {})
         if any(key in arguments for key in ("user_id", "userId", "owner_id", "ownerId")):
             raise ToolExecutionException(
-                tool_name=name, message="Caller identity is not an accepted tool argument",
+                tool_name=name,
+                message="Caller identity is not an accepted tool argument",
             )
         if user_id is not None:
             arguments = {**arguments, "user_id": user_id}

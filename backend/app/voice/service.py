@@ -114,12 +114,11 @@ class VoiceService:
 
             validate_audio(audio_data=audio_data)
 
-            result = await self._stt.transcribe(
+            return await self._stt.transcribe(
                 audio_data=audio_data,
                 language=language,
                 filename=filename,
             )
-            return result
 
         except InvalidAudioError:
             raise
@@ -146,13 +145,12 @@ class VoiceService:
             raise ValueError("Text too long for TTS (max 5000 characters)")
 
         try:
-            result = await self._tts.synthesize(
+            return await self._tts.synthesize(
                 text=text,
                 voice_id=voice_id,
                 speed=speed,
                 language=language,
             )
-            return result
 
         except SpeechSynthesisError:
             raise

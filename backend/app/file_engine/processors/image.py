@@ -61,6 +61,7 @@ class ImageProcessor(Processor):
                 return (w, h)
             if data.startswith(b"RIFF") and data[8:12] == b"WEBP":
                 return self._webp_dimensions(data)
+        return None
 
     def _jpeg_dimensions(self, data: bytes) -> tuple[int, int] | None:
         i = 2

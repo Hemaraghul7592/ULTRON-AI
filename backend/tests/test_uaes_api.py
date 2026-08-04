@@ -8,7 +8,8 @@ from httpx import AsyncClient  # noqa: TC002
 
 @pytest.mark.asyncio
 async def test_operations_endpoints_return_collections(
-    client: AsyncClient, auth_headers: dict,
+    client: AsyncClient,
+    auth_headers: dict,
 ) -> None:
     responses = await asyncio.gather(
         client.get("/api/v1/operations/health", headers=auth_headers),

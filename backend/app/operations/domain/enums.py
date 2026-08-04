@@ -1,23 +1,23 @@
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class HealthStatus(str, Enum):
+class HealthStatus(StrEnum):
     HEALTHY = "healthy"
     WARNING = "warning"
     CRITICAL = "critical"
     OFFLINE = "offline"
 
 
-class IncidentSeverity(str, Enum):
+class IncidentSeverity(StrEnum):
     LOW = "low"
     MEDIUM = "medium"
     HIGH = "high"
     CRITICAL = "critical"
 
 
-class IncidentStatus(str, Enum):
+class IncidentStatus(StrEnum):
     OPEN = "open"
     TRIAGED = "triaged"
     INVESTIGATING = "investigating"
@@ -26,7 +26,7 @@ class IncidentStatus(str, Enum):
     ESCALATED = "escalated"
 
 
-class ComponentType(str, Enum):
+class ComponentType(StrEnum):
     BACKEND = "backend"
     DATABASE = "database"
     REDIS = "redis"
@@ -38,14 +38,14 @@ class ComponentType(str, Enum):
     API = "api"
 
 
-class EnvironmentType(str, Enum):
+class EnvironmentType(StrEnum):
     DEVELOPMENT = "development"
     TEST = "test"
     STAGING = "staging"
     PRODUCTION = "production"
 
 
-class MetricType(str, Enum):
+class MetricType(StrEnum):
     CPU_PERCENT = "cpu_percent"
     MEMORY_PERCENT = "memory_percent"
     DISK_PERCENT = "disk_percent"
@@ -56,7 +56,7 @@ class MetricType(str, Enum):
     ERROR_RATE = "error_rate"
 
 
-class EvidenceType(str, Enum):
+class EvidenceType(StrEnum):
     FASTAPI_LOG = "fastapi_log"
     STACK_TRACE = "stack_trace"
     DOCKER_LOG = "docker_log"
@@ -68,7 +68,7 @@ class EvidenceType(str, Enum):
     ENVIRONMENT_VARIABLES = "environment_variables"
 
 
-class EventType(str, Enum):
+class EventType(StrEnum):
     HEALTH_SNAPSHOT_RECORDED = "health_snapshot_recorded"
     COMPONENT_DEGRADED = "component_degraded"
     INCIDENT_CREATED = "incident_created"

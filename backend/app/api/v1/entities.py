@@ -29,7 +29,10 @@ async def list_entities(
     async with session_factory() as session:
         repo = EntityRepository(session)
         entities, total = await repo.list_all(
-            user_id=user_id, entity_type=entity_type, page=page, page_size=page_size,
+            user_id=user_id,
+            entity_type=entity_type,
+            page=page,
+            page_size=page_size,
         )
         return KnowledgeGraphResponse(
             entities=[EntityResponse.model_validate(e) for e in entities],
@@ -92,7 +95,8 @@ async def get_entity(entity_id: str, user: dict = Depends(verify_token)) -> Enti
 
 @router.post("/relationships", response_model=RelationshipResponse, status_code=201)
 async def create_relationship(
-    data: RelationshipCreate, user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
+    data: RelationshipCreate,
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> RelationshipResponse:
     user_id = user["user_id"]
     session_factory = get_session()

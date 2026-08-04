@@ -80,14 +80,13 @@ class AIProviderRouter:
 
         while True:
             try:
-                result = await current.chat(
+                return await current.chat(
                     messages=messages,
                     temperature=temperature,
                     max_tokens=max_tokens,
                     tools=tools,
                     **kwargs,
                 )
-                return result
             except Exception as e:
                 tried.add(current.name)
                 logger.warning(

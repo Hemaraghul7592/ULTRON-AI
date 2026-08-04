@@ -22,7 +22,9 @@ class EventSubscription:
 
 class EventBus(Protocol):
     def subscribe(
-        self, event_type: type[TEvent], handler: EventHandler[TEvent],
+        self,
+        event_type: type[TEvent],
+        handler: EventHandler[TEvent],
     ) -> EventSubscription: ...
 
     def unsubscribe(self, subscription: EventSubscription) -> None: ...
@@ -34,11 +36,14 @@ class InProcessEventBus:
     def __init__(self) -> None:
         self._lock = threading.RLock()
         self._handlers: dict[
-            type[DomainEvent], dict[UUID, Callable[[DomainEvent], Awaitable[None]]],
+            type[DomainEvent],
+            dict[UUID, Callable[[DomainEvent], Awaitable[None]]],
         ] = defaultdict(dict)
 
     def subscribe(
-        self, event_type: type[TEvent], handler: EventHandler[TEvent],
+        self,
+        event_type: type[TEvent],
+        handler: EventHandler[TEvent],
     ) -> EventSubscription:
         subscription = EventSubscription(subscription_id=uuid4(), event_type=event_type)
 

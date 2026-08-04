@@ -33,8 +33,7 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
 def decode_access_token(token: str) -> dict[str, Any]:
     settings = get_settings()
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        return payload
+        return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except JWTError as e:
         raise AuthenticationException(f"Invalid token: {e}") from e
 

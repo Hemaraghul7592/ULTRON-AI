@@ -48,7 +48,8 @@ class ChatService:
         conversation_id = request.conversation_id
         if not conversation_id:
             conv = await self.conversation_repo.create(
-                ConversationCreate(title=None), user_id=user_id,
+                ConversationCreate(title=None),
+                user_id=user_id,
             )
             conversation_id = conv.id
 
@@ -58,14 +59,17 @@ class ChatService:
             if conversation is None:
                 raise NotFoundException("Conversation", conversation_id)
             messages = await self.conversation_repo.get_recent_messages(
-                conversation_id, user_id, limit=20,
+                conversation_id,
+                user_id,
+                limit=20,
             )
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
         if request.use_memory:
             memory_context = await self.memory_service.get_context_for_query(
-                request.message, user_id=user_id,
+                request.message,
+                user_id=user_id,
             )
 
         tools = None
@@ -192,7 +196,8 @@ class ChatService:
         conversation_id = request.conversation_id
         if not conversation_id:
             conv = await self.conversation_repo.create(
-                ConversationCreate(title=None), user_id=user_id,
+                ConversationCreate(title=None),
+                user_id=user_id,
             )
             conversation_id = conv.id
 
@@ -202,14 +207,17 @@ class ChatService:
             if conversation is None:
                 raise NotFoundException("Conversation", conversation_id)
             messages = await self.conversation_repo.get_recent_messages(
-                conversation_id, user_id, limit=20,
+                conversation_id,
+                user_id,
+                limit=20,
             )
             history = [{"role": m.role, "content": m.content} for m in messages]
 
         memory_context = ""
         if request.use_memory:
             memory_context = await self.memory_service.get_context_for_query(
-                request.message, user_id=user_id,
+                request.message,
+                user_id=user_id,
             )
 
         messages = self.prompt_builder.build_messages(

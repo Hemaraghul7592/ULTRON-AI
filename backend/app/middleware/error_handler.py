@@ -37,8 +37,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         start = time.monotonic()
         request_id = getattr(request.state, "request_id", None)
         try:
-            response = await call_next(request)
-            return response
+            return await call_next(request)
         except AuthenticationException as e:
             logger.warning(
                 "authentication_exception",

@@ -6,10 +6,10 @@ from typing import Any
 
 from app.ai.providers import AIProvider, GeminiProvider, GrokProvider, GroqProvider, OpenAIProvider
 from app.core.config import get_settings
-
-settings = get_settings()
 from app.core.exceptions import AIServiceException, ProviderUnavailableException
 from app.core.logging import get_logger
+
+settings = get_settings()
 
 logger = get_logger(__name__)
 

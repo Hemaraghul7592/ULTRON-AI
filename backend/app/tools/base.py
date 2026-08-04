@@ -55,9 +55,11 @@ class BasePlugin(abc.ABC):
     def get_tools(self) -> list[BaseTool]:
         pass
 
+    @abc.abstractmethod
     async def initialize(self, config: dict | None = None) -> None:
         pass
 
+    @abc.abstractmethod
     async def cleanup(self) -> None:
         pass
 

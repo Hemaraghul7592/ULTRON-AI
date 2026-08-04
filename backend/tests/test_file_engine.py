@@ -6,7 +6,7 @@ import pytest
 
 from app.file_engine.errors import (
     DuplicateFileError,
-    FileNotFoundError,
+    FileNotFoundError,  # noqa: A004
     FilePermissionError,
     InvalidFileTypeError,
     ProcessingError,

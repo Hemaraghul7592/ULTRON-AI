@@ -15,7 +15,10 @@ class EntityRepository:
         self.session = session
 
     async def create(
-        self, data: EntityCreate, user_id: str, embedding: str | None = None,
+        self,
+        data: EntityCreate,
+        user_id: str,
+        embedding: str | None = None,
     ) -> Entity:
         entity = Entity(
             user_id=user_id,

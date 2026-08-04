@@ -23,7 +23,10 @@ memory_tags = Table(
     "memory_tags",
     Base.metadata,
     Column(
-        "memory_id", String(36), ForeignKey("memories.id", ondelete="CASCADE"), primary_key=True,
+        "memory_id",
+        String(36),
+        ForeignKey("memories.id", ondelete="CASCADE"),
+        primary_key=True,
     ),
     Column("tag_id", String(36), ForeignKey("tags.id", ondelete="CASCADE"), primary_key=True),
 )
@@ -54,12 +57,16 @@ class Memory(Base):
     context: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
     updated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=_utcnow, onupdate=_utcnow,
+        DateTime(timezone=True),
+        default=_utcnow,
+        onupdate=_utcnow,
     )
     last_accessed: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     tags: Mapped[list[Tag]] = relationship(
-        secondary=memory_tags, back_populates="memories", lazy="selectin",
+        secondary=memory_tags,
+        back_populates="memories",
+        lazy="selectin",
     )
 
     __table_args__ = (
@@ -77,5 +84,7 @@ class Tag(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)
 
     memories: Mapped[list[Memory]] = relationship(
-        secondary=memory_tags, back_populates="tags", lazy="selectin",
+        secondary=memory_tags,
+        back_populates="tags",
+        lazy="selectin",
     )

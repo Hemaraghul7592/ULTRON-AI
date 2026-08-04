@@ -44,7 +44,10 @@ class FakeTool(BaseTool):
 
 class FakePlugin(PluginInterface):
     def __init__(
-        self, name: str = "fake", version: str = "1.0.0", desc: str = "Fake plugin",
+        self,
+        name: str = "fake",
+        version: str = "1.0.0",
+        desc: str = "Fake plugin",
     ) -> None:
         self._name = name
         self._version = version
@@ -71,6 +74,12 @@ class FakePlugin(PluginInterface):
     def get_tools(self) -> list[BaseTool]:
         return self._tools
 
+    async def initialize(self, config: dict | None = None) -> None:
+        pass
+
+    async def cleanup(self) -> None:
+        pass
+
     async def health_check(self) -> dict:
         if not self._enabled:
             return {"status": PluginStatus.DISABLED, "message": "disabled"}
@@ -94,25 +103,28 @@ class FailingPlugin(FakePlugin):
 
 class TestPluginInterface:
     def test_required_credentials_abstract(self) -> None:
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError):  # noqa: PT012
 
-            class IncompletePlugin(PluginInterface):  # type: ignore
-                @property
-                def name(self) -> str:
-                    return "test"
+            def make() -> None:
+                class IncompletePlugin(PluginInterface):  # type: ignore
+                    @property
+                    def name(self) -> str:
+                        return "test"
 
-                @property
-                def version(self) -> str:
-                    return "1.0.0"
+                    @property
+                    def version(self) -> str:
+                        return "1.0.0"
 
-                @property
-                def description(self) -> str:
-                    return "test"
+                    @property
+                    def description(self) -> str:
+                        return "test"
 
-                def get_tools(self) -> list:
-                    return []
+                    def get_tools(self) -> list:
+                        return []
 
-            IncompletePlugin()
+                IncompletePlugin()
+
+            make()
 
     def test_get_metadata(self) -> None:
         p = FakePlugin()
@@ -212,8 +224,7 @@ class TestPluginErrors:
 class TestPluginManager:
     @pytest.fixture
     def manager(self) -> PluginManager:
-        pm = PluginManager()
-        return pm
+        return PluginManager()
 
     @pytest.mark.asyncio
     async def test_initial_state(self, manager: PluginManager) -> None:

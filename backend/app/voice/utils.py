@@ -54,13 +54,9 @@ def get_audio_format(audio_data: bytes) -> str:
         return "unknown"
     if audio_data.startswith(b"RIFF") and audio_data[8:12] == b"WAVE":
         return "wav"
-    if (
-        audio_data.startswith(b"\xff\xfb")
-        or audio_data.startswith(b"\xff\xf3")
-        or audio_data.startswith(b"\xff\xf2")
-    ):
+    if audio_data.startswith((b"\xff\xfb", b"\xff\xf3", b"\xff\xf2")):
         return "mp3"
-    if audio_data.startswith(b"\xff\xf1") or audio_data.startswith(b"ID3"):
+    if audio_data.startswith((b"\xff\xf1", b"ID3")):
         return "mp3"
     if audio_data.startswith(b"OggS"):
         return "ogg"

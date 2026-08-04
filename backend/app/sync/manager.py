@@ -88,7 +88,9 @@ class SyncManager:
             remote_changes = await provider.pull()
         except Exception as e:
             raise ProviderUnavailableError(
-                message=str(e), provider=provider_name, original_error=e,
+                message=str(e),
+                provider=provider_name,
+                original_error=e,
             ) from e
 
         resolved: list[SyncChange] = []

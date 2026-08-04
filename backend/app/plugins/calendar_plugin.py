@@ -72,7 +72,8 @@ class CalendarListTool(BaseTool):
             results = [f"Upcoming events ({len(events)}):"]
             for event in events:
                 start = event.get("start", {}).get(
-                    "dateTime", event.get("start", {}).get("date", ""),
+                    "dateTime",
+                    event.get("start", {}).get("date", ""),
                 )
                 summary = event.get("summary", "No title")
                 location = event.get("location", "")

@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import os
 import shutil
+from contextlib import suppress
 from typing import Any
 
-from app.file_engine.errors import FileNotFoundError, FilePermissionError
+from app.file_engine.errors import FileNotFoundError, FilePermissionError  # noqa: A004
 from app.file_engine.interface import StorageProvider
 
 _DEFAULT_ROOT = os.path.join(
@@ -52,10 +53,8 @@ class LocalStorage(StorageProvider):
             return False
         os.remove(full)
         parent = os.path.dirname(full)
-        try:
+        with suppress(OSError):
             os.rmdir(parent)
-        except OSError:
-            pass
         return True
 
     async def exists(self, path: str) -> bool:

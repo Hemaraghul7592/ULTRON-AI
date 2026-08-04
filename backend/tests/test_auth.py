@@ -19,7 +19,8 @@ async def test_root_public(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_register_and_login(client: AsyncClient):
     r = await client.post(
-        "/api/v1/auth/register", json={"username": "testuser", "password": "TestPass123!"},
+        "/api/v1/auth/register",
+        json={"username": "testuser", "password": "TestPass123!"},
     )
     assert r.status_code == 200, f"register: {r.status_code} {r.text}"
     data = r.json()
@@ -27,7 +28,8 @@ async def test_register_and_login(client: AsyncClient):
     assert data["token_type"] == "bearer"
 
     r = await client.post(
-        "/api/v1/auth/login", json={"username": "testuser", "password": "TestPass123!"},
+        "/api/v1/auth/login",
+        json={"username": "testuser", "password": "TestPass123!"},
     )
     assert r.status_code == 200, f"login: {r.status_code} {r.text}"
     data = r.json()
@@ -60,7 +62,8 @@ async def test_protected_routes_return_401_without_token(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_protected_routes_work_with_valid_jwt(client: AsyncClient):
     r = await client.post(
-        "/api/v1/auth/register", json={"username": "testuser", "password": "TestPass123!"},
+        "/api/v1/auth/register",
+        json={"username": "testuser", "password": "TestPass123!"},
     )
     token = r.json()["access_token"]
     headers = {"Authorization": f"Bearer {token}"}

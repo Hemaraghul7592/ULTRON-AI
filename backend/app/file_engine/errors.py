@@ -7,7 +7,7 @@ class FileError(Exception):
         super().__init__(message)
 
 
-class FileNotFoundError(FileError):
+class FileNotFoundError(FileError):  # noqa: A001
     pass
 
 

@@ -187,7 +187,7 @@ class GitHubIssuesTool(BaseTool):
                 return f"No {state} issues in {owner}/{repo}"
             results = [f"Issues in {owner}/{repo} ({len(issues)}):"]
             for issue in issues:
-                labels = ", ".join(l["name"] for l in issue.get("labels", []))
+                labels = ", ".join(item["name"] for item in issue.get("labels", []))
                 results.append(
                     f"#{issue['number']}: {issue['title']}" + (f" [{labels}]" if labels else ""),
                 )

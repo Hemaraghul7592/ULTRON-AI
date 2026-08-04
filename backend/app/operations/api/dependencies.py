@@ -12,7 +12,8 @@ def get_operations_runtime(request: Request) -> OperationsRuntime:
     if runtime is None:
         try:
             runtime = OperationsRuntime(
-                event_bus=InProcessEventBus(), session_factory=get_session(),
+                event_bus=InProcessEventBus(),
+                session_factory=get_session(),
             )
         except RuntimeError as exc:
             raise HTTPException(

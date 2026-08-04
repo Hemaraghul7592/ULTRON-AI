@@ -21,11 +21,10 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         limiter = get_auth_rate_limiter() if is_auth else get_rate_limiter()
 
         try:
-            if hasattr(limiter, "check"):
-                if callable(getattr(limiter, "check", None)):
-                    result = limiter.check(key=client_ip)
-                    if hasattr(result, "__await__"):
-                        await result
+            if hasattr(limiter, "check") and callable(getattr(limiter, "check", None)):
+                result = limiter.check(key=client_ip)
+                if hasattr(result, "__await__"):
+                    await result
         except Exception:
             remaining = limiter.get_remaining(key=client_ip)
             if hasattr(remaining, "__await__"):

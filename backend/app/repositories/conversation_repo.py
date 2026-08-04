@@ -35,7 +35,10 @@ class ConversationRepository:
         return result.scalar_one_or_none()
 
     async def list_all(
-        self, user_id: str, page: int = 1, page_size: int = 20,
+        self,
+        user_id: str,
+        page: int = 1,
+        page_size: int = 20,
     ) -> tuple[list[Conversation], int]:
         query = select(Conversation).where(Conversation.user_id == user_id)
         count_result = await self.session.execute(

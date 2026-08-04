@@ -6,7 +6,7 @@ from typing import Any
 
 from app.file_engine.errors import (
     DuplicateFileError,
-    FileNotFoundError,
+    FileNotFoundError,  # noqa: A004
     InvalidFileTypeError,
     ProcessingError,
     StorageError,
@@ -99,7 +99,7 @@ class FileService:
 
         try:
             actual_path = await self._storage.save(storage_path, data)
-        except Exception:
+        except Exception as e:
             raise StorageError(message="Failed to save file", path=storage_path) from e
 
         meta = FileMetadata(

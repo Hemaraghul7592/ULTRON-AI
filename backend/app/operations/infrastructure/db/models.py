@@ -45,7 +45,9 @@ class UaesHealthSnapshot(Base):
     overall_status: Mapped[HealthStatus] = mapped_column(String(20), nullable=False)
     overall_score: Mapped[float] = mapped_column(Float, nullable=False)
     collected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_utcnow,
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     source: Mapped[str] = mapped_column(String(100), nullable=False)
 
@@ -88,7 +90,8 @@ class UaesHealthComponent(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     snapshot_id: Mapped[str] = mapped_column(
-        ForeignKey("uaes_health_snapshots.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("uaes_health_snapshots.id", ondelete="CASCADE"),
+        nullable=False,
     )
     component_id: Mapped[str] = mapped_column(String(36), nullable=False)
     component_type: Mapped[ComponentType] = mapped_column(String(30), nullable=False)
@@ -98,7 +101,9 @@ class UaesHealthComponent(Base):
     score: Mapped[float] = mapped_column(Float, nullable=False)
     message: Mapped[str] = mapped_column(String(500), nullable=False)
     observed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_utcnow,
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     details_json: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False, default=dict)
 
@@ -138,7 +143,9 @@ class UaesIncident(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     timestamp: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_utcnow,
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     severity: Mapped[IncidentSeverity] = mapped_column(String(20), nullable=False)
     component: Mapped[ComponentType] = mapped_column(String(30), nullable=False)
@@ -146,7 +153,9 @@ class UaesIncident(Base):
     summary: Mapped[str] = mapped_column(String(200), nullable=False)
     detailed_description: Mapped[str] = mapped_column(Text, nullable=False)
     status: Mapped[IncidentStatus] = mapped_column(
-        String(20), nullable=False, default=IncidentStatus.OPEN,
+        String(20),
+        nullable=False,
+        default=IncidentStatus.OPEN,
     )
     resolution: Mapped[str | None] = mapped_column(Text, nullable=True)
     confidence: Mapped[float] = mapped_column(Float, nullable=False, default=0.0)
@@ -221,12 +230,15 @@ class UaesIncidentEvidence(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     incident_id: Mapped[str] = mapped_column(
-        ForeignKey("uaes_incidents.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("uaes_incidents.id", ondelete="CASCADE"),
+        nullable=False,
     )
     evidence_type: Mapped[EvidenceType] = mapped_column(String(40), nullable=False)
     source: Mapped[str] = mapped_column(String(100), nullable=False)
     collected_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_utcnow,
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     payload_ref: Mapped[str] = mapped_column(String(255), nullable=False)
     redacted_excerpt: Mapped[str] = mapped_column(Text, nullable=False)
@@ -275,11 +287,14 @@ class UaesMetric(Base):
     environment: Mapped[EnvironmentType] = mapped_column(String(20), nullable=False)
     source: Mapped[str] = mapped_column(String(100), nullable=False)
     observed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_utcnow,
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     tags_json: Mapped[dict[str, str]] = mapped_column(JSON, nullable=False, default=dict)
     incident_id: Mapped[str | None] = mapped_column(
-        ForeignKey("uaes_incidents.id", ondelete="SET NULL"), nullable=True,
+        ForeignKey("uaes_incidents.id", ondelete="SET NULL"),
+        nullable=True,
     )
 
     __table_args__ = (
@@ -323,10 +338,13 @@ class UaesDiagnosticPack(Base):
 
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=_uuid)
     incident_id: Mapped[str] = mapped_column(
-        ForeignKey("uaes_incidents.id", ondelete="CASCADE"), nullable=False,
+        ForeignKey("uaes_incidents.id", ondelete="CASCADE"),
+        nullable=False,
     )
     generated_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_utcnow,
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     summary: Mapped[str] = mapped_column(String(1000), nullable=False)
     log_ref: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -376,7 +394,9 @@ class UaesEvent(Base):
     aggregate_type: Mapped[str] = mapped_column(String(100), nullable=False)
     aggregate_id: Mapped[str] = mapped_column(String(36), nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, default=_utcnow,
+        DateTime(timezone=True),
+        nullable=False,
+        default=_utcnow,
     )
     correlation_id: Mapped[str | None] = mapped_column(String(36), nullable=True)
     causation_id: Mapped[str | None] = mapped_column(String(36), nullable=True)

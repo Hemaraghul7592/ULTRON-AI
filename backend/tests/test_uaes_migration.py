@@ -11,7 +11,8 @@ from app.core.config import get_settings
 
 
 def test_uaes_migration_upgrade_and_downgrade(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     db_path = tmp_path / "uaes-migration.db"
     monkeypatch.setenv("DATABASE_URL", f"sqlite+aiosqlite:///{db_path}")

@@ -29,7 +29,7 @@ class PluginManager:
 
     async def initialize(self) -> int:
         count = await self._loader.load_builtin_plugins()
-        for name, plugin in self._router._plugins.items():
+        for name, plugin in self._router._plugins.items():  # noqa: SLF001 Intentional internal access
             self._statuses[name] = PluginStatus.INITIALIZED
             self._health_cache[name] = PluginInterface.get_metadata(plugin)
         self._initialized = True
@@ -38,8 +38,8 @@ class PluginManager:
 
     async def shutdown(self) -> None:
         await self._router.cleanup_all()
-        self._router._plugins.clear()
-        self._router._tools.clear()
+        self._router._plugins.clear()  # noqa: SLF001 Intentional internal access
+        self._router._tools.clear()  # noqa: SLF001 Intentional internal access
         self._statuses.clear()
         self._health_cache.clear()
         self._initialized = False
@@ -76,13 +76,13 @@ class PluginManager:
         ]
 
     def plugin_count(self) -> int:
-        return len(self._router._plugins)
+        return len(self._router._plugins)  # noqa: SLF001 Intentional internal access
 
     def tool_count(self) -> int:
-        return len(self._router._tools)
+        return len(self._router._tools)  # noqa: SLF001 Intentional internal access
 
     def _find_plugin_for_tool(self, tool_name: str) -> str:
-        for pname, plugin in self._router._plugins.items():
+        for pname, plugin in self._router._plugins.items():  # noqa: SLF001 Intentional internal access
             for tool in plugin.get_tools():
                 if tool.name == tool_name:
                     return pname
@@ -177,7 +177,9 @@ class PluginManager:
             result = await tool.execute(**kwargs)
             self._statuses[plugin_name] = PluginStatus.AVAILABLE
             return success_response(
-                result=str(result), tool_name=tool_name, plugin_name=plugin_name,
+                result=str(result),
+                tool_name=tool_name,
+                plugin_name=plugin_name,
             )
 
         except PluginError:
@@ -221,6 +223,6 @@ class PluginManager:
                     "status": self._statuses.get(name, PluginStatus.LOADED),
                     "tools": [t.name for t in p.get_tools()],
                 }
-                for name, p in self._router._plugins.items()
+                for name, p in self._router._plugins.items()  # noqa: SLF001 Intentional internal access
             },
         }

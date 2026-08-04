@@ -5,14 +5,14 @@ import enum
 from typing import Any, TypedDict
 
 
-class SyncAction(str, enum.Enum):
+class SyncAction(enum.StrEnum):
     CREATE = "create"
     UPDATE = "update"
     DELETE = "delete"
     MOVE = "move"
 
 
-class SyncStatus(str, enum.Enum):
+class SyncStatus(enum.StrEnum):
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"

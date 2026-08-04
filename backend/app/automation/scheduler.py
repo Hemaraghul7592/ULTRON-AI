@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import time
 from collections.abc import Callable, Coroutine  # noqa: TC003
+from contextlib import suppress
 from typing import Any
 
 from app.core.logging import get_logger
@@ -96,10 +97,8 @@ class SchedulerService:
         self._running = False
         if self._task:
             self._task.cancel()
-            try:
+            with suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
         logger.info("scheduler_stopped")
 
     async def _run_loop(self) -> None:

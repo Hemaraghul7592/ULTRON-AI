@@ -33,13 +33,13 @@ class TTSResult:
     def __init__(
         self,
         audio_base64: str = "",
-        format: str = "wav",
+        format: str = "wav",  # noqa: A002
         size_bytes: int = 0,
         provider: str = "",
         voice_id: str = "",
     ) -> None:
         self.audio_base64 = audio_base64
-        self.format = format
+        self.format = format  # noqa: A002
         self.size_bytes = size_bytes
         self.provider = provider
         self.voice_id = voice_id

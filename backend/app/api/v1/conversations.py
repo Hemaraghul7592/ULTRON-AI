@@ -17,7 +17,9 @@ from app.schemas.conversation import (
 )
 
 router = APIRouter(
-    prefix="/conversations", tags=["conversations"], dependencies=[Depends(verify_token)],
+    prefix="/conversations",
+    tags=["conversations"],
+    dependencies=[Depends(verify_token)],
 )
 
 
@@ -61,7 +63,8 @@ async def list_conversations(
 
 @router.post("", response_model=ConversationResponse, status_code=201)
 async def create_conversation(
-    data: ConversationCreate, user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
+    data: ConversationCreate,
+    user: dict = Depends(verify_token),  # noqa: B008 FastAPI Depends() convention
 ) -> ConversationResponse:
     user_id = user["user_id"]
     session_factory = get_session()
@@ -128,7 +131,9 @@ async def update_conversation(
     async with session_factory() as session:
         repo = ConversationRepository(session)
         conv = await repo.update(
-            conversation_id, data.model_dump(exclude_unset=True), user_id=user_id,
+            conversation_id,
+            data.model_dump(exclude_unset=True),
+            user_id=user_id,
         )
         if not conv:
             from app.core.exceptions import NotFoundExceptionHTTP

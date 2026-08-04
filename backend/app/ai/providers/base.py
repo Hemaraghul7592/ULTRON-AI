@@ -37,5 +37,6 @@ class AIProvider(abc.ABC):
     @abc.abstractmethod
     def get_models(self) -> list[str]: ...
 
+    @abc.abstractmethod
     async def close(self) -> None:
         pass

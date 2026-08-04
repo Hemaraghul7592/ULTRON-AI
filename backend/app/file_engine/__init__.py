@@ -1,8 +1,8 @@
 from app.file_engine.errors import (
     DuplicateFileError,
     FileError,
-    FileNotFoundError,
-    FilePermissionError,
+    FileNotFoundError,  # noqa: A004
+    FilePermissionError,  # noqa: F401
     InvalidFileTypeError,
     ProcessingError,
     StorageError,

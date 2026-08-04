@@ -98,7 +98,10 @@ class Executor:
             if task.can_retry():
                 graph.mark_retry(task.id)
                 logger.warning(
-                    "task_retry", task=task.name, attempt=task.attempts, error=type(e).__name__,
+                    "task_retry",
+                    task=task.name,
+                    attempt=task.attempts,
+                    error=type(e).__name__,
                 )
             else:
                 task.status = "failed"

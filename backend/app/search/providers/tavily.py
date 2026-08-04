@@ -180,7 +180,8 @@ class TavilyProvider(SearchProvider):
                 if attempt == 0:
                     continue
                 raise SearchTimeoutError(
-                    message="Tavily request timed out", provider="tavily",
+                    message="Tavily request timed out",
+                    provider="tavily",
                 ) from e
             except httpx.RequestError as e:
                 if attempt == 0:

@@ -138,7 +138,8 @@ class GmailReadTool(BaseTool):
             import base64
 
             return base64.urlsafe_b64decode(payload["body"]["data"]).decode(
-                "utf-8", errors="replace",
+                "utf-8",
+                errors="replace",
             )
         parts = payload.get("parts", [])
         for part in parts:

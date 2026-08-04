@@ -358,7 +358,8 @@ class TestAIService:
         service = AIService()
         service._providers = {"failing": failing, "test": mock_provider}
         result = await service.chat(
-            messages=[{"role": "user", "content": "Hi"}], fallback=["failing", "test"],
+            messages=[{"role": "user", "content": "Hi"}],
+            fallback=["failing", "test"],
         )
         assert result["content"] == "test"
 

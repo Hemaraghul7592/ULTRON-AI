@@ -102,7 +102,10 @@ class KnowledgeGraphService:
         return scored[:limit]
 
     async def get_entity_context(
-        self, entity_name: str, user_id: str, depth: int = 2,
+        self,
+        entity_name: str,
+        user_id: str,
+        depth: int = 2,
     ) -> dict[str, Any]:
         entity = await self.repo.get_by_name(entity_name, user_id=user_id)
         if not entity:

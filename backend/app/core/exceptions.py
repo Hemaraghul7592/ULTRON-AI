@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import HTTPException, status
 
 
-class UltronException(Exception):
+class UltronException(Exception):  # noqa: N818
     def __init__(self, message: str, code: str = "ULTRON_ERROR", details: Any = None) -> None:
         super().__init__(message)
         self.message = message

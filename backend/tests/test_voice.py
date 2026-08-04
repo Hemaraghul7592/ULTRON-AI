@@ -25,17 +25,17 @@ from app.voice.utils import (
 
 class TestProviderInterfaces:
     def test_stt_provider_abstract(self) -> None:
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError):  # noqa: PT012
 
-            class _(SpeechToTextProvider):  # type: ignore
+            class _(SpeechToTextProvider):  # type: ignore  # noqa: N801
                 pass
 
             _()
 
     def test_tts_provider_abstract(self) -> None:
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeError):  # noqa: PT012
 
-            class _(TextToSpeechProvider):  # type: ignore
+            class _(TextToSpeechProvider):  # type: ignore  # noqa: N801
                 pass
 
             _()
@@ -47,7 +47,10 @@ class TestProviderInterfaces:
                 return "test"
 
             async def transcribe(
-                self, audio_data: bytes, language: str = "en-US", filename: str = "audio.wav",
+                self,
+                audio_data: bytes,
+                language: str = "en-US",
+                filename: str = "audio.wav",
             ) -> STTResult:
                 return STTResult(text="ok", provider=self.name)
 
