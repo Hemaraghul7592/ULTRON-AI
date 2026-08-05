@@ -1,6 +1,6 @@
 # UAES v0.5 — Validation Engine Architecture Specification
 
-> **Status**: FROZEN — Implementation-ready architecture document
+> **Status**: ARCHITECTURE REVIEW — Revised draft with improvements
 > **Version**: 0.5.0
 > **Date**: 2026-08-05
 > **Owner**: ULTRON Core Team
@@ -13,23 +13,43 @@
 1. [Purpose](#1-purpose)
 2. [Responsibilities](#2-responsibilities)
 3. [Architecture](#3-architecture)
-4. [Domain Models](#4-domain-models)
-5. [Value Objects](#5-value-objects)
-6. [Enums](#6-enums)
-7. [Repositories](#7-repositories)
-8. [Services](#8-services)
-9. [Validation Rules](#9-validation-rules)
-10. [Approval Policy](#10-approval-policy)
-11. [Validation Pipeline](#11-validation-pipeline)
-12. [Database](#12-database)
-13. [REST API](#13-rest-api)
-14. [Events](#14-events)
-15. [Integration](#15-integration)
-16. [Failure Modes](#16-failure-modes)
-17. [Security](#17-security)
-18. [Performance](#18-performance)
-19. [Testing Strategy](#19-testing-strategy)
-20. [Definition of Done](#20-definition-of-done)
+4. [Validation Context](#4-validation-context)
+5. [Domain Models](#5-domain-models)
+6. [Value Objects](#6-value-objects)
+7. [Enums](#7-enums)
+8. [Repositories](#8-repositories)
+9. [Services](#9-services)
+10. [Validation Rules](#10-validation-rules)
+11. [Approval Policy](#11-approval-policy)
+12. [Validation Pipeline](#12-validation-pipeline)
+13. [Database](#13-database)
+14. [REST API](#14-rest-api)
+15. [Events](#15-events)
+16. [Integration](#16-integration)
+17. [Learning Integration](#17-learning-integration)
+18. [Architecture Constraints](#18-architecture-constraints)
+19. [Failure Modes](#19-failure-modes)
+20. [Security](#20-security)
+21. [Performance](#21-performance)
+22. [Testing Strategy](#22-testing-strategy)
+23. [Definition of Done](#23-definition-of-done)
+24. [Validation History Intelligence](#24-validation-history-intelligence)
+25. [Explainable Validation](#25-explainable-validation)
+26. [AI Validator Extension Point](#26-ai-validator-extension-point)
+27. [Validation Cache](#27-validation-cache)
+28. [Digital Signature](#28-digital-signature)
+29. [Validation Trend Analysis](#29-validation-trend-analysis)
+30. [Generic Validation Framework](#30-generic-validation-framework)
+31. [Policy Packs](#31-policy-packs)
+32. [Validator Plugin System](#32-validator-plugin-system)
+33. [Future Integration](#33-future-integration)
+
+**Appendices**:
+- [Appendix A: UAES System Architecture](#appendix-a-uaes-system-architecture)
+- [Appendix B: Dependency Graph](#appendix-b-dependency-graph)
+- [Appendix C: Data Flow](#appendix-c-data-flow)
+- [Appendix D: Enum Reference](#appendix-d-enum-reference)
+- [Appendix E: Checklist Summary](#appendix-e-checklist-summary)
 
 ---
 
@@ -39,44 +59,56 @@
 
 The ULTRON Autonomous Execution System (UAES) enables autonomous repair and remediation of infrastructure incidents. The Validation Engine is the **final safety gate** between the Planner (which generates repair plans) and the Execution Engine (which carries out those plans). Without the Validation Engine, the system would execute arbitrary repairs with no safety guarantee.
 
-The Validation Engine answers a single question: **"Should ULTRON be allowed to execute this plan?"**
+The Validation Engine is a **generic validation framework** that supports validating:
+- Infrastructure repair plans
+- Deployment plans
+- Automation plans
+- Financial strategies
+- Stock trading strategies
+- AI workflows
+- Future autonomous tasks
+
+The Validation Engine answers a single question: **"Should this plan be allowed to execute?"**
 
 ### 1.2 Problems It Solves
 
 | Problem | Solution |
 |---------|----------|
-| Blind autonomous execution | Every plan passes through 17+ validation dimensions |
+| Blind autonomous execution | Every plan passes through 20+ validation dimensions |
 | No rollback safety net | Rollback feasibility assessment before execution |
-| Insufficient human oversight | 5-level approval hierarchy with escalation |
+| Insufficient human oversight | 6-level approval hierarchy with escalation |
 | Unbounded blast radius | Dependency graph analysis with cascade risk scoring |
 | Configuration drift | Compatibility checks across config, environment, and version |
 | Resource exhaustion | Resource availability verification before execution |
-| Compliance violations | Organizational policy enforcement with hard/soft modes |
+| Compliance violations | Policy pack enforcement with hard/soft modes |
 | No audit trail | Immutable audit log with hash-chain integrity |
-| Catastrophic actions | Hard blocks on destructive operations (delete production data, etc.) |
+| Catastrophic actions | Hard blocks on destructive operations |
 | Cost overruns | Budget compliance checks with threshold enforcement |
+| No explainability | Every decision includes detailed reasoning |
+| Untraceable decisions | Digital signatures on approved plans |
+| No historical intelligence | Validation history with trend analysis |
+| No extensibility | Plugin system for custom validators |
 
 ### 1.3 Defense-in-Depth Layers
 
-The Validation Engine implements five nested defense layers, each providing an independent safety mechanism:
+The Validation Engine implements six nested defense layers:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                    AUDIT LAYER                              │
 │  Immutable log of every validation, decision, and action    │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │                 APPROVAL LAYER                       │   │
-│  │  Human approval with 5-level hierarchy               │   │
+│  │                 SIGNATURE LAYER                      │   │
+│  │  Digital signatures on approved plans                │   │
 │  │  ┌───────────────────────────────────────────────┐   │   │
-│  │  │              EVIDENCE LAYER                   │   │   │
-│  │  │  Evidence-backed decisions with confidence    │   │   │
+│  │  │              APPROVAL LAYER                   │   │   │
+│  │  │  Human approval with 6-level hierarchy        │   │   │
 │  │  │  ┌────────────────────────────────────────┐   │   │   │
-│  │  │  │           POLICY LAYER                 │   │   │
-│  │  │  │  Organizational policies with          │   │   │
-│  │  │  │  hard/soft enforcement                 │   │   │
+│  │  │  │           POLICY LAYER                 │   │   │   │
+│  │  │  │  Policy packs with hard/soft enforce   │   │   │   │
 │  │  │  │  ┌─────────────────────────────────┐   │   │   │   │
 │  │  │  │  │         RULE LAYER              │   │   │   │   │
-│  │  │  │  │  30+ configurable validation    │   │   │   │   │
+│  │  │  │  │  40+ configurable validation    │   │   │   │   │
 │  │  │  │  │  rules across 8 categories     │   │   │   │   │
 │  │  │  │  └─────────────────────────────────┘   │   │   │   │
 │  │  │  └────────────────────────────────────────┘   │   │   │
@@ -85,28 +117,67 @@ The Validation Engine implements five nested defense layers, each providing an i
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Rule Layer**: Evaluates 30+ configurable rules across 8 categories. Rules produce blockers (hard stops) and warnings (advisory). Rules are evaluated sequentially; any blocker halts the pipeline.
+**Rule Layer**: Evaluates 40+ configurable rules across 8 categories. Rules produce blockers (hard stops) and warnings (advisory).
 
-**Policy Layer**: Enforces organizational policies. Policies are typed (approval, cost, maintenance, production, security, business) with hard enforcement (blocks execution) or soft enforcement (generates warnings).
+**Policy Layer**: Enforces policy packs. Policies are typed with hard enforcement (blocks) or soft enforcement (warns).
 
-**Evidence Layer**: Every decision is backed by evidence tuples `(source, key, value, confidence)`. Evidence is collected throughout the pipeline and stored for audit and debugging.
+**Approval Layer**: 6-level human approval hierarchy (AUTO → DEVELOPER → MAINTAINER → OPERATIONS → ADMINISTRATOR → EMERGENCY). Emergency override with audit. Timeout-based escalation.
 
-**Approval Layer**: 5-level human approval hierarchy (AUTO → DEVELOPER → MAINTAINER → OPERATIONS → ADMINISTRATOR). Emergency override with audit. Timeout-based escalation. Delegation rules.
+**Signature Layer**: Digital signatures on approved plans. Execution Engine verifies signatures before execution.
 
-**Audit Layer**: Immutable audit log with hash-chain integrity. Every validation, decision, approval, and permission change is recorded with actor, timestamp, IP, and details.
+**Audit Layer**: Immutable audit log with hash-chain integrity. Every validation, decision, approval, and permission change is recorded.
 
 ### 1.4 Position in UAES
 
+The Validation Engine is stage 5 of the 7-stage ULTRON Autonomous Execution System:
+
 ```
-┌──────────────┐     ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
-│              │     │                  │     │                  │     │                  │
-│   Planner    │────▶│  Validation      │────▶│  Execution       │────▶│  Monitoring      │
-│              │     │  Engine          │     │  Engine          │     │                  │
-└──────────────┘     └──────────────────┘     └──────────────────┘     └──────────────────┘
-       │                     │                        │                        │
-       │  PlanGenerated      │  ValidationCompleted   │  ExecutionStarted      │
-       └─────────────────────┘                        │  ExecutionCompleted    │
-                                                      └────────────────────────┘
+┌──────────────────┐
+│    MONITORING    │ ◄──── Stage 1: Detect health changes
+│                  │
+└────────┬─────────┘
+         │ HealthChanged
+         ▼
+┌──────────────────┐
+│   INCIDENT       │ ◄──── Stage 2: Create incidents
+│   DETECTION      │
+└────────┬─────────┘
+         │ IncidentCreated
+         ▼
+┌──────────────────┐
+│   ROOT CAUSE     │ ◄──── Stage 3: Determine probable cause
+│   ANALYSIS       │
+└────────┬─────────┘
+         │ RootCauseDetermined
+         ▼
+┌──────────────────┐
+│    PLANNER       │ ◄──── Stage 4: Produce repair plans
+│                  │
+└────────┬─────────┘
+         │ PlanGenerated
+         ▼
+┌──────────────────┐
+│   VALIDATION     │ ◄──── Stage 5: Verify every repair
+│   ENGINE         │
+└────────┬─────────┘
+         │ ValidationCompleted
+         ▼
+┌──────────────────┐
+│   EXECUTION      │ ◄──── Stage 6: Execute approved repairs
+│   ENGINE         │
+└────────┬─────────┘
+         │ ExecutionCompleted
+         ▼
+┌──────────────────┐
+│    LEARNING      │ ◄──── Stage 7: Learn from outcomes
+│    ENGINE        │
+└──────────────────┘
+
+Feedback Loops:
+- Learning → Monitoring: Updated health thresholds
+- Learning → Planner: Improved strategy selection
+- Learning → Validation: Improved rule accuracy
+- Learning → Execution: Improved rollback strategies
 ```
 
 ---
@@ -115,7 +186,7 @@ The Validation Engine implements five nested defense layers, each providing an i
 
 ### 2.1 Validation Dimensions
 
-The Validation Engine evaluates every plan against 17+ dimensions. Each dimension produces evidence that feeds into the final decision.
+The Validation Engine evaluates every plan against 20+ dimensions:
 
 | # | Dimension | Description | Severity if Failed |
 |---|-----------|-------------|-------------------|
@@ -137,6 +208,8 @@ The Validation Engine evaluates every plan against 17+ dimensions. Each dimensio
 | 16 | **Production Policy** | Does this comply with production policies? | BLOCKER |
 | 17 | **Business Policy** | Does this comply with business policies? | BLOCKER or WARNING |
 | 18 | **Cost Impact** | What is the operational and human cost? | WARNING or BLOCKER |
+| 19 | **Historical Patterns** | Does this match known failure patterns? | WARNING |
+| 20 | **AI Assessment** | What does the AI validator recommend? | INFO or WARNING |
 
 ### 2.2 Non-Responsibilities
 
@@ -156,167 +229,68 @@ The Validation Engine is a standalone bounded context within the ULTRON backend.
 ### 3.2 Folder Structure
 
 ```
-backend/app/validation_engine/
+backend/app/operations/validation/
 ├── __init__.py
 ├── domain/
 │   ├── __init__.py
-│   ├── models/
-│   │   ├── __init__.py
-│   │   ├── validation_request.py
-│   │   ├── validation_result.py
-│   │   ├── validation_decision.py
-│   │   ├── validation_rule.py
-│   │   ├── validation_policy.py
-│   │   ├── validation_evidence.py
-│   │   ├── validation_failure.py
-│   │   ├── validation_warning.py
-│   │   ├── approval_decision.py
-│   │   ├── execution_permission.py
-│   │   ├── execution_blocker.py
-│   │   ├── safety_assessment.py
-│   │   ├── compatibility_assessment.py
-│   │   ├── rollback_assessment.py
-│   │   ├── simulation_assessment.py
-│   │   ├── dependency_assessment.py
-│   │   ├── resource_assessment.py
-│   │   ├── security_assessment.py
-│   │   └── cost_assessment.py
-│   ├── value_objects/
-│   │   ├── __init__.py
-│   │   ├── confidence_score.py
-│   │   ├── risk_score.py
-│   │   ├── time_range.py
-│   │   ├── threshold_range.py
-│   │   ├── component_descriptor.py
-│   │   ├── environment_descriptor.py
-│   │   ├── version_constraint.py
-│   │   ├── resource_quota.py
-│   │   └── maintenance_window.py
-│   ├── enums.py
-│   └── events.py
+│   ├── models.py                    # All domain models
+│   ├── value_objects.py             # All value objects
+│   ├── enums.py                     # All enums
+│   ├── events.py                    # All domain events
+│   └── rules.py                     # Validation rule definitions
 ├── application/
 │   ├── __init__.py
 │   ├── ports/
 │   │   ├── __init__.py
-│   │   ├── repositories.py
-│   │   └── event_publisher.py
+│   │   ├── repositories.py          # Repository protocols
+│   │   └── event_publisher.py       # Event publisher protocol
 │   ├── services/
 │   │   ├── __init__.py
-│   │   ├── validation_service.py
-│   │   ├── rule_engine.py
-│   │   ├── policy_engine.py
-│   │   ├── approval_engine.py
-│   │   ├── dependency_analyzer.py
+│   │   ├── validation_service.py    # Orchestrator
+│   │   ├── rule_engine.py           # Rule evaluation
+│   │   ├── policy_engine.py         # Policy evaluation
+│   │   ├── approval_engine.py       # Approval workflow
+│   │   ├── dependency_analyzer.py   # Dependency analysis
 │   │   ├── compatibility_analyzer.py
 │   │   ├── rollback_analyzer.py
 │   │   ├── security_analyzer.py
 │   │   ├── simulation_verifier.py
 │   │   ├── environment_analyzer.py
 │   │   ├── resource_analyzer.py
-│   │   ├── decision_engine.py
-│   │   └── summary_generator.py
+│   │   ├── decision_engine.py       # Final decision
+│   │   ├── summary_generator.py     # Human-readable summary
+│   │   ├── explainability_service.py # Explainability
+│   │   ├── history_service.py       # Validation history
+│   │   ├── trend_service.py         # Trend analysis
+│   │   └── cache_service.py         # Validation cache
 │   └── pipeline/
 │       ├── __init__.py
-│       ├── validation_pipeline.py
-│       └── stages.py
+│       └── stages.py                # Pipeline stage definitions
 ├── infrastructure/
 │   ├── __init__.py
 │   ├── persistence/
 │   │   ├── __init__.py
-│   │   ├── models/
-│   │   │   ├── __init__.py
-│   │   │   ├── validation_request_model.py
-│   │   │   ├── validation_result_model.py
-│   │   │   ├── validation_failure_model.py
-│   │   │   ├── validation_warning_model.py
-│   │   │   ├── validation_evidence_model.py
-│   │   │   ├── approval_decision_model.py
-│   │   │   ├── execution_permission_model.py
-│   │   │   └── audit_log_model.py
-│   │   ├── repositories/
-│   │   │   ├── __init__.py
-│   │   │   ├── validation_repository.py
-│   │   │   ├── rule_repository.py
-│   │   │   ├── policy_repository.py
-│   │   │   ├── evidence_repository.py
-│   │   │   └── audit_repository.py
-│   │   └── migrations/
-│   │       └── versions/
-│   │           └── 001_create_validation_tables.py
+│   │   ├── models/                  # SQLAlchemy ORM models
+│   │   ├── repositories/            # Repository implementations
+│   │   └── migrations/              # Alembic migrations
 │   ├── event_bus/
-│   │   ├── __init__.py
 │   │   └── in_process_event_publisher.py
-│   └── cache/
+│   ├── cache/
+│   │   └── validation_cache.py
+│   └── plugins/
 │       ├── __init__.py
-│       └── rule_policy_cache.py
+│       └── plugin_manager.py        # Plugin discovery and loading
 ├── api/
 │   ├── __init__.py
-│   ├── v1/
-│   │   ├── __init__.py
-│   │   ├── routes.py
-│   │   ├── dependencies.py
-│   │   └── schemas/
-│   │       ├── __init__.py
-│   │       ├── requests.py
-│   │       └── responses.py
-│   └── __init__.py
+│   └── v1/
+│       ├── __init__.py
+│       ├── router.py
+│       └── schemas.py
 └── tests/
-    ├── __init__.py
     ├── unit/
-    │   ├── __init__.py
-    │   ├── test_validation_request.py
-    │   ├── test_validation_result.py
-    │   ├── test_validation_decision.py
-    │   ├── test_validation_rule.py
-    │   ├── test_validation_policy.py
-    │   ├── test_validation_evidence.py
-    │   ├── test_validation_failure.py
-    │   ├── test_validation_warning.py
-    │   ├── test_approval_decision.py
-    │   ├── test_execution_permission.py
-    │   ├── test_execution_blocker.py
-    │   ├── test_safety_assessment.py
-    │   ├── test_compatibility_assessment.py
-    │   ├── test_rollback_assessment.py
-    │   ├── test_simulation_assessment.py
-    │   ├── test_dependency_assessment.py
-    │   ├── test_resource_assessment.py
-    │   ├── test_security_assessment.py
-    │   ├── test_cost_assessment.py
-    │   ├── test_confidence_score.py
-    │   ├── test_risk_score.py
-    │   ├── test_time_range.py
-    │   ├── test_threshold_range.py
-    │   ├── test_component_descriptor.py
-    │   ├── test_environment_descriptor.py
-    │   ├── test_version_constraint.py
-    │   ├── test_resource_quota.py
-    │   ├── test_maintenance_window.py
-    │   ├── test_rule_engine.py
-    │   ├── test_policy_engine.py
-    │   ├── test_approval_engine.py
-    │   ├── test_decision_engine.py
-    │   └── test_summary_generator.py
     ├── integration/
-    │   ├── __init__.py
-    │   ├── test_validation_pipeline.py
-    │   ├── test_validation_repository.py
-    │   ├── test_rule_repository.py
-    │   ├── test_policy_repository.py
-    │   ├── test_evidence_repository.py
-    │   ├── test_audit_repository.py
-    │   ├── test_event_dispatch.py
-    │   └── test_full_validation_flow.py
     ├── stress/
-    │   ├── __init__.py
-    │   ├── test_concurrent_validations.py
-    │   └── test_timeout_handling.py
     └── chaos/
-        ├── __init__.py
-        ├── test_database_failure.py
-        ├── test_rule_engine_failure.py
-        ├── test_approval_timeout.py
-        └── test_partial_validation.py
 ```
 
 ### 3.3 Clean Architecture / DDD Layers
@@ -325,7 +299,6 @@ backend/app/validation_engine/
 ┌─────────────────────────────────────────────────────────────┐
 │                     API Layer (FastAPI)                      │
 │  Routes, Request/Response schemas, Dependencies             │
-│  Imports: application.services                              │
 ├─────────────────────────────────────────────────────────────┤
 │                  Application Layer                          │
 │  Services, Pipeline, Ports (interfaces)                     │
@@ -337,24 +310,322 @@ backend/app/validation_engine/
 ├─────────────────────────────────────────────────────────────┤
 │                 Infrastructure Layer                        │
 │  SQLAlchemy models, Repository implementations              │
-│  Event bus, Cache, External adapters                        │
-│  Imports: application.ports, domain (for types)             │
+│  Event bus, Cache, Plugins, External adapters               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Dependency Rules**:
-- **Domain** → depends on nothing. Pure data structures, enums, and value objects.
-- **Application** → depends only on Domain. Defines port interfaces (repository protocols, event publisher protocols). Services implement business logic.
-- **Infrastructure** → depends on Application (ports) and Domain (types). Implements repository protocols, event publishing, caching.
-- **API** → depends on Application. Defines HTTP routes, request/response schemas, dependency injection wiring.
+---
+
+## 4. Validation Context
+
+### 4.1 Purpose
+
+The Validation Context is the **single source of truth** for the entire validation pipeline. It replaces the previous architecture where analyzers received many independent parameters. Instead, every analyzer receives only the context:
+
+```python
+# OLD ARCHITECTURE (rejected)
+result = await analyzer.analyze(
+    request,
+    incident,
+    planner,
+    monitoring,
+    resources,
+    dependency_graph,
+    policies,
+    runtime,
+    evidence,
+)
+
+# NEW ARCHITECTURE (adopted)
+result = await analyzer.analyze(context)
+```
+
+### 4.2 Why It Exists
+
+| Problem | Solution |
+|---------|----------|
+| Analyzer signature explosion | Single `context` parameter |
+| Inconsistent data access | Centralized, immutable context |
+| Difficult to test | Mock one context object |
+| Race conditions | Immutable during validation |
+| Hidden dependencies | Explicit context fields |
+| Difficult to audit | Complete validation state in one object |
+
+### 4.3 Why Every Analyzer Depends on It
+
+Every analyzer needs access to the same validation state. Without a shared context:
+- Analyzers receive different subsets of data
+- Data inconsistency between analyzers
+- Testing requires mocking many objects
+- Auditing requires reconstructing state from scattered sources
+
+With a shared context:
+- All analyzers see the same data
+- Data is consistent across the pipeline
+- Testing requires mocking one object
+- Auditing has complete state in one place
+
+### 4.4 ValidationContext Model
+
+```python
+class ValidationContext(BaseModel):
+    """
+    Immutable validation context. Single source of truth for the pipeline.
+    Built by ValidationService. Read-only for all analyzers.
+    """
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    # ── Request ──────────────────────────────────────────────
+    request: ValidationRequest                    # The original validation request
+
+    # ── Planner Result ───────────────────────────────────────
+    planner_result: dict[str, Any]                # Serialized planner output
+    planner_strategy: str | None = None           # Strategy used by planner
+    planner_confidence: float | None = None       # Planner's confidence score
+
+    # ── Monitoring Snapshot ──────────────────────────────────
+    monitoring_snapshot: MonitoringSnapshot        # Current system health
+    cpu_usage_percent: float = 0.0
+    memory_usage_mb: float = 0.0
+    disk_usage_gb: float = 0.0
+    network_latency_ms: float = 0.0
+    active_incidents: list[str] = []              # Currently active incidents
+
+    # ── Incident ─────────────────────────────────────────────
+    incident: IncidentDetails | None = None       # Associated incident details
+    incident_severity: str | None = None          # "low", "medium", "high", "critical"
+    incident_category: str | None = None          # Root cause category
+    incident_age_hours: float | None = None       # How long incident has been active
+
+    # ── Dependency Graph ─────────────────────────────────────
+    dependency_graph: DependencyGraph             # Service dependency graph
+    affected_components: list[str] = []           # Components affected by plan
+    reverse_dependencies: list[str] = []          # Services that depend on affected
+    critical_path: list[str] = []                 # Critical path services
+
+    # ── Policy Pack ──────────────────────────────────────────
+    policy_pack: PolicyPack                       # Selected policy pack
+    active_policies: list[ValidationPolicy] = []  # Policies to evaluate
+    enforcement_mode: str = "hard"                # "hard" or "soft"
+
+    # ── Runtime Snapshot ─────────────────────────────────────
+    runtime_snapshot: RuntimeSnapshot             # Current runtime state
+    active_deployments: list[str] = []            # Currently deploying services
+    maintenance_window_active: bool = False       # Is maintenance window active?
+    deployment_in_progress: bool = False          # Is a deployment happening?
+
+    # ── Collected Evidence ───────────────────────────────────
+    collected_evidence: list[ValidationEvidence] = []  # Evidence collected so far
+
+    # ── Execution Constraints ────────────────────────────────
+    execution_constraints: ExecutionConstraints   # Time, resource, ordering constraints
+    max_execution_time_seconds: int = 3600        # Maximum allowed execution time
+    required_approvals: list[str] = []            # Required approval roles
+    blocked_time_ranges: list[TimeRange] = []     # Times when execution is blocked
+
+    # ── Historical Context ───────────────────────────────────
+    historical_failures: int = 0                  # Past failures for this pattern
+    false_positive_rate: float = 0.0              # Historical false positive rate
+    similar_plan_outcomes: list[str] = []         # Outcomes of similar past plans
+
+    # ── Metadata ─────────────────────────────────────────────
+    metadata: dict[str, Any] = {}                 # Arbitrary metadata
+    built_at: datetime                            # When context was built
+    built_by: str = "system"                      # Who built the context
+```
+
+### 4.5 Context Construction
+
+Only `ValidationService` may build the `ValidationContext`:
+
+```python
+class ValidationService:
+    async def _build_context(
+        self,
+        request: ValidationRequest,
+    ) -> ValidationContext:
+        """Build the immutable validation context."""
+        # 1. Fetch planner result
+        planner_result = await self._planner_repository.get_result(request.plan_id)
+
+        # 2. Fetch monitoring snapshot
+        monitoring_snapshot = await self._monitoring_service.get_snapshot()
+
+        # 3. Fetch incident details (if any)
+        incident = None
+        if request.incident_id:
+            incident = await self._incident_service.get_details(request.incident_id)
+
+        # 4. Fetch dependency graph
+        dependency_graph = await self._dependency_service.get_graph()
+
+        # 5. Select policy pack
+        policy_pack = await self._policy_pack_loader.select_pack(request)
+        active_policies = await self._policy_pack_loader.load_policies(policy_pack)
+
+        # 6. Fetch runtime snapshot
+        runtime_snapshot = await self._runtime_service.get_snapshot()
+
+        # 7. Fetch historical context
+        historical = await self._history_service.get_context(request.plan_id)
+
+        return ValidationContext(
+            request=request,
+            planner_result=planner_result,
+            planner_strategy=planner_result.get("strategy"),
+            planner_confidence=planner_result.get("confidence"),
+            monitoring_snapshot=monitoring_snapshot,
+            cpu_usage_percent=monitoring_snapshot.cpu_usage,
+            memory_usage_mb=monitoring_snapshot.memory_usage,
+            disk_usage_gb=monitoring_snapshot.disk_usage,
+            network_latency_ms=monitoring_snapshot.network_latency,
+            active_incidents=monitoring_snapshot.active_incidents,
+            incident=incident,
+            incident_severity=incident.severity if incident else None,
+            incident_category=incident.category if incident else None,
+            incident_age_hours=incident.age_hours if incident else None,
+            dependency_graph=dependency_graph,
+            affected_components=self._extract_affected_components(request, dependency_graph),
+            reverse_dependencies=self._extract_reverse_dependencies(request, dependency_graph),
+            critical_path=self._extract_critical_path(request, dependency_graph),
+            policy_pack=policy_pack,
+            active_policies=active_policies,
+            enforcement_mode=policy_pack.enforcement_mode,
+            runtime_snapshot=runtime_snapshot,
+            active_deployments=runtime_snapshot.active_deployments,
+            maintenance_window_active=runtime_snapshot.maintenance_window_active,
+            deployment_in_progress=runtime_snapshot.deployment_in_progress,
+            collected_evidence=[],
+            execution_constraints=self._extract_constraints(request, policy_pack),
+            max_execution_time_seconds=self._compute_max_execution_time(request),
+            required_approvals=self._compute_required_approvals(request, policy_pack),
+            blocked_time_ranges=self._compute_blocked_times(request, policy_pack),
+            historical_failures=historical.failures,
+            false_positive_rate=historical.false_positive_rate,
+            similar_plan_outcomes=historical.similar_outcomes,
+            metadata={},
+            built_at=datetime.utcnow(),
+            built_by="system",
+        )
+```
+
+### 4.6 Immutability Rules
+
+| Rule | Description |
+|------|-------------|
+| **Immutable during run** | Once built, the context cannot be modified |
+| **Read-only for analyzers** | Analyzers may only read from the context |
+| **No mutation** | No analyzer may call `model_copy()` on the context |
+| **Evidence accumulation** | New evidence is added by returning it, not mutating context |
+| **Only ValidationService builds** | No other service may construct a context |
+
+### 4.7 Analyzer Contract
+
+Every analyzer must follow this contract:
+
+```python
+class AnalyzerProtocol(Protocol):
+    """Protocol for all analyzers."""
+
+    async def analyze(
+        self,
+        context: ValidationContext,
+    ) -> Assessment:
+        """
+        Analyze the plan using the provided context.
+
+        Rules:
+        1. READ from context only
+        2. DO NOT mutate context
+        3. RETURN assessment with evidence
+        4. Evidence is accumulated by ValidationService
+        """
+        ...
+```
+
+### 4.8 Evidence Accumulation
+
+Analyzers return evidence, which ValidationService accumulates:
+
+```python
+class ValidationService:
+    async def _run_pipeline(
+        self,
+        context: ValidationContext,
+    ) -> ValidationDecision:
+        """Run the validation pipeline."""
+        all_evidence = []
+        all_failures = []
+        all_warnings = []
+
+        # Run analyzers (each returns evidence, no mutation)
+        safety_evidence = await self._safety_analyzer.analyze(context)
+        all_evidence.extend(safety_evidence.evidence)
+
+        dependency_evidence = await self._dependency_analyzer.analyze(context)
+        all_evidence.extend(dependency_evidence.evidence)
+
+        # ... more analyzers ...
+
+        # Build new context with accumulated evidence (immutably)
+        context_with_evidence = context.model_copy(update={
+            "collected_evidence": all_evidence,
+        })
+
+        # Continue pipeline with enriched context
+        return await self._run_rules_and_decide(context_with_evidence)
+```
+
+### 4.9 Testing Benefits
+
+With a single context object, testing becomes straightforward:
+
+```python
+async def test_safety_analyzer_blocks_catastrophic_risk():
+    # Arrange: Build a test context
+    context = ValidationContext(
+        request=ValidationRequest(...),
+        planner_result={"risk_score": 95},
+        monitoring_snapshot=MonitoringSnapshot(...),
+        incident=IncidentDetails(severity="critical"),
+        dependency_graph=DependencyGraph(...),
+        policy_pack=PolicyPack(...),
+        runtime_snapshot=RuntimeSnapshot(...),
+        execution_constraints=ExecutionConstraints(...),
+        built_at=datetime.utcnow(),
+    )
+
+    # Act: Run the analyzer
+    analyzer = SafetyAnalyzer()
+    result = await analyzer.analyze(context)
+
+    # Assert: Check the result
+    assert result.risk_score.value >= 90
+    assert result.requires_human_approval is True
+```
+
+### 4.10 Audit Benefits
+
+The context provides complete audit trail:
+
+```python
+# Every validation run has a complete, immutable context
+context = await validation_service._build_context(request)
+
+# The context can be stored for audit
+await audit_repository.save_context(context)
+
+# Later, auditors can inspect exactly what data was used
+stored_context = await audit_repository.get_context(request_id)
+```
 
 ---
 
-## 4. Domain Models
+## 5. Domain Models
 
 All domain models are Pydantic `BaseModel` with `frozen=True` and `model_config = ConfigDict(use_enum_values=True)`. Mutations use `model_copy(update={...})`.
 
-### 4.1 ValidationRequest
+### 5.1 ValidationRequest
 
 Entry point from the Planner. Immutable request to validate a plan.
 
@@ -366,6 +637,7 @@ class ValidationRequest(BaseModel):
     plan_id: str                                 # Reference to the plan being validated
     incident_id: str | None                      # Associated incident (if any)
     plan_json: dict[str, Any]                    # Serialized plan for validation
+    plan_type: str = "infrastructure_repair"     # Plan type for generic validation
     environment: str                             # "development" | "staging" | "production"
     requested_by: str                            # Actor who requested validation
     requested_at: datetime                       # When the request was made
@@ -374,26 +646,36 @@ class ValidationRequest(BaseModel):
     metadata: dict[str, Any] = {}                # Arbitrary metadata
 ```
 
-### 4.2 ValidationDecision
+### 5.2 ValidationDecision
 
-Enum-based decision outcome. This is the final verdict of the validation pipeline.
+Enum-based decision outcome with full explainability.
 
 ```python
 class ValidationDecision(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    decision: ValidationDecisionEnum              # APPROVED, REJECTED, CONDITIONAL, PENDING_APPROVAL, EXPIRED
+    decision: ValidationDecisionEnum              # Final decision
     decision_reason: str                          # Human-readable reason
     decided_at: datetime                          # When the decision was made
     decided_by: str                               # "system" for auto, user ID for human
     conditions: list[str] = []                    # Conditions for CONDITIONAL approval
     expiration_at: datetime | None = None         # When the decision expires
     validation_duration_ms: float                 # How long validation took
+    # Explainability fields
+    detailed_reasons: list[str] = []              # Detailed reasoning for the decision
+    failed_rules: list[str] = []                  # List of rule codes that failed
+    warning_rules: list[str] = []                 # List of rule codes that warned
+    confidence_explanation: str = ""               # Why confidence is at this level
+    suggested_fixes: list[str] = []               # Suggested remediation steps
+    strategy_recommendation: str | None = None    # Planner strategy recommendation
+    dependency_explanation: str = ""               # Explanation of dependency impact
+    rollback_explanation: str = ""                 # Explanation of rollback feasibility
+    evidence_summary: str = ""                    # Summary of evidence collected
 ```
 
-### 4.3 ValidationRule
+### 5.3 ValidationRule
 
-Configurable rule with conditions. Rules are the atomic unit of validation logic.
+Configurable rule with conditions.
 
 ```python
 class ValidationRule(BaseModel):
@@ -401,181 +683,183 @@ class ValidationRule(BaseModel):
 
     rule_id: str                                  # e.g., "SAFETY_001"
     rule_code: str                                # e.g., "SAFETY_001"
-    name: str                                     # e.g., "Block Database Restart During Migration"
+    name: str                                     # Human-readable name
     description: str                              # What this rule checks
-    category: ValidationCategory                  # SAFETY, DEPENDENCY, COMPATIBILITY, etc.
+    category: ValidationCategory                  # SAFETY, DEPENDENCY, etc.
     severity: ValidationSeverity                  # BLOCKER, WARNING, INFO
-    enabled: bool = True                          # Can be disabled without removing
+    enabled: bool = True
     conditions: list[dict[str, Any]] = []         # JSON-logic conditions
-    message_on_pass: str = ""                     # Message when rule passes
-    message_on_fail: str = ""                     # Message when rule fails
-    suggested_fix: str = ""                       # Suggested remediation
+    message_on_pass: str = ""
+    message_on_fail: str = ""
+    suggested_fix: str = ""
+    plugin_id: str | None = None                  # For plugin-provided rules
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 4.4 ValidationPolicy
+### 5.4 ValidationPolicy
 
-Organizational policy. Policies are higher-level than rules and enforce business/organizational constraints.
+Organizational policy with policy pack support.
 
 ```python
 class ValidationPolicy(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    policy_id: str                                # e.g., "POLICY_MAINT_001"
-    name: str                                     # e.g., "Production Maintenance Window"
-    description: str                              # What this policy enforces
-    policy_type: PolicyType                       # APPROVAL, COST, MAINTENANCE, PRODUCTION, SECURITY, BUSINESS
+    policy_id: str
+    name: str
+    description: str
+    policy_type: PolicyType
     enforcement: PolicyEnforcement                 # HARD (blocks) or SOFT (warns)
     enabled: bool = True
-    conditions: list[dict[str, Any]] = []         # JSON-logic conditions
+    conditions: list[dict[str, Any]] = []
     applicable_environments: list[str] = []       # Empty = all environments
+    policy_pack_id: str | None = None             # Associated policy pack
     message_on_pass: str = ""
     message_on_fail: str = ""
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 4.5 ValidationEvidence
+### 5.5 ValidationEvidence
 
-Evidence tuple. Every decision is backed by evidence. Evidence is the audit trail of what was checked and what was found.
+Evidence tuple for audit trail.
 
 ```python
 class ValidationEvidence(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    evidence_id: str                              # UUID, auto-generated
-    result_id: str                                # FK to ValidationResult
+    evidence_id: str
+    result_id: str
     evidence_type: str                            # "rule_result", "assessment", "external_check"
-    source: str                                   # Which service produced this evidence
-    key: str                                      # What was checked (e.g., "cpu_availability")
+    source: str                                   # Which service produced this
+    key: str                                      # What was checked
     value: Any                                    # What was found
-    confidence: ConfidenceScore                   # 0.0-1.0 confidence in this evidence
-    metadata: dict[str, Any] = {}                 # Additional context
+    confidence: ConfidenceScore
+    metadata: dict[str, Any] = {}
     created_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 4.6 ValidationFailure
+### 5.6 ValidationFailure
 
-Blocker. A failure that prevents execution. Failures are produced by rules with BLOCKER severity.
+Blocker that prevents execution.
 
 ```python
 class ValidationFailure(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    failure_id: str                               # UUID, auto-generated
-    result_id: str                                # FK to ValidationResult
-    rule_id: str                                  # FK to ValidationRule
-    rule_code: str                                # e.g., "SAFETY_001"
-    rule_name: str                                # e.g., "Block Database Restart During Migration"
-    category: ValidationCategory                  # Which category
-    severity: ValidationSeverity                  # Always BLOCKER for failures
-    reason: str                                   # Why this failed
-    suggested_fix: str                            # How to fix it
+    failure_id: str
+    result_id: str
+    rule_id: str
+    rule_code: str
+    rule_name: str
+    category: ValidationCategory
+    severity: ValidationSeverity
+    reason: str
+    suggested_fix: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 4.7 ValidationWarning
+### 5.7 ValidationWarning
 
-Non-blocking advisory. Warnings inform but do not block execution.
+Non-blocking advisory.
 
 ```python
 class ValidationWarning(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    warning_id: str                               # UUID, auto-generated
-    result_id: str                                # FK to ValidationResult
-    rule_id: str                                  # FK to ValidationRule
-    rule_code: str                                # e.g., "ROLLBACK_003"
-    rule_name: str                                # e.g., "Low Rollback Success Rate"
-    category: ValidationCategory                  # Which category
-    severity: ValidationSeverity                  # Always WARNING
-    message: str                                  # What was observed
+    warning_id: str
+    result_id: str
+    rule_id: str
+    rule_code: str
+    rule_name: str
+    category: ValidationCategory
+    severity: ValidationSeverity
+    message: str
     created_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 4.8 ApprovalDecision
+### 5.8 ApprovalDecision
 
-Human approval record. Tracks who approved/rejected what, when, and with what conditions.
+Human approval record.
 
 ```python
 class ApprovalDecision(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    decision_id: str                              # UUID, auto-generated
-    request_id: str                               # FK to ValidationRequest
-    result_id: str | None                         # FK to ValidationResult (if decision made)
-    plan_id: str                                  # FK to the plan
-    decision: ApprovalStatus                      # PENDING, APPROVED, REJECTED, ESCALATED, EXPIRED
-    decided_by: str                               # User ID of approver
-    reason: str                                   # Why they approved/rejected
-    conditions: list[str] = []                    # Conditions for conditional approval
-    approval_level: ApprovalLevel                 # Who can approve at this level
-    expires_at: datetime                          # When this approval expires
-    decided_at: datetime | None = None            # When the decision was made
+    decision_id: str
+    request_id: str
+    result_id: str | None
+    plan_id: str
+    decision: ApprovalStatus                      # Expanded lifecycle
+    decided_by: str
+    reason: str
+    conditions: list[str] = []
+    approval_level: ApprovalLevel
+    expires_at: datetime
+    decided_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 4.9 ExecutionPermission
+### 5.9 ExecutionPermission
 
-Grants or denies execution. This is the final artifact that the Execution Engine checks before running a plan.
+Grants or denies execution.
 
 ```python
 class ExecutionPermission(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    permission_id: str                            # UUID, auto-generated
-    plan_id: str                                  # FK to the plan
-    result_id: str                                # FK to ValidationResult
-    granted: bool                                 # True = can execute, False = blocked
-    granted_by: str                               # "system" for auto, user ID for human
-    granted_at: datetime                          # When permission was granted
-    expires_at: datetime                          # When permission expires
-    conditions: list[str] = []                    # Conditions that must be met
-    revocation_reason: str | None = None          # Why permission was revoked (if revoked)
-    revoked_at: datetime | None = None            # When permission was revoked
+    permission_id: str
+    plan_id: str
+    result_id: str
+    granted: bool
+    granted_by: str
+    granted_at: datetime
+    expires_at: datetime
+    conditions: list[str] = []
+    signature_id: str | None = None               # Link to digital signature
+    revocation_reason: str | None = None
+    revoked_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 4.10 ExecutionBlocker
+### 5.10 ExecutionBlocker
 
-Explicit execution block. Produced when validation fails. The Execution Engine checks for active blockers before executing.
+Explicit execution block.
 
 ```python
 class ExecutionBlocker(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    blocker_id: str                               # UUID, auto-generated
-    plan_id: str                                  # FK to the plan
-    result_id: str                                # FK to ValidationResult
-    blocker_type: BlockerType                     # RULE_VIOLATION, POLICY_VIOLATION, etc.
-    reason: str                                   # Why execution is blocked
-    rule_code: str | None = None                  # Which rule caused the block
-    policy_id: str | None = None                  # Which policy caused the block
+    blocker_id: str
+    plan_id: str
+    result_id: str
+    blocker_type: BlockerType
+    reason: str
+    rule_code: str | None = None
+    policy_id: str | None = None
+    resolved_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
-    resolved_at: datetime | None = None           # When the blocker was resolved
 ```
 
-### 4.11 SafetyAssessment
+### 5.11 SafetyAssessment
 
-Risk, confidence, blast radius, and historical failure analysis.
+Risk, confidence, and blast radius analysis.
 
 ```python
 class SafetyAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    risk_score: RiskScore                         # 0-100, computed from multiple factors
-    confidence_score: ConfidenceScore             # 0.0-1.0, how confident in this assessment
-    blast_radius: int                             # Number of components affected
-    historical_failures: int                      # How many times similar repairs failed
-    is_catastrophic: bool                         # risk_score > 95
-    requires_human_approval: bool                 # Based on risk threshold
-    assessment_summary: str                       # Human-readable summary
-    factors: dict[str, float] = {}                # Individual risk factors
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    risk_score: RiskScore
+    confidence_score: ConfidenceScore
+    blast_radius: int                             # Number of affected components
+    historical_failures: int                      # Past failures for this pattern
+    is_catastrophic: bool                         # Risk > 95
+    requires_human_approval: bool
+    assessment_summary: str
+    factors: list[dict[str, Any]] = []
 ```
 
-### 4.12 CompatibilityAssessment
+### 5.12 CompatibilityAssessment
 
 Configuration, environment, and version compatibility.
 
@@ -583,148 +867,303 @@ Configuration, environment, and version compatibility.
 class CompatibilityAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    config_compatible: bool                       # Configuration conflict detected?
-    environment_compatible: bool                  # Environment mismatch?
-    version_compatible: bool                      # Version incompatibility?
-    config_conflicts: list[str] = []              # Specific config conflicts found
-    environment_mismatches: list[str] = []        # Specific env mismatches found
-    version_incompatibilities: list[str] = []     # Specific version issues found
-    pre_release_components: list[str] = []        # Components using pre-release versions
-    assessment_summary: str = ""                  # Human-readable summary
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    config_compatible: bool
+    environment_compatible: bool
+    version_compatible: bool
+    config_conflicts: list[str] = []
+    environment_mismatches: list[str] = []
+    version_incompatibilities: list[str] = []
+    pre_release_components: list[str] = []
+    assessment_summary: str
 ```
 
-### 4.13 RollbackAssessment
+### 5.13 RollbackAssessment
 
-Rollback feasibility, complexity, and success rate.
+Rollback feasibility analysis.
 
 ```python
 class RollbackAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    rollback_available: bool                      # Is a rollback plan available?
-    automatic_rollback: bool                      # Can rollback be done automatically?
-    rollback_tested: bool                         # Has this rollback been tested?
-    rollback_success_rate: float                  # 0.0-1.0, historical success rate
-    rollback_complexity: RollbackComplexity       # LOW, MEDIUM, HIGH, IMPOSSIBLE
-    data_loss_risk: bool                          # Will rollback cause data loss?
-    estimated_rollback_time_seconds: int          # How long rollback takes
-    assessment_summary: str = ""                  # Human-readable summary
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    rollback_available: bool
+    automatic_rollback: bool
+    rollback_tested: bool
+    rollback_success_rate: float                  # 0.0-1.0
+    rollback_complexity: RollbackComplexity
+    data_loss_risk: bool
+    estimated_rollback_time_seconds: int
+    assessment_summary: str
 ```
 
-### 4.14 SimulationAssessment
+### 5.14 SimulationAssessment
 
-Simulation outcome and pre/postcondition verification.
+Simulation results verification.
 
 ```python
 class SimulationAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    simulation_performed: bool                    # Was a simulation run?
-    simulation_outcome: str                       # "success", "failure", "timeout", "not_performed"
-    preconditions_met: bool                       # Were preconditions satisfied?
-    postconditions_met: bool                      # Were postconditions satisfied?
-    simulation_duration_ms: float                 # How long the simulation took
-    simulation_errors: list[str] = []             # Errors during simulation
-    assessment_summary: str = ""                  # Human-readable summary
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    simulation_performed: bool
+    simulation_outcome: str                       # "success", "failure", "not_performed"
+    preconditions_met: bool
+    postconditions_met: bool
+    simulation_duration_ms: int
+    simulation_errors: list[str] = []
+    assessment_summary: str
 ```
 
-### 4.15 DependencyAssessment
+### 5.15 DependencyAssessment
 
-Graph traversal, blast radius calculation, and cascade risk.
+Dependency graph and cascade analysis.
 
 ```python
 class DependencyAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    direct_dependencies: list[str] = []           # Services this plan directly affects
-    reverse_dependencies: list[str] = []          # Services that depend on affected services
-    blast_radius: int                             # Total components in impact zone
-    cascade_risk: CascadeRisk                     # LOW, MEDIUM, HIGH, CRITICAL
-    critical_path_affected: bool                  # Is a critical path service affected?
-    cross_boundary_impact: bool                   # Does impact cross bounded context boundaries?
-    dependent_service_count: int                  # How many services depend on affected services
-    assessment_summary: str = ""                  # Human-readable summary
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    direct_dependencies: list[str] = []
+    reverse_dependencies: list[str] = []
+    blast_radius: int
+    cascade_risk: CascadeRisk
+    critical_path_affected: bool
+    cross_boundary_impact: bool
+    dependent_service_count: int
+    assessment_summary: str
 ```
 
-### 4.16 ResourceAssessment
+### 5.16 ResourceAssessment
 
-CPU, memory, disk, and network availability.
+Resource availability analysis.
 
 ```python
 class ResourceAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    cpu_available_percent: float                  # Current CPU availability
-    memory_available_mb: float                    # Current memory availability
-    disk_available_gb: float                      # Current disk availability
-    network_impact: str                           # "low", "medium", "high"
-    resource_sufficient: bool                     # Are resources sufficient for this repair?
-    estimated_downtime_seconds: int               # Estimated downtime for this repair
-    resource_conflicts: list[str] = []            # Specific resource conflicts
-    assessment_summary: str = ""                  # Human-readable summary
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    cpu_available_percent: float
+    memory_available_mb: float
+    disk_available_gb: float
+    network_impact: str                           # "none", "low", "medium", "high"
+    resource_sufficient: bool
+    estimated_downtime_seconds: int
+    resource_conflicts: list[str] = []
+    assessment_summary: str
 ```
 
-### 4.17 SecurityAssessment
+### 5.17 SecurityAssessment
 
-Permissions, authentication, and audit requirements.
+Security and permission analysis.
 
 ```python
 class SecurityAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    auth_valid: bool                              # Is the auth token valid?
-    permissions_sufficient: bool                  # Does the actor have required permissions?
-    elevated_permissions_required: bool           # Does this action need elevated permissions?
-    audit_trail_complete: bool                    # Is the audit trail complete?
-    security_violations: list[str] = []           # Specific security violations found
-    required_roles: list[str] = []                # Roles required for this action
-    assessment_summary: str = ""                  # Human-readable summary
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    auth_valid: bool
+    permissions_sufficient: bool
+    elevated_permissions_required: bool
+    audit_trail_complete: bool
+    security_violations: list[str] = []
+    required_roles: list[str] = []
+    assessment_summary: str
 ```
 
-### 4.18 CostAssessment
+### 5.18 CostAssessment
 
-Operational cost, human effort, and budget compliance.
+Cost impact analysis.
 
 ```python
 class CostAssessment(BaseModel):
     model_config = ConfigDict(frozen=True, use_enum_values=True)
 
-    estimated_cost_usd: float                     # Estimated operational cost
-    human_effort_hours: float                     # Estimated human effort required
-    budget_remaining_usd: float                   # Remaining budget for this period
-    budget_compliant: bool                        # Is this within budget?
-    cost_breakdown: dict[str, float] = {}         # Itemized cost breakdown
-    cost_approval_required: bool                  # Does this exceed budget threshold?
-    assessment_summary: str = ""                  # Human-readable summary
+    estimated_cost_usd: float
+    human_effort_hours: float
+    budget_remaining_usd: float
+    budget_compliant: bool
+    cost_breakdown: dict[str, float] = {}
+    cost_approval_required: bool
+    assessment_summary: str
+```
+
+### 5.19 ValidationExplanation
+
+Comprehensive explanation of validation results.
+
+```python
+class ValidationExplanation(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    explanation_id: str
+    result_id: str
+    summary: str                                 # High-level summary
+    detailed_reasons: list[str]                  # Detailed reasoning
+    failed_rules_explanation: str                # Why rules failed
+    warning_rules_explanation: str               # Why rules warned
+    confidence_explanation: str                  # Confidence reasoning
+    dependency_explanation: str                  # Dependency impact explanation
+    rollback_explanation: str                    # Rollback feasibility explanation
+    suggested_fixes: list[str]                   # Remediation steps
+    strategy_recommendation: str | None          # Recommended strategy
+    evidence_summary: str                        # Evidence summary
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### 5.20 ValidationSignature
+
+Digital signature for approved plans.
+
+```python
+class ValidationSignature(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    signature_id: str
+    result_id: str
+    plan_id: str
+    signature_hash: str                          # SHA-256 of plan + decision + timestamp
+    signed_at: datetime
+    signed_by: str                               # "system" for auto, user ID for human
+    approval_metadata: dict[str, Any] = {}       # Approval context
+    verification_method: str = "sha256"          # Hash algorithm used
+    expires_at: datetime | None = None           # Signature expiry
+```
+
+### 5.21 ValidationHistoryRecord
+
+Historical validation record for learning.
+
+```python
+class ValidationHistoryRecord(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    record_id: str
+    request_id: str
+    result_id: str
+    plan_id: str
+    incident_id: str | None
+    decision: str
+    risk_score: int
+    confidence_score: float
+    validation_duration_ms: float
+    environment: str
+    plan_type: str
+    rules_triggered: list[str] = []              # Rule codes that fired
+    was_executed: bool = False                   # Was the plan executed?
+    execution_succeeded: bool | None = None      # Did execution succeed?
+    is_false_positive: bool = False              # Approved but failed execution
+    is_false_negative: bool = False              # Rejected but would have succeeded
+    recorded_at: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### 5.22 ValidationStatistics
+
+Aggregated validation statistics.
+
+```python
+class ValidationStatistics(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    stat_id: str
+    period_start: datetime
+    period_end: datetime
+    total_validations: int
+    approved_count: int
+    rejected_count: int
+    pending_count: int
+    conditional_count: int
+    average_duration_ms: float
+    p95_duration_ms: float
+    p99_duration_ms: float
+    approval_rate: float                         # approved / total
+    false_positive_rate: float                   # false positives / approved
+    false_negative_rate: float                   # false negatives / rejected
+    top_failing_rules: list[dict[str, Any]] = [] # Most common failures
+    computed_at: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### 5.23 ValidationTrend
+
+Historical trend data.
+
+```python
+class ValidationTrend(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    trend_id: str
+    trend_type: str                              # "risk", "confidence", "failure", "approval", "latency"
+    period: str                                  # "7d", "30d", "90d"
+    data_points: list[dict[str, Any]] = []       # Time series data
+    moving_average: float = 0.0
+    trend_direction: str = "stable"              # "improving", "stable", "degrading"
+    computed_at: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### 5.24 ValidationCacheEntry
+
+Cache entry for validation results.
+
+```python
+class ValidationCacheEntry(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    cache_key: str                               # SHA-256 hash
+    result_id: str
+    plan_id: str
+    environment: str
+    decision: str
+    created_at: datetime
+    expires_at: datetime
+    hit_count: int = 0
+```
+
+### 5.25 PolicyPack
+
+Collection of policies for a specific context.
+
+```python
+class PolicyPack(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    pack_id: str
+    name: str                                    # e.g., "production", "development"
+    description: str
+    pack_type: PolicyPackType
+    enabled: bool = True
+    policy_ids: list[str] = []                   # Policies in this pack
+    priority: int = 0                            # Higher = evaluated first
+    applicable_environments: list[str] = []
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+```
+
+### 5.26 ValidatorPlugin
+
+Plugin metadata for extensible validation.
+
+```python
+class ValidatorPlugin(BaseModel):
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    plugin_id: str
+    name: str
+    description: str
+    version: str
+    plugin_type: PluginType                       # INFRASTRUCTURE, CLOUD, FINANCIAL, etc.
+    enabled: bool = True
+    provides_rules: list[str] = []               # Rule codes this plugin provides
+    provides_analyzers: list[str] = []           # Analyzer names this plugin provides
+    dependencies: list[str] = []                 # Other plugin dependencies
+    loaded_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 ```
 
 ---
 
-## 5. Value Objects
+## 6. Value Objects
 
-Value objects are immutable, equality-by-value types. They encapsulate domain concepts with built-in validation.
-
-### 5.1 ConfidenceScore
+### 6.1 ConfidenceScore
 
 ```python
 class ConfidenceScore(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    value: float                                  # 0.0 to 1.0
-
-    @field_validator("value")
-    @classmethod
-    def validate_range(cls, v: float) -> float:
-        if not 0.0 <= v <= 1.0:
-            raise ValueError(f"ConfidenceScore must be between 0.0 and 1.0, got {v}")
-        return v
+    value: float                                  # 0.0-1.0
 
     @property
     def is_low(self) -> bool:
@@ -739,20 +1178,13 @@ class ConfidenceScore(BaseModel):
         return self.value >= 0.7
 ```
 
-### 5.2 RiskScore
+### 6.2 RiskScore
 
 ```python
 class RiskScore(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    value: int                                    # 0 to 100
-
-    @field_validator("value")
-    @classmethod
-    def validate_range(cls, v: int) -> int:
-        if not 0 <= v <= 100:
-            raise ValueError(f"RiskScore must be between 0 and 100, got {v}")
-        return v
+    value: int                                    # 0-100
 
     @property
     def is_low(self) -> bool:
@@ -764,14 +1196,14 @@ class RiskScore(BaseModel):
 
     @property
     def is_high(self) -> bool:
-        return 70 <= self.value < 95
+        return 70 <= self.value < 90
 
     @property
     def is_catastrophic(self) -> bool:
-        return self.value >= 95
+        return self.value >= 90
 ```
 
-### 5.3 TimeRange
+### 6.3 TimeRange
 
 ```python
 class TimeRange(BaseModel):
@@ -779,14 +1211,6 @@ class TimeRange(BaseModel):
 
     start: datetime
     end: datetime
-
-    @field_validator("end")
-    @classmethod
-    def validate_after_start(cls, v: datetime, info) -> datetime:
-        start = info.data.get("start")
-        if start and v <= start:
-            raise ValueError("end must be after start")
-        return v
 
     @property
     def duration_seconds(self) -> float:
@@ -796,7 +1220,7 @@ class TimeRange(BaseModel):
         return self.start <= dt <= self.end
 ```
 
-### 5.4 ThresholdRange
+### 6.4 ThresholdRange
 
 ```python
 class ThresholdRange(BaseModel):
@@ -805,106 +1229,97 @@ class ThresholdRange(BaseModel):
     min_value: float
     max_value: float
 
-    @field_validator("max_value")
-    @classmethod
-    def validate_max_gte_min(cls, v: float, info) -> float:
-        min_val = info.data.get("min_value")
-        if min_val is not None and v < min_val:
-            raise ValueError(f"max_value ({v}) must be >= min_value ({min_val})")
-        return v
-
     def contains(self, value: float) -> bool:
         return self.min_value <= value <= self.max_value
 ```
 
-### 5.5 ComponentDescriptor
+### 6.5 ComponentDescriptor
 
 ```python
 class ComponentDescriptor(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    name: str                                     # Component name (e.g., "api-gateway")
-    component_type: str                           # "service", "database", "cache", "queue"
-    environment: str                              # "development", "staging", "production"
-    version: str | None = None                    # Current version
-    health_status: str = "unknown"                # "healthy", "degraded", "unhealthy"
+    name: str
+    component_type: str                          # "service", "database", "cache", etc.
+    environment: str
+    version: str | None = None
+    health_status: str | None = None
     metadata: dict[str, Any] = {}
 ```
 
-### 5.6 EnvironmentDescriptor
+### 6.6 EnvironmentDescriptor
 
 ```python
 class EnvironmentDescriptor(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    name: str                                     # "development", "staging", "production"
-    is_production: bool                           # Convenience flag
-    allowed_actions: list[str] = []               # Actions allowed in this environment
-    restricted_actions: list[str] = []            # Actions restricted in this environment
-    required_approvals: list[str] = []            # Approvals required in this environment
+    name: str
+    is_production: bool
+    allowed_actions: list[str] = []
+    restricted_actions: list[str] = []
+    required_approvals: list[str] = []
     maintenance_window: MaintenanceWindow | None = None
 ```
 
-### 5.7 VersionConstraint
+### 6.7 VersionConstraint
 
 ```python
 class VersionConstraint(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    component: str                                # Component name
-    constraint: str                               # Semver constraint (e.g., ">=1.0.0,<2.0.0")
-    current_version: str | None = None            # Currently deployed version
-    required_version: str | None = None           # Required version for this plan
+    component: str
+    constraint: str                              # e.g., ">=1.0.0,<2.0.0"
+    current_version: str
+    required_version: str | None = None
 
     def is_satisfied_by(self, version: str) -> bool:
-        # Semver constraint checking logic
+        # Version comparison logic
         ...
 ```
 
-### 5.8 ResourceQuota
+### 6.8 ResourceQuota
 
 ```python
 class ResourceQuota(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    cpu_percent: ThresholdRange                   # CPU availability threshold
-    memory_mb: ThresholdRange                     # Memory availability threshold (MB)
-    disk_gb: ThresholdRange                       # Disk availability threshold (GB)
-    network_impact: str                           # "low", "medium", "high" max allowed
+    cpu_percent: ThresholdRange
+    memory_mb: float
+    disk_gb: float
+    network_impact: str                          # "none", "low", "medium", "high"
 
     @classmethod
-    def production_defaults(cls) -> ResourceQuota:
+    def production_defaults(cls) -> "ResourceQuota":
         return cls(
-            cpu_percent=ThresholdRange(min_value=20.0, max_value=100.0),
-            memory_mb=ThresholdRange(min_value=512.0, max_value=100000.0),
-            disk_gb=ThresholdRange(min_value=1.0, max_value=10000.0),
-            network_impact="medium",
+            cpu_percent=ThresholdRange(min_value=0, max_value=80),
+            memory_mb=512,
+            disk_gb=1,
+            network_impact="low",
         )
 ```
 
-### 5.9 MaintenanceWindow
+### 6.9 MaintenanceWindow
 
 ```python
 class MaintenanceWindow(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    name: str                                     # e.g., "Weekly Maintenance"
-    schedule: str                                 # Cron expression or "always", "never"
-    timezone: str = "UTC"
-    allowed_actions: list[str] = []               # Actions allowed during window
-    blocked_actions: list[str] = []               # Actions blocked outside window
-    is_active: bool = False                       # Is the window currently active?
+    name: str
+    schedule: str                               # Cron expression
+    timezone: str
+    allowed_actions: list[str] = []
+    blocked_actions: list[str] = []
 
-    def is_now_in_window(self, dt: datetime | None = None) -> bool:
-        # Check if current time (or provided time) is within window
+    def is_now_in_window(self) -> bool:
+        # Check if current time is within window
         ...
 ```
 
 ---
 
-## 6. Enums
+## 7. Enums
 
-All enums use `StrEnum` for JSON serialization compatibility with `use_enum_values=True`.
+All enums use `StrEnum` for JSON serialization compatibility.
 
 ```python
 from enum import StrEnum
@@ -923,7 +1338,12 @@ class ValidationDecisionEnum(StrEnum):
     REJECTED = "rejected"
     CONDITIONAL = "conditional"
     PENDING_APPROVAL = "pending_approval"
+    NEEDS_REVIEW = "needs_review"
+    DEFERRED = "deferred"
+    TIMED_OUT = "timed_out"
+    ESCALATED = "escalated"
     EXPIRED = "expired"
+    CANCELLED = "cancelled"
 
 
 class ValidationSeverity(StrEnum):
@@ -956,8 +1376,12 @@ class ApprovalStatus(StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+    NEEDS_REVIEW = "needs_review"
+    DEFERRED = "deferred"
+    TIMED_OUT = "timed_out"
     ESCALATED = "escalated"
     EXPIRED = "expired"
+    CANCELLED = "cancelled"
 
 
 class ExecutionPermissionStatus(StrEnum):
@@ -1002,21 +1426,44 @@ class BlockerType(StrEnum):
     SAFETY = "safety"
     RESOURCE = "resource"
     SECURITY = "security"
+
+
+class PolicyPackType(StrEnum):
+    PRODUCTION = "production"
+    DEVELOPMENT = "development"
+    TESTING = "testing"
+    INFRASTRUCTURE = "infrastructure"
+    FINANCIAL = "financial"
+    PERSONAL_ASSISTANT = "personal_assistant"
+    EXPERIMENTAL = "experimental"
+    CUSTOM = "custom"
+
+
+class PluginType(StrEnum):
+    INFRASTRUCTURE = "infrastructure"
+    CLOUD = "cloud"
+    DATABASE = "database"
+    FINANCIAL = "financial"
+    CALENDAR = "calendar"
+    COMMUNICATION = "communication"
+    CUSTOM = "custom"
+
+
+class TrendType(StrEnum):
+    RISK = "risk"
+    CONFIDENCE = "confidence"
+    FAILURE = "failure"
+    APPROVAL = "approval"
+    LATENCY = "latency"
 ```
 
 ---
 
-## 7. Repositories
+## 8. Repositories
 
-Repository interfaces are defined as `Protocol` classes in `application/ports/repositories.py`. Implementations live in `infrastructure/persistence/repositories/`.
+Repository interfaces are defined as `Protocol` classes.
 
-All repositories follow the existing codebase convention:
-- Async methods
-- `flush()` after writes (never `commit()` — callers commit)
-- Return domain models, not ORM models
-- Use dependency injection via `__init__`
-
-### 7.1 ValidationRepository
+### 8.1 ValidationRepository
 
 ```python
 class ValidationRepository(Protocol):
@@ -1043,7 +1490,7 @@ class ValidationRepository(Protocol):
     ) -> list[ApprovalDecision]: ...
 ```
 
-### 7.2 RuleRepository
+### 8.2 RuleRepository
 
 ```python
 class RuleRepository(Protocol):
@@ -1054,7 +1501,7 @@ class RuleRepository(Protocol):
     async def save_rule(self, rule: ValidationRule) -> None: ...
 ```
 
-### 7.3 PolicyRepository
+### 8.3 PolicyRepository
 
 ```python
 class PolicyRepository(Protocol):
@@ -1065,7 +1512,7 @@ class PolicyRepository(Protocol):
     async def save_policy(self, policy: ValidationPolicy) -> None: ...
 ```
 
-### 7.4 EvidenceRepository
+### 8.4 EvidenceRepository
 
 ```python
 class EvidenceRepository(Protocol):
@@ -1074,7 +1521,7 @@ class EvidenceRepository(Protocol):
     async def get_evidence_by_result(self, result_id: str) -> list[ValidationEvidence]: ...
 ```
 
-### 7.5 AuditRepository
+### 8.5 AuditRepository
 
 ```python
 class AuditRepository(Protocol):
@@ -1091,15 +1538,71 @@ class AuditRepository(Protocol):
     ) -> list[AuditLogEntry]: ...
 ```
 
+### 8.6 ValidationHistoryRepository
+
+```python
+class ValidationHistoryRepository(Protocol):
+    async def save_history(self, record: ValidationHistoryRecord) -> None: ...
+    async def get_history_by_plan(self, plan_id: str) -> list[ValidationHistoryRecord]: ...
+    async def get_history_by_incident(self, incident_id: str) -> list[ValidationHistoryRecord]: ...
+    async def get_statistics(
+        self,
+        *,
+        period_start: datetime,
+        period_end: datetime,
+        environment: str | None = None,
+    ) -> ValidationStatistics: ...
+    async def get_false_positives(self, limit: int = 100) -> list[ValidationHistoryRecord]: ...
+    async def get_false_negatives(self, limit: int = 100) -> list[ValidationHistoryRecord]: ...
+    async def get_recurring_failures(
+        self,
+        *,
+        rule_code: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]: ...
+```
+
+### 8.7 SignatureRepository
+
+```python
+class SignatureRepository(Protocol):
+    async def save_signature(self, signature: ValidationSignature) -> None: ...
+    async def get_signature_by_plan(self, plan_id: str) -> ValidationSignature | None: ...
+    async def get_signature_by_result(self, result_id: str) -> ValidationSignature | None: ...
+    async def verify_signature(self, plan_id: str, plan_hash: str) -> bool: ...
+```
+
+### 8.8 PolicyPackRepository
+
+```python
+class PolicyPackRepository(Protocol):
+    async def get_all_packs(self) -> list[PolicyPack]: ...
+    async def get_pack_by_id(self, pack_id: str) -> PolicyPack | None: ...
+    async def get_packs_by_type(self, pack_type: PolicyPackType) -> list[PolicyPack]: ...
+    async def get_active_packs(self) -> list[PolicyPack]: ...
+    async def save_pack(self, pack: PolicyPack) -> None: ...
+```
+
+### 8.9 PluginRepository
+
+```python
+class PluginRepository(Protocol):
+    async def get_all_plugins(self) -> list[ValidatorPlugin]: ...
+    async def get_plugin_by_id(self, plugin_id: str) -> ValidatorPlugin | None: ...
+    async def get_enabled_plugins(self) -> list[ValidatorPlugin]: ...
+    async def save_plugin(self, plugin: ValidatorPlugin) -> None: ...
+    async def disable_plugin(self, plugin_id: str) -> None: ...
+```
+
 ---
 
-## 8. Services
+## 9. Services
 
-### 8.1 Service Overview
+### 9.1 Service Overview
 
 | Service | Location | Responsibility |
 |---------|----------|---------------|
-| ValidationService | `application/services/validation_service.py` | Orchestrator. 12-stage pipeline. |
+| ValidationService | `application/services/validation_service.py` | Orchestrator. Pipeline execution. |
 | RuleEngine | `application/services/rule_engine.py` | Evaluates rules, produces blockers/warnings. |
 | PolicyEngine | `application/services/policy_engine.py` | Evaluates policies, enforces hard/soft. |
 | ApprovalEngine | `application/services/approval_engine.py` | Determines approval level, manages workflow. |
@@ -1110,12 +1613,18 @@ class AuditRepository(Protocol):
 | SimulationVerifier | `application/services/simulation_verifier.py` | Validates simulation results. |
 | EnvironmentAnalyzer | `application/services/environment_analyzer.py` | Environment-specific constraints. |
 | ResourceAnalyzer | `application/services/resource_analyzer.py` | CPU, memory, disk, network checks. |
-| DecisionEngine | `application/services/decision_engine.py` | Aggregates all assessments, makes final decision. |
+| DecisionEngine | `application/services/decision_engine.py` | Aggregates assessments, makes final decision. |
 | SummaryGenerator | `application/services/summary_generator.py` | Human-readable validation summary. |
+| ExplainabilityService | `application/services/explainability_service.py` | Generates detailed explanations. |
+| ValidationHistoryService | `application/services/history_service.py` | Stores and queries validation history. |
+| TrendAnalysisService | `application/services/trend_service.py` | Computes validation trends. |
+| ValidationCacheService | `application/services/cache_service.py` | Caches validation results. |
+| PluginManager | `infrastructure/plugins/plugin_manager.py` | Discovers and loads plugins. |
+| PolicyPackLoader | `application/services/policy_pack_loader.py` | Loads and selects policy packs. |
 
-### 8.2 ValidationService
+### 9.2 ValidationService
 
-The orchestrator. Receives a `ValidationRequest`, runs it through the 12-stage pipeline, and produces a `ValidationDecision`.
+The orchestrator. Receives a request, runs the pipeline, produces a decision.
 
 ```python
 class ValidationService:
@@ -1134,6 +1643,9 @@ class ValidationService:
         resource_analyzer: ResourceAnalyzer,
         decision_engine: DecisionEngine,
         summary_generator: SummaryGenerator,
+        explainability_service: ExplainabilityService,
+        history_service: ValidationHistoryService,
+        cache_service: ValidationCacheService,
         validation_repository: ValidationRepository,
         evidence_repository: EvidenceRepository,
         audit_repository: AuditRepository,
@@ -1141,8 +1653,22 @@ class ValidationService:
     ) -> None: ...
 
     async def validate(self, request: ValidationRequest) -> ValidationDecision:
-        """Run the 12-stage validation pipeline."""
-        ...
+        """Run the validation pipeline with caching."""
+        # Check cache first
+        cached = await self._cache_service.get(request)
+        if cached:
+            return cached
+
+        # Run pipeline
+        decision = await self._run_pipeline(request)
+
+        # Store in cache
+        await self._cache_service.put(request, decision)
+
+        # Store history
+        await self._history_service.record(request, decision)
+
+        return decision
 
     async def approve(
         self,
@@ -1160,9 +1686,7 @@ class ValidationService:
     ) -> ApprovalDecision: ...
 ```
 
-### 8.3 RuleEngine
-
-Evaluates all applicable rules against a plan. Produces blockers and warnings.
+### 9.3 RuleEngine
 
 ```python
 class RuleEngine:
@@ -1171,6 +1695,7 @@ class RuleEngine:
         *,
         rule_repository: RuleRepository,
         cache: RulePolicyCache,
+        plugin_manager: PluginManager,
     ) -> None: ...
 
     async def evaluate(
@@ -1178,13 +1703,11 @@ class RuleEngine:
         request: ValidationRequest,
         assessments: dict[str, Any],
     ) -> tuple[list[ValidationFailure], list[ValidationWarning]]:
-        """Evaluate all enabled rules. Returns (failures, warnings)."""
+        """Evaluate all enabled rules including plugin rules."""
         ...
 ```
 
-### 8.4 PolicyEngine
-
-Evaluates all applicable policies. Enforces hard (block) and soft (warn) policies.
+### 9.4 PolicyEngine
 
 ```python
 class PolicyEngine:
@@ -1192,6 +1715,7 @@ class PolicyEngine:
         self,
         *,
         policy_repository: PolicyRepository,
+        policy_pack_loader: PolicyPackLoader,
         cache: RulePolicyCache,
     ) -> None: ...
 
@@ -1200,13 +1724,11 @@ class PolicyEngine:
         request: ValidationRequest,
         assessments: dict[str, Any],
     ) -> tuple[list[ValidationFailure], list[ValidationWarning]]:
-        """Evaluate all active policies. Returns (failures, warnings)."""
+        """Evaluate all active policies from selected policy pack."""
         ...
 ```
 
-### 8.5 ApprovalEngine
-
-Determines the required approval level based on risk, environment, and severity. Manages the approval workflow.
+### 9.5 ApprovalEngine
 
 ```python
 class ApprovalEngine:
@@ -1221,31 +1743,221 @@ class ApprovalEngine:
         risk_score: RiskScore,
         environment: str,
         severity: str,
-        is_production: bool,
-    ) -> ApprovalLevel:
-        """Determine the required approval level."""
-        ...
+        confidence: ConfidenceScore,
+        rollback_available: bool,
+    ) -> ApprovalLevel: ...
 
     async def check_approval_status(
         self,
         request_id: str,
         required_level: ApprovalLevel,
-    ) -> ApprovalDecision | None:
-        """Check if required approval exists and is valid."""
-        ...
+    ) -> ApprovalDecision | None: ...
 
     async def escalate(
         self,
         current_level: ApprovalLevel,
         request_id: str,
-    ) -> ApprovalLevel:
-        """Escalate to next approval level."""
+    ) -> ApprovalLevel: ...
+```
+
+### 9.6 ExplainabilityService
+
+Generates detailed explanations for validation decisions.
+
+```python
+class ExplainabilityService:
+    async def generate_explanation(
+        self,
+        request: ValidationRequest,
+        assessments: dict[str, Any],
+        failures: list[ValidationFailure],
+        warnings: list[ValidationWarning],
+        decision: ValidationDecision,
+    ) -> ValidationExplanation:
+        """Generate comprehensive explanation for the validation result."""
+        ...
+
+    async def explain_rule_failure(
+        self,
+        failure: ValidationFailure,
+        context: dict[str, Any],
+    ) -> str:
+        """Explain why a specific rule failed."""
+        ...
+
+    async def explain_decision(
+        self,
+        decision: ValidationDecision,
+        assessments: dict[str, Any],
+    ) -> str:
+        """Explain the overall decision rationale."""
         ...
 ```
 
-### 8.6 DependencyAnalyzer
+### 9.7 ValidationHistoryService
 
-Graph traversal and blast radius calculation.
+Stores and queries validation history for learning.
+
+```python
+class ValidationHistoryService:
+    def __init__(
+        self,
+        *,
+        history_repository: ValidationHistoryRepository,
+    ) -> None: ...
+
+    async def record(
+        self,
+        request: ValidationRequest,
+        decision: ValidationDecision,
+    ) -> None:
+        """Record a validation result for history."""
+        ...
+
+    async def record_execution_outcome(
+        self,
+        plan_id: str,
+        succeeded: bool,
+    ) -> None:
+        """Record whether an executed plan succeeded or failed."""
+        ...
+
+    async def get_statistics(
+        self,
+        *,
+        period_start: datetime,
+        period_end: datetime,
+        environment: str | None = None,
+    ) -> ValidationStatistics:
+        """Get aggregated validation statistics."""
+        ...
+
+    async def get_false_positives(self, limit: int = 100) -> list[ValidationHistoryRecord]:
+        """Get approved plans that failed execution."""
+        ...
+
+    async def get_false_negatives(self, limit: int = 100) -> list[ValidationHistoryRecord]:
+        """Get rejected plans that would have succeeded."""
+        ...
+
+    async def get_recurring_failures(
+        self,
+        *,
+        rule_code: str | None = None,
+        limit: int = 100,
+    ) -> list[dict[str, Any]]:
+        """Get rules that fail repeatedly."""
+        ...
+
+    async def predict_outcome(
+        self,
+        request: ValidationRequest,
+    ) -> dict[str, Any]:
+        """Predict validation outcome based on historical patterns."""
+        ...
+```
+
+### 9.8 TrendAnalysisService
+
+Computes historical validation trends.
+
+```python
+class TrendAnalysisService:
+    def __init__(
+        self,
+        *,
+        history_repository: ValidationHistoryRepository,
+    ) -> None: ...
+
+    async def compute_risk_trend(
+        self,
+        *,
+        period: str = "7d",
+        environment: str | None = None,
+    ) -> ValidationTrend: ...
+
+    async def compute_confidence_trend(
+        self,
+        *,
+        period: str = "7d",
+        environment: str | None = None,
+    ) -> ValidationTrend: ...
+
+    async def compute_failure_trend(
+        self,
+        *,
+        period: str = "7d",
+        environment: str | None = None,
+    ) -> ValidationTrend: ...
+
+    async def compute_approval_trend(
+        self,
+        *,
+        period: str = "7d",
+        environment: str | None = None,
+    ) -> ValidationTrend: ...
+
+    async def compute_latency_trend(
+        self,
+        *,
+        period: str = "7d",
+        environment: str | None = None,
+    ) -> ValidationTrend: ...
+```
+
+### 9.9 ValidationCacheService
+
+Caches validation results for identical plans.
+
+```python
+class ValidationCacheService:
+    def __init__(
+        self,
+        *,
+        cache_backend: ValidationCacheBackend,
+        ttl_seconds: int = 300,
+        max_entries: int = 10000,
+    ) -> None: ...
+
+    def _compute_cache_key(
+        self,
+        request: ValidationRequest,
+        rules_version: str,
+        policies_version: str,
+    ) -> str:
+        """Compute SHA-256 cache key from plan + environment + versions."""
+        ...
+
+    async def get(
+        self,
+        request: ValidationRequest,
+    ) -> ValidationDecision | None:
+        """Get cached validation result if available."""
+        ...
+
+    async def put(
+        self,
+        request: ValidationRequest,
+        decision: ValidationDecision,
+    ) -> None:
+        """Store validation result in cache."""
+        ...
+
+    async def invalidate(
+        self,
+        *,
+        plan_id: str | None = None,
+        environment: str | None = None,
+    ) -> int:
+        """Invalidate cache entries. Returns count of invalidated entries."""
+        ...
+
+    async def clear(self) -> None:
+        """Clear all cache entries."""
+        ...
+```
+
+### 9.10 DependencyAnalyzer
 
 ```python
 class DependencyAnalyzer:
@@ -1258,9 +1970,7 @@ class DependencyAnalyzer:
     async def analyze(
         self,
         request: ValidationRequest,
-    ) -> DependencyAssessment:
-        """Analyze dependency impact of the plan."""
-        ...
+    ) -> DependencyAssessment: ...
 
     def _calculate_blast_radius(
         self,
@@ -1276,299 +1986,256 @@ class DependencyAnalyzer:
     ) -> CascadeRisk: ...
 ```
 
-### 8.7 CompatibilityAnalyzer
-
-Configuration, environment, and version compatibility checks.
+### 9.11 CompatibilityAnalyzer
 
 ```python
 class CompatibilityAnalyzer:
     async def analyze(
         self,
         request: ValidationRequest,
-    ) -> CompatibilityAssessment:
-        """Check config, environment, and version compatibility."""
-        ...
+    ) -> CompatibilityAssessment: ...
 
     async def check_config_compatibility(
         self,
         plan: dict[str, Any],
         environment: str,
-    ) -> list[str]: ...
-
-    async def check_environment_compatibility(
-        self,
-        plan: dict[str, Any],
-        environment: str,
-    ) -> list[str]: ...
+    ) -> tuple[bool, list[str]]: ...
 
     async def check_version_compatibility(
         self,
         plan: dict[str, Any],
-    ) -> list[str]: ...
+    ) -> tuple[bool, list[str]]: ...
 ```
 
-### 8.8 RollbackAnalyzer
-
-Rollback feasibility assessment.
+### 9.12 RollbackAnalyzer
 
 ```python
 class RollbackAnalyzer:
     async def analyze(
         self,
         request: ValidationRequest,
-    ) -> RollbackAssessment:
-        """Assess rollback feasibility."""
-        ...
-
-    def _calculate_success_rate(
-        self,
-        component: str,
-        action_type: str,
-    ) -> float: ...
-
-    def _assess_complexity(
-        self,
-        has_data_migration: bool,
-        has_config_change: bool,
-        has_service_restart: bool,
-    ) -> RollbackComplexity: ...
+    ) -> RollbackAssessment: ...
 ```
 
-### 8.9 SecurityAnalyzer
-
-Permission, auth, and audit checks.
+### 9.13 SecurityAnalyzer
 
 ```python
 class SecurityAnalyzer:
     async def analyze(
         self,
         request: ValidationRequest,
-    ) -> SecurityAssessment:
-        """Check security constraints."""
-        ...
-
-    async def check_permissions(
-        self,
-        actor: str,
-        required_roles: list[str],
-    ) -> bool: ...
-
-    async def check_audit_trail(
-        self,
-        plan_id: str,
-    ) -> bool: ...
+    ) -> SecurityAssessment: ...
 ```
 
-### 8.10 SimulationVerifier
-
-Validates simulation results.
+### 9.14 SimulationVerifier
 
 ```python
 class SimulationVerifier:
     async def verify(
         self,
         request: ValidationRequest,
-    ) -> SimulationAssessment:
-        """Verify simulation results if available."""
-        ...
-
-    def _check_preconditions(
-        self,
-        simulation_result: dict[str, Any],
-    ) -> bool: ...
-
-    def _check_postconditions(
-        self,
-        simulation_result: dict[str, Any],
-    ) -> bool: ...
+    ) -> SimulationAssessment: ...
 ```
 
-### 8.11 EnvironmentAnalyzer
-
-Environment-specific constraints.
+### 9.15 EnvironmentAnalyzer
 
 ```python
 class EnvironmentAnalyzer:
     async def analyze(
         self,
         request: ValidationRequest,
-    ) -> dict[str, Any]:
-        """Analyze environment-specific constraints."""
-        ...
-
-    async def is_maintenance_window(
-        self,
-        environment: str,
-    ) -> bool: ...
-
-    async def get_environment_policy(
-        self,
-        environment: str,
-    ) -> EnvironmentDescriptor: ...
+    ) -> SafetyAssessment: ...
 ```
 
-### 8.12 ResourceAnalyzer
-
-CPU, memory, disk, and network checks.
+### 9.16 ResourceAnalyzer
 
 ```python
 class ResourceAnalyzer:
     async def analyze(
         self,
         request: ValidationRequest,
-    ) -> ResourceAssessment:
-        """Check resource availability."""
-        ...
-
-    async def get_current_resources(self) -> dict[str, float]:
-        """Get current resource utilization."""
-        ...
-
-    def _estimate_downtime(
-        self,
-        plan: dict[str, Any],
-    ) -> int: ...
+    ) -> ResourceAssessment: ...
 ```
 
-### 8.13 DecisionEngine
-
-Aggregates all assessments and makes the final decision.
+### 9.17 DecisionEngine
 
 ```python
 class DecisionEngine:
-    def decide(
+    async def decide(
         self,
         request: ValidationRequest,
-        safety: SafetyAssessment,
-        dependency: DependencyAssessment,
-        compatibility: CompatibilityAssessment,
-        rollback: RollbackAssessment,
-        simulation: SimulationAssessment,
-        resource: ResourceAssessment,
-        security: SecurityAssessment,
-        cost: CostAssessment,
+        assessments: dict[str, Any],
         failures: list[ValidationFailure],
         warnings: list[ValidationWarning],
-        approval_level: ApprovalLevel,
-    ) -> ValidationDecision:
-        """Make the final validation decision."""
-        ...
-
-    def _has_blockers(self, failures: list[ValidationFailure]) -> bool:
-        return len(failures) > 0
-
-    def _needs_approval(self, level: ApprovalLevel) -> bool:
-        return level != ApprovalLevel.AUTO
+    ) -> ValidationDecision: ...
 ```
 
-### 8.14 SummaryGenerator
-
-Human-readable validation summary.
+### 9.18 SummaryGenerator
 
 ```python
 class SummaryGenerator:
-    def generate(
+    async def generate(
         self,
         request: ValidationRequest,
-        decision: ValidationDecision,
-        safety: SafetyAssessment,
-        dependency: DependencyAssessment,
-        compatibility: CompatibilityAssessment,
-        rollback: RollbackAssessment,
-        simulation: SimulationAssessment,
-        resource: ResourceAssessment,
-        security: SecurityAssessment,
-        cost: CostAssessment,
+        assessments: dict[str, Any],
         failures: list[ValidationFailure],
         warnings: list[ValidationWarning],
-    ) -> str:
-        """Generate a human-readable validation summary."""
+        decision: ValidationDecision,
+    ) -> str: ...
+```
+
+### 9.19 PolicyPackLoader
+
+Loads and selects appropriate policy packs.
+
+```python
+class PolicyPackLoader:
+    def __init__(
+        self,
+        *,
+        policy_pack_repository: PolicyPackRepository,
+    ) -> None: ...
+
+    async def select_pack(
+        self,
+        request: ValidationRequest,
+    ) -> PolicyPack:
+        """Select the appropriate policy pack for this request."""
+        ...
+
+    async def load_policies(
+        self,
+        pack: PolicyPack,
+    ) -> list[ValidationPolicy]:
+        """Load all policies from a pack."""
+        ...
+```
+
+### 9.20 PluginManager
+
+Discovers, loads, and manages validator plugins.
+
+```python
+class PluginManager:
+    def __init__(
+        self,
+        *,
+        plugin_repository: PluginRepository,
+    ) -> None: ...
+
+    async def discover_plugins(self) -> list[ValidatorPlugin]:
+        """Discover available plugins."""
+        ...
+
+    async def load_plugin(
+        self,
+        plugin_id: str,
+    ) -> ValidatorPlugin:
+        """Load a specific plugin."""
+        ...
+
+    async def get_plugin_rules(
+        self,
+        plugin_id: str,
+    ) -> list[ValidationRule]:
+        """Get rules provided by a plugin."""
+        ...
+
+    async def get_plugin_analyzers(
+        self,
+        plugin_id: str,
+    ) -> list[str]:
+        """Get analyzers provided by a plugin."""
+        ...
+
+    async def reload_plugins(self) -> None:
+        """Reload all enabled plugins."""
         ...
 ```
 
 ---
 
-## 9. Validation Rules
+## 10. Validation Rules
 
-### 9.1 Safety Rules
+### 10.1 Safety Rules
 
-| Code | Name | Severity | Condition |
-|------|------|----------|-----------|
-| SAFETY_001 | Block Database Restart During Migration | BLOCKER | Plan restarts database AND active migration detected |
-| SAFETY_002 | Block Redis Restart During Cache Migration | BLOCKER | Plan restarts Redis AND cache migration in progress |
-| SAFETY_003 | Block Production Data Deletion | BLOCKER | Plan deletes data AND environment is production |
-| SAFETY_004 | Block Deploy If Tests Failed | BLOCKER | Plan deploys AND tests failed in pipeline |
-| SAFETY_005 | Block Low-Confidence Repair in Production | BLOCKER | Confidence < 0.3 AND environment is production |
-| SAFETY_006 | Block Restart Without Rollback Plan | BLOCKER | Plan restarts service AND no rollback plan available |
-| SAFETY_007 | Block Catastrophic Risk Repairs | BLOCKER | Risk score > 95 |
-| SAFETY_008 | Block Multi-Component Repairs (>5) | BLOCKER | Blast radius > 5 components |
+| Code | Name | Severity | Description |
+|------|------|----------|-------------|
+| SAFETY_001 | Block Database Restart During Migration | BLOCKER | Never restart database if active migration running |
+| SAFETY_002 | Block Redis Restart During Cache Migration | BLOCKER | Never restart Redis during active cache migration |
+| SAFETY_003 | Block Production Data Deletion | BLOCKER | Never delete production data |
+| SAFETY_004 | Block Deploy If Tests Failed | BLOCKER | Never deploy if tests failed |
+| SAFETY_005 | Block Low-Confidence Repair in Production | BLOCKER | Never execute low-confidence repair (<0.3) in production |
+| SAFETY_006 | Block Restart Without Rollback Plan | BLOCKER | Never restart service without rollback plan |
+| SAFETY_007 | Block Catastrophic Risk Repairs | BLOCKER | Block catastrophic risk (>90) repairs |
+| SAFETY_008 | Block Multi-Component Repairs | BLOCKER | Block repairs affecting more than 5 components |
 
-### 9.2 Dependency Rules
+### 10.2 Dependency Rules
 
-| Code | Name | Severity | Condition |
-|------|------|----------|-----------|
-| DEPENDENCY_001 | Block Critical Path Service Impact | BLOCKER | Critical path service affected |
-| DEPENDENCY_002 | Block Critical Cascade Risk | BLOCKER | Cascade risk is CRITICAL |
-| DEPENDENCY_003 | Require Staging Validation (>3 Components) | WARNING | >3 components affected AND no staging validation |
-| DEPENDENCY_004 | Block Cross-Boundary Impact | BLOCKER | Impact crosses bounded context boundaries |
-| DEPENDENCY_005 | Require Rollback for High-Dep Services | BLOCKER | Service has >100 dependents AND no rollback plan |
+| Code | Name | Severity | Description |
+|------|------|----------|-------------|
+| DEPENDENCY_001 | Block Critical Path Service Impact | BLOCKER | Block if critical path service affected |
+| DEPENDENCY_002 | Block Critical Cascade Risk | BLOCKER | Block if cascade risk is CRITICAL |
+| DEPENDENCY_003 | Require Staging Validation | WARNING | Require staging validation if >3 components affected |
+| DEPENDENCY_004 | Block Cross-Boundary Impact | BLOCKER | Block if cross-boundary impact detected |
+| DEPENDENCY_005 | Require Rollback for High-Dep Services | BLOCKER | Require rollback for services with >100 dependents |
 
-### 9.3 Compatibility Rules
+### 10.3 Compatibility Rules
 
-| Code | Name | Severity | Condition |
-|------|------|----------|-----------|
-| COMPAT_001 | Block Configuration Conflict | BLOCKER | Configuration conflict detected |
-| COMPAT_002 | Block Environment Mismatch | BLOCKER | Environment mismatch detected |
-| COMPAT_003 | Block Version Incompatibility | BLOCKER | Version incompatibility detected |
-| COMPAT_004 | Require Manual Review for Pre-Release | WARNING | Pre-release version in plan |
-| COMPAT_005 | Block Dependency Version Constraint Violation | BLOCKER | Dependency version constraint violated |
+| Code | Name | Severity | Description |
+|------|------|----------|-------------|
+| COMPAT_001 | Block Configuration Conflict | BLOCKER | Block if configuration conflict detected |
+| COMPAT_002 | Block Environment Mismatch | BLOCKER | Block if environment mismatch |
+| COMPAT_003 | Block Version Incompatibility | BLOCKER | Block if version incompatibility detected |
+| COMPAT_004 | Require Manual Review for Pre-Release | WARNING | Require manual review for pre-release versions |
+| COMPAT_005 | Block Dependency Version Constraint Violation | BLOCKER | Block if dependency version constraint violated |
 
-### 9.4 Resource Rules
+### 10.4 Resource Rules
 
-| Code | Name | Severity | Condition |
-|------|------|----------|-----------|
-| RESOURCE_001 | Block Low CPU Availability | BLOCKER | CPU availability < 20% |
-| RESOURCE_002 | Block Low Memory Availability | BLOCKER | Memory availability < 512MB |
-| RESOURCE_003 | Block Low Disk Space | BLOCKER | Disk space < 1GB |
-| RESOURCE_004 | Block High Network Impact During Peak | BLOCKER | Network impact is HIGH AND during peak hours |
-| RESOURCE_005 | Block Downtime Exceeding Maintenance Window | BLOCKER | Estimated downtime > maintenance window |
+| Code | Name | Severity | Description |
+|------|------|----------|-------------|
+| RESOURCE_001 | Block Low CPU | BLOCKER | Block if CPU availability <20% |
+| RESOURCE_002 | Block Low Memory | BLOCKER | Block if memory availability <512MB |
+| RESOURCE_003 | Block Low Disk | BLOCKER | Block if disk space <1GB |
+| RESOURCE_004 | Block High Network Impact | BLOCKER | Block if network impact is HIGH during peak hours |
+| RESOURCE_005 | Block Excessive Downtime | BLOCKER | Block if estimated downtime >maintenance window |
 
-### 9.5 Policy Rules
+### 10.5 Policy Rules
 
-| Code | Name | Severity | Condition |
-|------|------|----------|-----------|
-| POLICY_001 | Production Changes Require Maintainer Approval | BLOCKER | Environment is production AND no maintainer approval |
-| POLICY_002 | Critical Severity Requires Administrator Approval | BLOCKER | Severity is critical AND no admin approval |
-| POLICY_003 | Operations Outside Maintenance Window Blocked | BLOCKER | Production AND outside maintenance window |
-| POLICY_004 | Cost Impact Exceeding Budget Requires Approval | BLOCKER | Cost > budget threshold AND no approval |
-| POLICY_005 | Emergency Override Requires Emergency Role | BLOCKER | Emergency override AND actor lacks emergency role |
-| POLICY_006 | Database Changes Require DBA Approval | BLOCKER | Database component affected AND no DBA approval |
-| POLICY_007 | Redis Changes Require Cache Team Approval | BLOCKER | Redis component affected AND no cache team approval |
-| POLICY_008 | Network Changes Require Network Team Approval | BLOCKER | Network component affected AND no network team approval |
+| Code | Name | Severity | Description |
+|------|------|----------|-------------|
+| POLICY_001 | Production Changes Require Approval | BLOCKER | Production changes require maintainer approval |
+| POLICY_002 | Critical Severity Requires Admin | BLOCKER | Critical severity requires administrator approval |
+| POLICY_003 | Outside Maintenance Window | BLOCKER | Operations outside maintenance window blocked |
+| POLICY_004 | Cost Exceeds Budget | BLOCKER | Cost impact >budget threshold requires approval |
+| POLICY_005 | Emergency Override Requires Role | BLOCKER | Emergency override requires emergency role |
+| POLICY_006 | Database Changes Require DBA | BLOCKER | Database changes require DBA approval |
+| POLICY_007 | Redis Changes Require Cache Team | BLOCKER | Redis changes require cache team approval |
+| POLICY_008 | Network Changes Require Network Team | BLOCKER | Network changes require network team approval |
 
-### 9.6 Security Rules
+### 10.6 Security Rules
 
-| Code | Name | Severity | Condition |
-|------|------|----------|-----------|
-| SECURITY_001 | Block Expired Auth Token | BLOCKER | Auth token expired |
-| SECURITY_002 | Block Insufficient Role | BLOCKER | User lacks required role |
-| SECURITY_003 | Block Elevated Permission Without Authorization | BLOCKER | Action requires elevated permissions AND not authorized |
-| SECURITY_004 | Block Incomplete Audit Trail | BLOCKER | Audit trail incomplete for this action |
+| Code | Name | Severity | Description |
+|------|------|----------|-------------|
+| SECURITY_001 | Block Expired Auth Token | BLOCKER | Block if auth token expired |
+| SECURITY_002 | Block Insufficient Role | BLOCKER | Block if user lacks required role |
+| SECURITY_003 | Block Elevated Permissions | BLOCKER | Block if action requires elevated permissions |
+| SECURITY_004 | Block Incomplete Audit Trail | BLOCKER | Block if audit trail incomplete |
 
-### 9.7 Rollback Rules
+### 10.7 Rollback Rules
 
-| Code | Name | Severity | Condition |
-|------|------|----------|-----------|
-| ROLLBACK_001 | Block if Rollback Unavailable and Risk > Medium | BLOCKER | No rollback available AND risk > 50 |
-| ROLLBACK_002 | Block Impossible Rollback | BLOCKER | Rollback complexity is IMPOSSIBLE |
-| ROLLBACK_003 | Warn Low Rollback Success Rate | WARNING | Rollback success rate < 80% |
-| ROLLBACK_004 | Block Data Loss Risk During Rollback | BLOCKER | Data loss risk detected during rollback |
+| Code | Name | Severity | Description |
+|------|------|----------|-------------|
+| ROLLBACK_001 | Block No Rollback with Risk | BLOCKER | Block if rollback not available and risk >medium |
+| ROLLBACK_002 | Block Impossible Rollback | BLOCKER | Block if rollback complexity is IMPOSSIBLE |
+| ROLLBACK_003 | Warn Low Rollback Success | WARNING | Warn if rollback success rate <80% |
+| ROLLBACK_004 | Block Data Loss Risk | BLOCKER | Block if data loss risk detected during rollback |
 
 ---
 
-## 10. Approval Policy
+## 11. Approval Policy
 
-### 10.1 Approval Hierarchy
+### 11.1 Approval Hierarchy
 
 ```
 Level 6: EMERGENCY    ── Any env, emergency override with full audit
@@ -1579,7 +2246,7 @@ Level 2: DEVELOPER     ── Any env, risk < 50, confidence > 0.6
 Level 1: AUTO          ── Dev/staging only, risk < 30, confidence > 0.8, rollback available
 ```
 
-### 10.2 Approval Level Determination
+### 11.2 Approval Level Determination
 
 ```python
 def determine_approval_level(
@@ -1591,10 +2258,6 @@ def determine_approval_level(
 ) -> ApprovalLevel:
     is_production = environment == "production"
 
-    # EMERGENCY override (explicit request)
-    # Checked separately via emergency_override parameter
-
-    # AUTO: dev/staging, low risk, high confidence, rollback available
     if (
         not is_production
         and risk_score.value < 30
@@ -1603,23 +2266,19 @@ def determine_approval_level(
     ):
         return ApprovalLevel.AUTO
 
-    # DEVELOPER: any env, moderate risk, decent confidence
     if risk_score.value < 50 and confidence.value > 0.6:
         return ApprovalLevel.DEVELOPER
 
-    # MAINTAINER: production, moderate-high risk
     if is_production and risk_score.value < 70:
         return ApprovalLevel.MAINTAINER
 
-    # OPERATIONS: production, high risk, or critical severity
     if is_production and (risk_score.value < 90 or severity == "critical"):
         return ApprovalLevel.OPERATIONS
 
-    # ADMINISTRATOR: production, very high risk, or catastrophic
     return ApprovalLevel.ADMINISTRATOR
 ```
 
-### 10.3 Escalation Matrix
+### 11.3 Escalation Matrix
 
 | Current Level | Escalates To | Trigger |
 |---------------|-------------|---------|
@@ -1629,7 +2288,7 @@ def determine_approval_level(
 | OPERATIONS | ADMINISTRATOR | Risk >= 90 OR severity is catastrophic |
 | ADMINISTRATOR | EMERGENCY | System-wide incident OR emergency override |
 
-### 10.4 Timeout Rules
+### 11.4 Timeout Rules
 
 | Context | Timeout | Action on Timeout |
 |---------|---------|------------------|
@@ -1638,7 +2297,7 @@ def determine_approval_level(
 | Critical severity | 1 hour | Auto-escalate to next level |
 | Emergency override | 30 minutes | Auto-expire, full audit |
 
-### 10.5 Delegation Rules
+### 11.5 Delegation Rules
 
 - **AUTO**: No delegation needed (system-authorized)
 - **DEVELOPER**: Can be delegated to any user with `developer` role
@@ -1647,12 +2306,11 @@ def determine_approval_level(
 - **ADMINISTRATOR**: Cannot be delegated (must be explicit approval)
 - **EMERGENCY**: Cannot be delegated (must be explicit approval with audit)
 
-### 10.6 Conditional Approval
+### 11.6 Conditional Approval
 
 Conditional approvals attach conditions that must be met before execution:
 
 ```python
-# Example conditions
 conditions = [
     "monitor_cpu_during_execution",
     "rollback_plan_must_be_tested",
@@ -1661,15 +2319,46 @@ conditions = [
 ]
 ```
 
-The Execution Engine checks all conditions before executing. If any condition is unmet, execution is blocked.
+### 11.7 Approval State Transitions
+
+```
+                    ┌─────────────┐
+                    │   PENDING   │
+                    └──────┬──────┘
+                           │
+            ┌──────────────┼──────────────┐
+            │              │              │
+            ▼              ▼              ▼
+    ┌──────────┐    ┌──────────┐    ┌──────────┐
+    │ APPROVED │    │ REJECTED │    │ CANCELLED│
+    └──────────┘    └──────────┘    └──────────┘
+            │
+            ▼
+    ┌──────────────┐
+    │  CONDITIONAL │
+    └──────┬───────┘
+           │
+    ┌──────┼──────┐
+    │      │      │
+    ▼      ▼      ▼
+┌───────┐ ┌───────┐ ┌─────────┐
+│DEFERRED│ │TIMED  │ │ESCALATED│
+└───────┘ │  OUT  │ └─────────┘
+          └───────┘
+
+Other transitions:
+- PENDING → NEEDS_REVIEW (manual intervention required)
+- Any → EXPIRED (timeout exceeded)
+- Any → ESCALATED (escalation triggered)
+```
 
 ---
 
-## 11. Validation Pipeline
+## 12. Validation Pipeline
 
-### 11.1 Pipeline Overview
+### 12.1 Pipeline Overview
 
-The Validation Pipeline is a 12-stage sequential pipeline. Each stage produces evidence and assessments that feed into subsequent stages. The pipeline halts early if a BLOCKER failure is detected.
+The Validation Pipeline is a sequential pipeline with optional AI validation. Each stage produces evidence and assessments. The pipeline halts early if a BLOCKER failure is detected.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1708,12 +2397,15 @@ The Validation Pipeline is a 12-stage sequential pipeline. Each stage produces e
 │  Stage 11: Policy Engine                                        │
 │      │                                                          │
 │      ▼                                                          │
-│  Stage 12: Decision Engine                                      │
+│  Stage 12: AI Validator (Optional)                              │
+│      │                                                          │
+│      ▼                                                          │
+│  Stage 13: Decision Engine                                      │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 11.2 Stage Descriptions
+### 12.2 Stage Descriptions
 
 | Stage | Input | Output | Service |
 |-------|-------|--------|---------|
@@ -1728,9 +2420,10 @@ The Validation Pipeline is a 12-stage sequential pipeline. Each stage produces e
 | 9. Security Assessment | Request | `SecurityAssessment` | SecurityAnalyzer |
 | 10. Rule Engine | All assessments | `failures` + `warnings` | RuleEngine |
 | 11. Policy Engine | All assessments | `failures` + `warnings` | PolicyEngine |
-| 12. Decision Engine | All assessments + failures + warnings | `ValidationDecision` | DecisionEngine |
+| 12. AI Validator | All assessments | `AIValidationResult` | AIValidator (optional) |
+| 13. Decision Engine | All assessments + failures + warnings | `ValidationDecision` | DecisionEngine |
 
-### 11.3 Happy Path (Auto-Approved)
+### 12.3 Happy Path (Auto-Approved)
 
 ```
 Planner                  Validation Engine              Execution Engine
@@ -1749,10 +2442,12 @@ Planner                  Validation Engine              Execution Engine
    │                           │ ├─ Stage 9: Security OK     │
    │                           │ ├─ Stage 10: Rules PASS     │
    │                           │ ├─ Stage 11: Policies PASS  │
-   │                           │ └─ Stage 12: DECIDE         │
+   │                           │ ├─ Stage 12: AI OK          │
+   │                           │ └─ Stage 13: DECIDE         │
    │                           │                              │
    │                           │ Decision: APPROVED          │
    │                           │ Permission: GRANTED         │
+   │                           │ Signature: CREATED          │
    │                           │                              │
    │  ValidationCompleted      │                              │
    │  (APPROVED)               │                              │
@@ -1764,38 +2459,41 @@ Planner                  Validation Engine              Execution Engine
    │                           │                              │ Execute
 ```
 
-### 11.4 Requires Approval Path
+### 12.4 Requires Approval Path
 
 ```
-Planner                  Validation Engine              Approver
+Planner                  Validation Engine              Human Approver
    │                           │                              │
    │  PlanGenerated            │                              │
    │──────────────────────────▶│                              │
    │                           │                              │
-   │                           │ (Pipeline runs...)           │
-   │                           │ Stage 12: PENDING_APPROVAL   │
+   │                           │ ┌─ Run pipeline             │
+   │                           │ └─ DECIDE                   │
    │                           │                              │
-   │  ValidationCompleted      │                              │
-   │  (PENDING_APPROVAL)       │                              │
+   │                           │ Decision: PENDING_APPROVAL  │
+   │                           │ Approval Level: MAINTAINER  │
+   │                           │                              │
+   │  ValidationApprovalRequired│                              │
    │◀──────────────────────────│                              │
    │                           │                              │
-   │                           │  ValidationApprovalRequired  │
+   │                           │  Notify approver            │
    │                           │─────────────────────────────▶│
    │                           │                              │
    │                           │                              │ Review
-   │                           │                              │ Approve/Reject
+   │                           │                              │ Approve
    │                           │                              │
-   │                           │  ValidationApprovalGranted   │
+   │                           │  ApprovalDecision           │
    │                           │◀─────────────────────────────│
    │                           │                              │
-   │                           │ Permission: GRANTED          │
+   │                           │ Permission: GRANTED         │
+   │                           │ Signature: CREATED          │
    │                           │                              │
    │  ValidationCompleted      │                              │
    │  (APPROVED)               │                              │
    │◀──────────────────────────│                              │
 ```
 
-### 11.5 Rejected Path
+### 12.5 Rejected Path
 
 ```
 Planner                  Validation Engine
@@ -1803,58 +2501,54 @@ Planner                  Validation Engine
    │  PlanGenerated            │
    │──────────────────────────▶│
    │                           │
-   │                           │ (Pipeline runs...)
-   │                           │ Stage 10: SAFETY_007 fires
-   │                           │   Risk score > 95
-   │                           │
-   │                           │ Blocker detected, halt pipeline
+   │                           │ ┌─ Run pipeline
+   │                           │ ├─ SAFETY_001 BLOCKER
+   │                           │ └─ DECIDE
    │                           │
    │                           │ Decision: REJECTED
-   │                           │ Permission: DENIED
+   │                           │ Failure: SAFETY_001
+   │                           │ Explanation: ...
    │                           │
    │  ValidationCompleted      │
    │  (REJECTED)               │
    │◀──────────────────────────│
-   │                           │
-   │  ValidationBlockerDetected│
-   │  (SAFETY_007)             │
-   │◀──────────────────────────│
 ```
 
-### 11.6 Conditional Approval Path
+### 12.6 Conditional Approval Path
 
 ```
-Planner                  Validation Engine              Approver
+Planner                  Validation Engine              Human Approver
    │                           │                              │
    │  PlanGenerated            │                              │
    │──────────────────────────▶│                              │
    │                           │                              │
-   │                           │ (Pipeline runs...)           │
-   │                           │ Stage 12: CONDITIONAL        │
-   │                           │   Conditions:                │
-   │                           │   - monitor_during_execution │
-   │                           │   - rollback_tested          │
+   │                           │ ┌─ Run pipeline             │
+   │                           │ └─ DECIDE                   │
    │                           │                              │
-   │                           │  ValidationApprovalRequired  │
-   │                           │─────────────────────────────▶│
+   │                           │ Decision: CONDITIONAL       │
+   │                           │ Conditions: [...]           │
+   │                           │                              │
+   │  ValidationApprovalRequired│                              │
+   │◀──────────────────────────│                              │
    │                           │                              │
    │                           │                              │ Approve with conditions
-   │                           │  ValidationApprovalGranted   │
+   │                           │                              │
+   │                           │  ApprovalDecision           │
    │                           │◀─────────────────────────────│
    │                           │                              │
-   │                           │ Permission: GRANTED          │
-   │                           │   Conditions: [...]          │
+   │                           │ Permission: GRANTED         │
+   │                           │ Conditions: [...]           │
    │                           │                              │
-   │  ValidationCompleted      │
-   │  (CONDITIONAL)            │
-   │◀──────────────────────────│
+   │  ValidationCompleted      │                              │
+   │  (CONDITIONAL)            │                              │
+   │◀──────────────────────────│                              │
 ```
 
 ---
 
-## 12. Database
+## 13. Database
 
-### 12.1 Schema Overview
+### 13.1 Schema Overview
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -1869,11 +2563,19 @@ Planner                  Validation Engine              Approver
 │                             │                                    │
 │                             ├── uaes_approval_decisions          │
 │                             │                                    │
+│                             ├── uaes_validation_signatures       │
+│                             │                                    │
+│                             ├── uaes_validation_history          │
+│                             │                                    │
+│                             ├── uaes_policy_packs                │
+│                             │                                    │
+│                             ├── uaes_validator_plugins           │
+│                             │                                    │
 │                             └── uaes_validation_audit_log        │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 12.2 Tables
+### 13.2 Tables
 
 #### uaes_validation_requests
 
@@ -1883,6 +2585,7 @@ CREATE TABLE uaes_validation_requests (
     plan_id             VARCHAR(36) NOT NULL,
     incident_id         VARCHAR(36),
     request_json        TEXT NOT NULL,
+    plan_type           VARCHAR(50) NOT NULL DEFAULT 'infrastructure_repair',
     environment         VARCHAR(50) NOT NULL,
     status              VARCHAR(20) NOT NULL DEFAULT 'pending',
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -1906,13 +2609,16 @@ CREATE TABLE uaes_validation_results (
     decision                VARCHAR(30) NOT NULL,
     decision_reason         TEXT NOT NULL,
     summary_json            TEXT NOT NULL,
+    explanation_json        TEXT,                          -- NEW: Explainability
     rules_evaluated         INTEGER NOT NULL DEFAULT 0,
     rules_passed            INTEGER NOT NULL DEFAULT 0,
     rules_failed            INTEGER NOT NULL DEFAULT 0,
     approval_required       BOOLEAN NOT NULL DEFAULT FALSE,
     approval_level          VARCHAR(30),
+    signature_id            VARCHAR(36),                   -- NEW: Digital signature
     validated_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     validation_duration_ms  FLOAT NOT NULL DEFAULT 0,
+    cache_key               VARCHAR(64),                   -- NEW: Cache key
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at              TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -1921,6 +2627,7 @@ CREATE INDEX idx_uvr_result_plan_id ON uaes_validation_results(plan_id);
 CREATE INDEX idx_uvr_result_incident_id ON uaes_validation_results(incident_id);
 CREATE INDEX idx_uvr_result_decision ON uaes_validation_results(decision);
 CREATE INDEX idx_uvr_result_validated_at ON uaes_validation_results(validated_at);
+CREATE INDEX idx_uvr_result_cache_key ON uaes_validation_results(cache_key);
 ```
 
 #### uaes_validation_failures
@@ -2018,6 +2725,7 @@ CREATE TABLE uaes_execution_permissions (
     granted_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     expires_at          TIMESTAMPTZ NOT NULL,
     conditions_json     TEXT NOT NULL DEFAULT '[]',
+    signature_id        VARCHAR(36),                       -- NEW: Link to signature
     revocation_reason   TEXT,
     revoked_at          TIMESTAMPTZ,
     created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -2027,6 +2735,99 @@ CREATE TABLE uaes_execution_permissions (
 CREATE INDEX idx_uep_plan_id ON uaes_execution_permissions(plan_id);
 CREATE INDEX idx_uep_granted ON uaes_execution_permissions(granted);
 CREATE INDEX idx_uep_expires_at ON uaes_execution_permissions(expires_at);
+```
+
+#### uaes_validation_signatures (NEW)
+
+```sql
+CREATE TABLE uaes_validation_signatures (
+    signature_id        VARCHAR(36) PRIMARY KEY,
+    result_id           VARCHAR(36) NOT NULL REFERENCES uaes_validation_results(result_id),
+    plan_id             VARCHAR(36) NOT NULL,
+    signature_hash      VARCHAR(64) NOT NULL,             -- SHA-256
+    signed_at           TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    signed_by           VARCHAR(100) NOT NULL,
+    approval_metadata   TEXT NOT NULL DEFAULT '{}',
+    verification_method VARCHAR(50) NOT NULL DEFAULT 'sha256',
+    expires_at          TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_uvs_plan_id ON uaes_validation_signatures(plan_id);
+CREATE INDEX idx_uvs_result_id ON uaes_validation_signatures(result_id);
+CREATE INDEX idx_uvs_signature_hash ON uaes_validation_signatures(signature_hash);
+```
+
+#### uaes_validation_history (NEW)
+
+```sql
+CREATE TABLE uaes_validation_history (
+    record_id           VARCHAR(36) PRIMARY KEY,
+    request_id          VARCHAR(36) NOT NULL,
+    result_id           VARCHAR(36) NOT NULL,
+    plan_id             VARCHAR(36) NOT NULL,
+    incident_id         VARCHAR(36),
+    decision            VARCHAR(30) NOT NULL,
+    risk_score          INTEGER NOT NULL,
+    confidence_score    FLOAT NOT NULL,
+    validation_duration_ms FLOAT NOT NULL,
+    environment         VARCHAR(50) NOT NULL,
+    plan_type           VARCHAR(50) NOT NULL,
+    rules_triggered     TEXT NOT NULL DEFAULT '[]',
+    was_executed        BOOLEAN NOT NULL DEFAULT FALSE,
+    execution_succeeded BOOLEAN,
+    is_false_positive   BOOLEAN NOT NULL DEFAULT FALSE,
+    is_false_negative   BOOLEAN NOT NULL DEFAULT FALSE,
+    recorded_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_uvh_plan_id ON uaes_validation_history(plan_id);
+CREATE INDEX idx_uvh_incident_id ON uaes_validation_history(incident_id);
+CREATE INDEX idx_uvh_decision ON uaes_validation_history(decision);
+CREATE INDEX idx_uvh_recorded_at ON uaes_validation_history(recorded_at);
+CREATE INDEX idx_uvh_false_positive ON uaes_validation_history(is_false_positive);
+CREATE INDEX idx_uvh_false_negative ON uaes_validation_history(is_false_negative);
+```
+
+#### uaes_policy_packs (NEW)
+
+```sql
+CREATE TABLE uaes_policy_packs (
+    pack_id             VARCHAR(36) PRIMARY KEY,
+    name                VARCHAR(100) NOT NULL,
+    description         TEXT NOT NULL,
+    pack_type           VARCHAR(50) NOT NULL,
+    enabled             BOOLEAN NOT NULL DEFAULT TRUE,
+    policy_ids          TEXT NOT NULL DEFAULT '[]',
+    priority            INTEGER NOT NULL DEFAULT 0,
+    applicable_environments TEXT NOT NULL DEFAULT '[]',
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_upp_pack_type ON uaes_policy_packs(pack_type);
+CREATE INDEX idx_upp_enabled ON uaes_policy_packs(enabled);
+```
+
+#### uaes_validator_plugins (NEW)
+
+```sql
+CREATE TABLE uaes_validator_plugins (
+    plugin_id           VARCHAR(36) PRIMARY KEY,
+    name                VARCHAR(100) NOT NULL,
+    description         TEXT NOT NULL,
+    version             VARCHAR(20) NOT NULL,
+    plugin_type         VARCHAR(50) NOT NULL,
+    enabled             BOOLEAN NOT NULL DEFAULT TRUE,
+    provides_rules      TEXT NOT NULL DEFAULT '[]',
+    provides_analyzers  TEXT NOT NULL DEFAULT '[]',
+    dependencies        TEXT NOT NULL DEFAULT '[]',
+    loaded_at           TIMESTAMPTZ,
+    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX idx_uvp_plugin_type ON uaes_validator_plugins(plugin_type);
+CREATE INDEX idx_uvp_enabled ON uaes_validator_plugins(enabled);
 ```
 
 #### uaes_validation_audit_log
@@ -2050,43 +2851,19 @@ CREATE INDEX idx_uval_actor ON uaes_validation_audit_log(actor);
 CREATE INDEX idx_uval_timestamp ON uaes_validation_audit_log(timestamp);
 ```
 
-### 12.3 SQLAlchemy Models
+### 13.3 SQLAlchemy Models
 
-All ORM models use `mapped_column` with `Mapped[]` type annotations. Models follow existing conventions:
-
-```python
-# Example: validation_result_model.py
-from sqlalchemy import String, Text, Float, Integer, Boolean, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column
-from app.core.database import Base
-
-
-class ValidationResultModel(Base):
-    __tablename__ = "uaes_validation_results"
-
-    result_id: Mapped[str] = mapped_column(String(36), primary_key=True)
-    request_id: Mapped[str] = mapped_column(String(36), ForeignKey("uaes_validation_requests.request_id"))
-    plan_id: Mapped[str] = mapped_column(String(36), index=True)
-    incident_id: Mapped[str | None] = mapped_column(String(36), nullable=True, index=True)
-    decision: Mapped[str] = mapped_column(String(30), index=True)
-    decision_reason: Mapped[str] = mapped_column(Text)
-    summary_json: Mapped[str] = mapped_column(Text)
-    rules_evaluated: Mapped[int] = mapped_column(Integer, default=0)
-    rules_passed: Mapped[int] = mapped_column(Integer, default=0)
-    rules_failed: Mapped[int] = mapped_column(Integer, default=0)
-    approval_required: Mapped[bool] = mapped_column(Boolean, default=False)
-    approval_level: Mapped[str | None] = mapped_column(String(30), nullable=True)
-    validated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    validation_duration_ms: Mapped[float] = mapped_column(Float, default=0)
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
-```
+SQLAlchemy models mirror the SQL schema above. All models use:
+- `Mapped[str]` for string columns
+- `Mapped[datetime]` for timestamp columns
+- `relationship()` for foreign key relationships
+- `Index()` for explicit indexes
 
 ---
 
-## 13. REST API
+## 14. REST API
 
-### 13.1 Endpoint Overview
+### 14.1 Endpoint Overview
 
 | Method | Path | Description | Auth |
 |--------|------|-------------|------|
@@ -2100,26 +2877,30 @@ class ValidationResultModel(Base):
 | DELETE | `/api/v1/validation/permissions/{plan_id}` | Revoke permission | admin+ |
 | GET | `/api/v1/validation/rules` | List validation rules | developer+ |
 | GET | `/api/v1/validation/policies` | List validation policies | developer+ |
+| GET | `/api/v1/validation/history/{plan_id}` | Get validation history | developer+ |
+| GET | `/api/v1/validation/statistics` | Get validation statistics | developer+ |
+| GET | `/api/v1/validation/trends/{trend_type}` | Get validation trends | developer+ |
+| GET | `/api/v1/validation/signatures/{plan_id}` | Get validation signature | developer+ |
+| GET | `/api/v1/validation/explanation/{result_id}` | Get validation explanation | developer+ |
 
-### 13.2 Request/Response Schemas
+### 14.2 Request/Response Schemas
 
 #### POST /api/v1/validation/validate
 
 ```python
-# Request
 class ValidatePlanRequest(BaseModel):
     plan_id: str
     incident_id: str | None = None
     plan_json: dict[str, Any]
+    plan_type: str = "infrastructure_repair"
     environment: str = "production"
     priority: int = 0
     timeout_seconds: int = 300
     metadata: dict[str, Any] = {}
 
-# Response
 class ValidatePlanResponse(BaseModel):
     request_id: str
-    status: str  # "pending", "completed", "failed"
+    status: str
     result: ValidationResultResponse | None = None
 ```
 
@@ -2133,6 +2914,7 @@ class ValidationResultResponse(BaseModel):
     decision: str
     decision_reason: str
     summary: str
+    explanation: ValidationExplanationResponse | None = None
     rules_evaluated: int
     rules_passed: int
     rules_failed: int
@@ -2140,6 +2922,7 @@ class ValidationResultResponse(BaseModel):
     warnings: list[ValidationWarningResponse]
     approval_required: bool
     approval_level: str | None
+    signature: ValidationSignatureResponse | None = None
     validated_at: str
     validation_duration_ms: float
 ```
@@ -2158,9 +2941,9 @@ class ApprovePlanResponse(BaseModel):
     expires_at: str
 ```
 
-### 13.3 Authentication
+### 14.3 Authentication
 
-All endpoints use `Depends(verify_token)` dependency injection, consistent with existing API patterns.
+All endpoints use `Depends(verify_token)` dependency injection.
 
 ```python
 from fastapi import Depends, APIRouter
@@ -2180,11 +2963,11 @@ async def validate_plan(
 
 ---
 
-## 14. Events
+## 15. Events
 
-### 14.1 Event Overview
+### 15.1 Event Overview
 
-All events are published via `InProcessEventBus`. Events carry full context for downstream consumers.
+All events are published via `InProcessEventBus`.
 
 | Event | Published When | Payload |
 |-------|---------------|---------|
@@ -2202,10 +2985,15 @@ All events are published via `InProcessEventBus`. Events carry full context for 
 | ValidationPermissionGranted | Execution permitted | plan_id, permission_id, expires_at |
 | ValidationPermissionRevoked | Permission removed | plan_id, permission_id, reason |
 | ValidationExpired | Validation window expired | request_id, plan_id |
-| ValidationAuditLogged | Audit entry created | log_id, action, actor |
+| ValidationSignatureCreated | Digital signature created | plan_id, signature_id, signature_hash |
+| ValidationSignatureVerified | Signature verified | plan_id, signature_id, valid |
+| ValidationHistoryRecorded | History entry created | record_id, plan_id, decision |
+| ValidationTrendComputed | Trend computed | trend_id, trend_type, period |
+| ValidationCacheHit | Cache hit occurred | plan_id, cache_key |
+| ValidationCacheMiss | Cache miss occurred | plan_id, cache_key |
 | ValidationMetricsRecorded | Metrics emitted | request_id, duration_ms, decision |
 
-### 14.2 Event Definitions
+### 15.2 Event Definitions
 
 ```python
 class ValidationRequested(BaseModel):
@@ -2257,9 +3045,32 @@ class ValidationPermissionGranted(BaseModel):
     expires_at: datetime
     conditions: list[str]
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ValidationSignatureCreated(BaseModel):
+    event_type: str = "validation.signature_created"
+    plan_id: str
+    signature_id: str
+    signature_hash: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ValidationHistoryRecorded(BaseModel):
+    event_type: str = "validation.history_recorded"
+    record_id: str
+    plan_id: str
+    decision: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+
+class ValidationCacheHit(BaseModel):
+    event_type: str = "validation.cache_hit"
+    plan_id: str
+    cache_key: str
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
 ```
 
-### 14.3 Event Flow
+### 15.3 Event Flow
 
 ```
                     ┌──────────────────────┐
@@ -2271,22 +3082,22 @@ class ValidationPermissionGranted(BaseModel):
             ▼                  ▼                  ▼
    ┌────────────────┐ ┌───────────────┐ ┌────────────────┐
    │  Validation     │ │  Monitoring   │ │  Execution     │
-   │  (self)         │ │  Engine       │ │  Engine        │
+   │  History        │ │  Engine       │ │  Engine        │
    └────────────────┘ └───────────────┘ └────────────────┘
             │                  │                  │
             ▼                  ▼                  ▼
-   ValidationCompleted  Metrics Recorded    Permission Checked
-   BlockerDetected      Health Updated      Execution Starts
-   ApprovalRequired                         Execution Blocked
+   HistoryRecorded      Metrics Recorded    Permission Checked
+   TrendComputed        Health Updated      Signature Verified
+   FalsePositiveTracked                     Execution Starts
 ```
 
 ---
 
-## 15. Integration
+## 16. Integration
 
-### 15.1 Planner Integration
+### 16.1 Planner Integration
 
-The Validation Engine subscribes to the `PlanGenerated` event from the Planner. When a new plan is generated, the Validation Engine automatically begins validation.
+The Validation Engine subscribes to the `PlanGenerated` event from the Planner.
 
 ```
 Planner                          Validation Engine
@@ -2295,18 +3106,15 @@ Planner                          Validation Engine
    │──────────────────────────────────▶│
    │                                   │
    │                                   │ Create ValidationRequest
-   │                                   │ Run 12-stage pipeline
+   │                                   │ Run pipeline
    │                                   │
    │  ValidationCompleted(event)       │
    │◀──────────────────────────────────│
 ```
 
-**Planner publishes**: `PlanGenerated`
-**Validation subscribes**: `PlanGenerated` → creates `ValidationRequest` → runs pipeline
+### 16.2 Execution Engine Integration
 
-### 15.2 Execution Engine Integration
-
-The Execution Engine checks for an active `ExecutionPermission` before executing any plan. Without a valid permission, execution is blocked.
+The Execution Engine checks for an active `ExecutionPermission` and valid `ValidationSignature` before executing.
 
 ```
 Execution Engine                   Validation Engine
@@ -2317,12 +3125,18 @@ Execution Engine                   Validation Engine
       │  PermissionGranted / Denied       │
       │◀──────────────────────────────────│
       │                                   │
-      │  (if granted) Execute plan        │
+      │  VerifySignature(plan_id)         │
+      │──────────────────────────────────▶│
+      │                                   │
+      │  SignatureValid / Invalid         │
+      │◀──────────────────────────────────│
+      │                                   │
+      │  (if both valid) Execute plan     │
 ```
 
-### 15.3 Monitoring Integration
+### 16.3 Monitoring Integration
 
-The Validation Engine reads health metrics and resource utilization from the Monitoring Engine to assess resource availability.
+The Validation Engine reads health metrics and resource utilization from the Monitoring Engine.
 
 ```
 Monitoring Engine                  Validation Engine
@@ -2336,9 +3150,9 @@ Monitoring Engine                  Validation Engine
       │                                   │ Feed into ResourceAssessment
 ```
 
-### 15.4 Incidents Integration
+### 16.4 Incidents Integration
 
-The Validation Engine reads incident severity and root cause category to assess safety and determine approval requirements.
+The Validation Engine reads incident severity and root cause category.
 
 ```
 Incident System                    Validation Engine
@@ -2352,23 +3166,232 @@ Incident System                    Validation Engine
       │                                   │ Feed into SafetyAssessment
 ```
 
-### 15.5 Event Bus Integration
-
-Full integration via `InProcessEventBus`. The Validation Engine both publishes and subscribes to events.
+### 16.5 Event Bus Integration
 
 ```python
-# Event bus wiring (in setup function)
+# Event bus wiring
 event_bus.subscribe("plan_generated", validation_service.handle_plan_generated)
 event_bus.subscribe("validation_completed", execution_engine.handle_validation_completed)
 event_bus.subscribe("validation_blocker_detected", notification_service.handle_blocker)
 event_bus.subscribe("validation_approval_required", approval_service.handle_approval_required)
+event_bus.subscribe("validation_signature_created", signature_service.handle_signature_created)
+```
+
+### 16.6 Learning Engine Integration (Future)
+
+The Learning Engine (Sprint 7) will consume validation history and trends:
+
+```
+Validation Engine                  Learning Engine
+      │                                   │
+      │  ValidationHistoryRecorded        │
+      │──────────────────────────────────▶│
+      │                                   │
+      │  ValidationTrendComputed          │
+      │──────────────────────────────────▶│
+      │                                   │
+      │                                   │ Learn patterns
+      │                                   │ Update rules
+      │                                   │ Improve predictions
+      │                                   │
+      │  RulesUpdated                     │
+      │◀──────────────────────────────────│
+```
+
+### 16.7 Knowledge Graph Integration (Future)
+
+The Knowledge Graph will store validation patterns:
+
+```
+Validation Engine                  Knowledge Graph
+      │                                   │
+      │  QueryValidationPatterns()        │
+      │◀──────────────────────────────────│
+      │                                   │
+      │  ValidationPatterns               │
+      │──────────────────────────────────▶│
+      │                                   │
+      │  StoreValidationOutcome()         │
+      │──────────────────────────────────▶│
+```
+
+### 16.8 Memory System Integration (Future)
+
+The Memory System will store validation context:
+
+```
+Validation Engine                  Memory System
+      │                                   │
+      │  StoreValidationContext()         │
+      │──────────────────────────────────▶│
+      │                                   │
+      │  RecallSimilarValidations()       │
+      │◀──────────────────────────────────│
 ```
 
 ---
 
-## 16. Failure Modes
+## 17. Learning Integration
 
-### 16.1 Failure Mode Matrix
+### 17.1 Purpose
+
+The Learning Engine continuously improves the entire UAES by learning from execution outcomes. It receives information from every stage and feeds improvements back.
+
+### 17.2 Information Sources
+
+| Source | Information Provided |
+|--------|---------------------|
+| Monitoring | Health metrics, repair effectiveness, system state changes |
+| Incident Detection | Incident patterns, root cause categories, severity distributions |
+| Root Cause Analysis | Causal relationships, pattern matches, diagnostic accuracy |
+| Planner | Strategy success rates, plan quality metrics, confidence calibration |
+| Validation | Rule accuracy, false positive/negative rates, approval patterns |
+| Execution | Execution success/failure rates, rollback effectiveness, duration accuracy |
+
+### 17.3 Feedback Loops
+
+```
+                    ┌─────────────────────────────────────────────┐
+                    │              LEARNING ENGINE                │
+                    └──────────────────┬──────────────────────────┘
+                                       │
+          ┌────────────────────────────┼────────────────────────────┐
+          │                            │                            │
+          ▼                            ▼                            ▼
+  ┌───────────────┐          ┌───────────────┐          ┌───────────────┐
+  │   MONITORING  │          │   PLANNER     │          │   VALIDATION  │
+  │               │          │               │          │               │
+  │ • Thresholds  │          │ • Strategies  │          │ • Rules       │
+  │ • Metrics     │          │ • Weights     │          │ • Policies    │
+  │ • Alerts      │          │ • Confidence  │          │ • Thresholds  │
+  └───────────────┘          └───────────────┘          └───────────────┘
+
+Feedback Examples:
+- Execution success → Validation history → Rule weight increase
+- Execution failure → Planner penalties → Strategy adjustment
+- Monitoring verification → Repair effectiveness → Threshold update
+- False positive → Validation rules → Rule refinement
+- False negative → Validation rules → New rule creation
+```
+
+### 17.4 Continuous Improvements
+
+| Area | What Learning Improves |
+|------|----------------------|
+| Risk Estimation | Adjusts risk scores based on actual outcomes |
+| Confidence Estimation | Calibrates confidence predictions |
+| Repair Ranking | Improves strategy selection weights |
+| Approval Prediction | Optimizes approval level determination |
+| Rollback Recommendation | Improves rollback feasibility predictions |
+| Simulation Prediction | Improves simulation accuracy |
+| Future Plan Generation | Enhances planner strategy selection |
+| Validation Policies | Optimizes policy pack configurations |
+
+### 17.5 Data Flow
+
+```
+Execution Completed
+       │
+       ▼
+┌──────────────┐
+│   Learning   │
+│   Engine     │
+└──────┬───────┘
+       │
+       ├──▶ Update Validation History
+       │    (record success/failure)
+       │
+       ├──▶ Update Rule Weights
+       │    (increase weight of accurate rules)
+       │
+       ├──▶ Update Planner Strategies
+       │    (prefer strategies with high success)
+       │
+       ├──▶ Update Risk Models
+       │    (recalibrate risk scoring)
+       │
+       └──▶ Update Confidence Models
+            (recalibrate confidence scoring)
+```
+
+---
+
+## 18. Architecture Constraints
+
+### 18.1 System Constraints
+
+| Constraint | Description |
+|-----------|-------------|
+| Monitoring never calls Planner directly | Monitoring observes and reports. It does not trigger repairs. |
+| Planner never executes repairs | Planner produces plans. Execution Engine executes. |
+| Execution never bypasses Validation | No plan executes without passing validation. |
+| Validation never modifies plans | Validation verifies plans. It does not change them. |
+| Learning never modifies historical records | Learning adds new knowledge. It does not alter history. |
+| Only services may orchestrate contexts | Contexts are built by services, not analyzers. |
+| All analyzers remain stateless | Analyzers have no internal state between calls. |
+| ValidationContext is immutable | Once built, context cannot be modified. |
+| Bounded contexts remain isolated | Each context depends on nothing outside its boundary. |
+
+### 18.2 Data Flow Constraints
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    DATA FLOW RULES                          │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Monitoring ──▶ Incident Detection ──▶ Root Cause Analysis  │
+│       │                                        │            │
+│       │ (read-only)                           │ (read-only) │
+│       ▼                                        ▼            │
+│  Validation ◄─────────────────────────────── Planner        │
+│       │                                        ▲            │
+│       │ (read-only)                           │ (read-only) │
+│       ▼                                        │            │
+│  Execution ──────────────────────────────▶ Learning         │
+│                                                             │
+│  Rules:                                                     │
+│  • Arrows show data flow direction                          │
+│  • (read-only) means the source cannot modify the target   │
+│  • Learning feeds back to all stages (not shown for clarity)│
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 18.3 Immutability Constraints
+
+| Object | Immutable? | Mutated By |
+|--------|-----------|------------|
+| ValidationContext | YES | Nobody (built once) |
+| ValidationRequest | YES | Nobody (created once) |
+| ValidationDecision | YES | DecisionEngine (created once) |
+| ValidationRule | YES | RuleRepository (update via replacement) |
+| ValidationPolicy | YES | PolicyRepository (update via replacement) |
+| AuditLogEntry | YES | Nobody (append-only) |
+| ValidationSignature | YES | Nobody (created once) |
+
+### 18.4 Bounded Context Isolation
+
+Each bounded context:
+- Has its own domain, application, infrastructure, and API layers
+- Depends on nothing outside its boundary except shared kernel types
+- Communicates with other contexts only via events or explicit APIs
+- Cannot directly access another context's database or internal state
+
+### 18.5 Service Orchestration Rules
+
+| Rule | Description |
+|------|-------------|
+| Services orchestrate | Only services may coordinate multiple analyzers |
+| Analyzers analyze | Analyzers only read context and return assessments |
+| Repositories persist | Repositories only store and retrieve data |
+| Events communicate | Contexts communicate via domain events |
+| APIs expose | APIs expose functionality to external consumers |
+
+---
+
+## 19. Failure Modes
+
+### 19.1 Failure Mode Matrix
 
 | Failure Mode | Detection | Response | Recovery |
 |-------------|-----------|----------|----------|
@@ -2378,48 +3401,42 @@ event_bus.subscribe("validation_approval_required", approval_service.handle_appr
 | Simulation unavailable | Timeout / connection error | Treat as "not simulated" | Warning, not blocker |
 | Approval unavailable | Timeout / queue full | Queue for later | Timeout escalation |
 | External dependency unavailable | Connection error | Log, skip non-critical | Retry with backoff |
+| Cache unavailable | Connection error | Skip cache, run pipeline | Retry with backoff |
+| Plugin unavailable | Load failure | Disable plugin, continue | Retry plugin load |
 
-### 16.2 Graceful Degradation
+### 19.2 Graceful Degradation
 
-**Validation crashes**: The pipeline is idempotent via `request_id`. If the engine crashes mid-validation, the request can be retried and the pipeline will re-run from the beginning. No partial state is persisted.
+**Validation crashes**: The pipeline is idempotent via `request_id`. No partial state is persisted.
 
-**Rules unavailable**: If the rule repository is unavailable, the system defaults to the **most restrictive** mode: all rules are treated as BLOCKER and all plans are rejected. This is a safe failure mode — it is better to reject a valid plan than to approve a dangerous one.
+**Rules unavailable**: Default to **most restrictive** mode: all plans are rejected.
 
-**Database unavailable**: If the database is unavailable, the engine can still perform validation in-memory. Results are not persisted, but the validation decision is still returned to the caller. The audit log is queued for later persistence.
+**Database unavailable**: In-memory validation. Results not persisted but decision returned.
 
-**Simulation unavailable**: If the simulation service is unavailable, the simulation assessment is marked as "not_performed". This generates a WARNING (not a BLOCKER) unless the plan has high risk, in which case it becomes a BLOCKER.
+**Simulation unavailable**: Marked as "not_performed". Warning unless high risk.
 
-**Approval unavailable**: If the approval system is unavailable, the validation result is stored with `PENDING_APPROVAL` status. When the approval system becomes available, pending approvals are processed. Timeout escalation still applies.
+**Approval unavailable**: Stored with `PENDING_APPROVAL` status. Timeout escalation applies.
 
-**External dependency unavailable**: Non-critical external dependencies (e.g., cost estimation service) are skipped with a warning. Critical dependencies (e.g., auth service) cause the pipeline to fail.
+**Cache unavailable**: Skip cache, run full pipeline. Results not cached.
 
-### 16.3 Idempotency
+**Plugin unavailable**: Disable plugin, continue with built-in rules.
 
-Every validation request carries a unique `request_id`. The pipeline is designed to be idempotent:
+### 19.3 Idempotency
 
-- If a request with the same `request_id` is submitted twice, the second submission returns the existing result
+Every validation request carries a unique `request_id`. The pipeline is idempotent:
+
+- If a request with the same `request_id` is submitted twice, the second returns the existing result
 - Rule evaluations are deterministic given the same input
-- Approval decisions are idempotent — approving an already-approved request returns the existing approval
+- Approval decisions are idempotent
 
 ---
 
-## 17. Security
+## 20. Security
 
-### 17.1 Authentication
+### 20.1 Authentication
 
-All API endpoints use JWT-based authentication via `Depends(verify_token)`, consistent with the existing auth pattern.
+All API endpoints use JWT-based authentication via `Depends(verify_token)`.
 
-```python
-@router.post("/validate")
-async def validate_plan(
-    request: ValidatePlanRequest,
-    token: dict = Depends(verify_token),
-) -> ValidatePlanResponse:
-    # token contains: sub (user_id), roles, exp
-    ...
-```
-
-### 17.2 Authorization
+### 20.2 Authorization
 
 Role-based access control (RBAC) with 5 roles:
 
@@ -2431,414 +3448,1009 @@ Role-based access control (RBAC) with 5 roles:
 | `administrator` | + Revoke permissions, manage audit logs |
 | `emergency` | + Emergency override with full audit |
 
-### 17.3 Audit Logging
+### 20.3 Audit Logging
 
-Every decision is logged with:
-- **Actor**: Who made the decision (user ID or "system")
-- **Timestamp**: When the decision was made
-- **IP Address**: Client IP address
-- **Details**: Full decision context (JSON)
-- **Action**: What action was taken (validate, approve, reject, revoke)
+Every decision is logged with actor, timestamp, IP, details, and action.
 
-```python
-audit_entry = AuditLogEntry(
-    log_id=str(uuid.uuid4()),
-    result_id=result.result_id,
-    plan_id=request.plan_id,
-    action="validation_completed",
-    actor=token["sub"],
-    details_json=json.dumps({
-        "decision": decision.decision,
-        "risk_score": safety.risk_score.value,
-        "rules_evaluated": len(failures) + len(warnings),
-    }),
-    ip_address=request.client.host,
-    timestamp=datetime.utcnow(),
-)
-```
+### 20.4 Tamper Protection
 
-### 17.4 Tamper Protection
+The audit log is append-only with planned hash-chain integrity.
 
-The audit log is designed for tamper-evidence:
+### 20.5 Approval Recording
 
-- Each log entry includes a `log_id` and `timestamp`
-- Log entries are append-only (no updates, no deletes)
-- Future enhancement: hash-chain integrity (each entry includes hash of previous entry)
-- The audit log is stored in a separate table with restricted write access
+The full approval chain is recorded with who, when, conditions, and level.
 
-### 17.5 Approval Recording
+### 20.6 Signature Verification
 
-The full approval chain is recorded:
+Digital signatures are verified before execution:
 
-```
-ApprovalDecision #1: PENDING (system)
-ApprovalDecision #2: APPROVED by user_123 at 14:30 with conditions
-ExecutionPermission #1: GRANTED by system at 14:30, expires at 18:30
-AuditLog #1: validation.approval_granted at 14:30 by user_123
-```
-
-Every approval includes:
-- Who approved/rejected
-- When they approved/rejected
-- What conditions they attached
-- What their approval level was
-- When the approval expires
+1. Execution Engine receives plan
+2. Queries `ValidationSignature` by `plan_id`
+3. Recomputes hash of `(plan_json + decision + timestamp)`
+4. Compares with stored `signature_hash`
+5. If match, execution proceeds
+6. If mismatch, execution blocked
 
 ---
 
-## 18. Performance
+## 21. Performance
 
-### 18.1 Latency Targets
+### 21.1 Latency Targets
 
-| Scenario | Target Latency | Measurement |
-|----------|---------------|-------------|
-| Auto-approved (dev/staging) | < 500ms | End-to-end pipeline |
-| Approval-required | < 2s | Pipeline + approval check |
-| Complex validation (>20 rules) | < 5s | Pipeline with many rules |
-| Database round-trip | < 50ms | Repository operations |
+| Scenario | Target Latency |
+|----------|---------------|
+| Auto-approved (dev/staging) | < 500ms |
+| Approval-required | < 2s |
+| Complex validation (>20 rules) | < 5s |
+| Cache hit | < 50ms |
+| Database round-trip | < 50ms |
 
-### 18.2 Caching Strategy
+### 21.2 Caching Strategy
 
-**Rules and policies** are cached in-memory with a 5-minute TTL. Cache is invalidated on:
-- Rule/policy update via API
-- Cache TTL expiry
-- Application restart
+**Validation results** are cached with:
+- **Key**: SHA-256 of `(plan_json, environment, rules_version, policies_version)`
+- **TTL**: 5 minutes default
+- **Max entries**: 10,000
+- **Eviction**: LRU
 
-```python
-class RulePolicyCache:
-    def __init__(self, ttl_seconds: int = 300) -> None:
-        self._rules: dict[str, ValidationRule] = {}
-        self._policies: dict[str, ValidationPolicy] = {}
-        self._last_refresh: datetime = datetime.min
-        self._ttl = timedelta(seconds=ttl_seconds)
+**Rules and policies** are cached in-memory with 5-minute TTL.
 
-    async def get_rules(self, rule_repository: RuleRepository) -> list[ValidationRule]:
-        if datetime.utcnow() - self._last_refresh > self._ttl:
-            await self._refresh(rule_repository)
-        return list(self._rules.values())
-```
+### 21.3 Scalability
 
-### 18.3 Scalability
+- **Horizontal scaling**: Stateless engine, multiple instances behind load balancer
+- **Validation workers**: Separate workers for pipeline stages
+- **Database**: Connection pooling, read replicas
 
-- **Horizontal scaling**: The Validation Engine is stateless. Multiple instances can run behind a load balancer.
-- **Validation workers**: Separate validation workers can process pipeline stages in parallel.
-- **Database**: Connection pooling via SQLAlchemy's async pool. Read replicas for query-heavy operations.
+### 21.4 Concurrency
 
-### 18.4 Concurrency
+All service methods are `async`. Independent analyzers run concurrently via `asyncio.gather`.
 
-All service methods are `async`. No blocking I/O operations. The pipeline stages are sequential by design (each stage depends on previous outputs), but independent analyzers can run concurrently within a stage.
-
-```python
-# Concurrent assessments within a stage
-async def _run_assessments(self, request: ValidationRequest) -> dict[str, Any]:
-    safety, dependency, compatibility, rollback, simulation, resource, security = await asyncio.gather(
-        self._safety_assessor.assess(request),
-        self._dependency_analyzer.analyze(request),
-        self._compatibility_analyzer.analyze(request),
-        self._rollback_analyzer.analyze(request),
-        self._simulation_verifier.verify(request),
-        self._resource_analyzer.analyze(request),
-        self._security_analyzer.analyze(request),
-    )
-    return {
-        "safety": safety,
-        "dependency": dependency,
-        "compatibility": compatibility,
-        "rollback": rollback,
-        "simulation": simulation,
-        "resource": resource,
-        "security": security,
-    }
-```
-
-### 18.5 Throughput
+### 21.5 Throughput
 
 - **Target**: 100 validations/second sustained
 - **Burst**: 500 validations/second for 10 seconds
-- **Bottleneck**: Database writes (audit log, results). Mitigated by batch inserts and connection pooling.
+- **Cache hit throughput**: 1000 validations/second
 
 ---
 
-## 19. Testing Strategy
+## 22. Testing Strategy
 
-### 19.1 Unit Tests
+### 22.1 Unit Tests
 
-- **100% rule coverage**: Every validation rule (30+) has at least one test
-- **All domain models**: Every model is tested for construction, validation, serialization
+- **100% rule coverage**: Every validation rule (40+) has at least one test
+- **All domain models**: Every model tested for construction, validation, serialization
 - **All value objects**: Range validation, property methods, edge cases
 - **All enums**: Verify string values, membership, serialization
 - **Service unit tests**: Mocked repositories, verify logic in isolation
 
-### 19.2 Integration Tests
+### 22.2 Integration Tests
 
-- **Full pipeline**: End-to-end validation with real repository implementations
+- **Full pipeline**: End-to-end validation with real repositories
 - **Repository round-trips**: Save and retrieve each model type
 - **Event dispatch**: Verify events are published on correct triggers
 - **API endpoint tests**: Full HTTP request/response cycle
 - **Database migrations**: Verify migration up/down works correctly
 
-### 19.3 Stress Tests
+### 22.3 Stress Tests
 
 - **Concurrent validations**: 100 simultaneous validation requests
 - **Timeout handling**: Validation timeout triggers correctly
 - **Connection pool exhaustion**: Graceful degradation under DB pressure
 - **Memory pressure**: Large number of cached rules/policies
 
-### 19.4 Chaos Tests
+### 22.4 Chaos Tests
 
 - **Database failure**: In-memory validation works correctly
 - **Rule engine failure**: Default to restrictive mode
 - **Approval timeout**: Escalation triggers correctly
 - **Partial validation**: Pipeline halts on blocker, produces correct partial result
 
-### 19.5 Failure Simulation
+### 22.5 Failure Simulation
 
 - **Rule engine crash recovery**: Pipeline recovers and produces valid result
 - **Partial validation**: Some analyzers succeed, others fail — decision still made
 - **Approval system down**: Queued for later, timeout escalation still works
 
-### 19.6 Test File Map
+### 22.6 Test File Map
 
 ```
 tests/unit/
-├── test_validation_request.py          # Request construction, validation
-├── test_validation_result.py           # Result construction, serialization
-├── test_validation_decision.py         # Decision logic, conditions
-├── test_validation_rule.py             # Rule construction, conditions
-├── test_validation_policy.py           # Policy construction, enforcement
-├── test_validation_evidence.py         # Evidence construction, confidence
-├── test_validation_failure.py          # Failure construction, severity
-├── test_validation_warning.py          # Warning construction, message
-├── test_approval_decision.py           # Approval construction, expiry
-├── test_execution_permission.py        # Permission grant/revoke
-├── test_execution_blocker.py           # Blocker construction, resolution
-├── test_safety_assessment.py           # Safety assessment logic
-├── test_compatibility_assessment.py    # Compatibility checks
-├── test_rollback_assessment.py         # Rollback feasibility
-├── test_simulation_assessment.py       # Simulation verification
-├── test_dependency_assessment.py       # Dependency analysis
-├── test_resource_assessment.py         # Resource checks
-├── test_security_assessment.py         # Security checks
-├── test_cost_assessment.py             # Cost estimation
-├── test_confidence_score.py            # ConfidenceScore validation
-├── test_risk_score.py                  # RiskScore validation
-├── test_time_range.py                  # TimeRange validation
-├── test_threshold_range.py             # ThresholdRange validation
-├── test_component_descriptor.py        # ComponentDescriptor
-├── test_environment_descriptor.py      # EnvironmentDescriptor
-├── test_version_constraint.py          # VersionConstraint
-├── test_resource_quota.py              # ResourceQuota
-├── test_maintenance_window.py          # MaintenanceWindow
-├── test_rule_engine.py                 # Rule evaluation
-├── test_policy_engine.py               # Policy evaluation
-├── test_approval_engine.py             # Approval workflow
-├── test_decision_engine.py             # Decision aggregation
-└── test_summary_generator.py           # Summary generation
+├── test_validation_request.py
+├── test_validation_result.py
+├── test_validation_decision.py
+├── test_validation_rule.py
+├── test_validation_policy.py
+├── test_validation_evidence.py
+├── test_validation_failure.py
+├── test_validation_warning.py
+├── test_approval_decision.py
+├── test_execution_permission.py
+├── test_execution_blocker.py
+├── test_safety_assessment.py
+├── test_compatibility_assessment.py
+├── test_rollback_assessment.py
+├── test_simulation_assessment.py
+├── test_dependency_assessment.py
+├── test_resource_assessment.py
+├── test_security_assessment.py
+├── test_cost_assessment.py
+├── test_validation_explanation.py
+├── test_validation_signature.py
+├── test_validation_history.py
+├── test_validation_statistics.py
+├── test_validation_trend.py
+├── test_validation_cache_entry.py
+├── test_policy_pack.py
+├── test_validator_plugin.py
+├── test_confidence_score.py
+├── test_risk_score.py
+├── test_time_range.py
+├── test_threshold_range.py
+├── test_component_descriptor.py
+├── test_environment_descriptor.py
+├── test_version_constraint.py
+├── test_resource_quota.py
+├── test_maintenance_window.py
+├── test_rule_engine.py
+├── test_policy_engine.py
+├── test_approval_engine.py
+├── test_decision_engine.py
+├── test_summary_generator.py
+├── test_explainability_service.py
+├── test_history_service.py
+├── test_trend_service.py
+├── test_cache_service.py
+└── test_plugin_manager.py
 
 tests/integration/
-├── test_validation_pipeline.py         # Full pipeline flow
-├── test_validation_repository.py       # Repository CRUD
-├── test_rule_repository.py             # Rule repository
-├── test_policy_repository.py           # Policy repository
-├── test_evidence_repository.py         # Evidence repository
-├── test_audit_repository.py            # Audit repository
-├── test_event_dispatch.py              # Event publishing
-└── test_full_validation_flow.py        # End-to-end validation
+├── test_validation_pipeline.py
+├── test_validation_repository.py
+├── test_rule_repository.py
+├── test_policy_repository.py
+├── test_evidence_repository.py
+├── test_audit_repository.py
+├── test_signature_repository.py
+├── test_history_repository.py
+├── test_event_dispatch.py
+└── test_full_validation_flow.py
 
 tests/stress/
-├── test_concurrent_validations.py      # 100 concurrent requests
-└── test_timeout_handling.py            # Timeout scenarios
+├── test_concurrent_validations.py
+└── test_timeout_handling.py
 
 tests/chaos/
-├── test_database_failure.py            # DB unavailable
-├── test_rule_engine_failure.py         # Rules unavailable
-├── test_approval_timeout.py            # Approval system down
-└── test_partial_validation.py          # Partial pipeline completion
+├── test_database_failure.py
+├── test_rule_engine_failure.py
+├── test_approval_timeout.py
+└── test_partial_validation.py
 ```
 
 ---
 
-## 20. Definition of Done
+## 23. Definition of Done
 
-### 20.1 Domain Layer
+### 23.1 Domain Layer
 
-- [ ] All 18 domain models implemented with `frozen=True` and `use_enum_values=True`
+- [ ] All 26+ domain models implemented with `frozen=True` and `use_enum_values=True`
 - [ ] All 9 value objects implemented with validation
-- [ ] All 12+ enums implemented as `StrEnum`
+- [ ] All 16 enums implemented as `StrEnum`
 - [ ] Domain events defined and typed
 - [ ] Domain layer has zero external dependencies
 
-### 20.2 Application Layer
+### 23.2 Application Layer
 
-- [ ] All 13 services implemented
+- [ ] All 20+ services implemented
 - [ ] All repository port interfaces defined as `Protocol`
 - [ ] Event publisher port interface defined
-- [ ] 12-stage validation pipeline complete
+- [ ] Validation pipeline complete (13 stages)
 - [ ] Pipeline is idempotent via `request_id`
+- [ ] ExplainabilityService generates detailed explanations
+- [ ] ValidationHistoryService stores and queries history
+- [ ] TrendAnalysisService computes trends
+- [ ] ValidationCacheService caches results
+- [ ] PluginManager discovers and loads plugins
+- [ ] PolicyPackLoader selects appropriate packs
 
-### 20.3 Infrastructure Layer
+### 23.3 Infrastructure Layer
 
-- [ ] All 7 database tables with SQLAlchemy ORM models
+- [ ] All 11 database tables with SQLAlchemy ORM models
 - [ ] Alembic migration created and tested (up/down)
-- [ ] All 5 repository implementations with async SQLAlchemy
+- [ ] All 9 repository implementations with async SQLAlchemy
 - [ ] In-process event publisher implemented
+- [ ] Validation cache with LRU eviction
 - [ ] Rule/policy cache with 5-minute TTL
 
-### 20.4 API Layer
+### 23.4 API Layer
 
-- [ ] All 10 REST endpoints implemented
-- [ ] All request/response schemas defined
+- [ ] All 15 REST endpoints implemented
+- [ ] Request/response schemas defined
 - [ ] `Depends(verify_token)` auth on all endpoints
-- [ ] OpenAPI documentation generated
+- [ ] OpenAPI docs auto-generated
 
-### 20.5 Rules & Policies
+### 23.5 Rules & Policies
 
-- [ ] All 8 Safety rules (SAFETY_001-008) implemented
-- [ ] All 5 Dependency rules (DEPENDENCY_001-005) implemented
-- [ ] All 5 Compatibility rules (COMPAT_001-005) implemented
-- [ ] All 5 Resource rules (RESOURCE_001-005) implemented
-- [ ] All 8 Policy rules (POLICY_001-008) implemented
-- [ ] All 4 Security rules (SECURITY_001-004) implemented
-- [ ] All 4 Rollback rules (ROLLBACK_001-004) implemented
-- [ ] Total: 39 rules implemented and tested
+- [ ] All 35+ rules implemented (8 Safety, 5 Dependency, 5 Compatibility, 5 Resource, 8 Policy, 4 Security, 4 Rollback)
+- [ ] Policy pack system working
+- [ ] Plugin-provided rules supported
 
-### 20.6 Approval System
+### 23.6 Approval System
 
-- [ ] 5-level approval hierarchy working
-- [ ] Escalation matrix implemented
-- [ ] Timeout rules (24h, 4h, 1h, 30m) implemented
-- [ ] Delegation rules implemented
-- [ ] Conditional approval with condition checking
+- [ ] 6-level hierarchy (AUTO → DEVELOPER → MAINTAINER → OPERATIONS → ADMINISTRATOR → EMERGENCY)
+- [ ] Escalation matrix working
+- [ ] Timeout rules working
+- [ ] Delegation rules working
+- [ ] Conditional approval working
+- [ ] State transitions working
 
-### 20.7 Events
+### 23.7 Digital Signature
 
-- [ ] All 16 domain events defined and typed
-- [ ] Events published on correct triggers
-- [ ] Events consumed by downstream systems
+- [ ] ValidationSignature created on approved plans
+- [ ] Signature hash computation working
+- [ ] Signature verification working
+- [ ] Signature expiry working
 
-### 20.8 Testing
+### 23.8 Events
 
-- [ ] 692+ existing tests pass (no regressions)
-- [ ] New validation tests: 150+ tests
-- [ ] Unit test coverage: 100% for rules, models, value objects
-- [ ] Integration tests: Full pipeline, repositories, events
-- [ ] Stress tests: Concurrent validations, timeouts
-- [ ] Chaos tests: Database failures, rule failures, approval timeouts
+- [ ] All 21 typed domain events
+- [ ] Published on correct triggers
+- [ ] Consumed by downstream
 
-### 20.9 Code Quality
+### 23.9 Testing
 
-- [ ] `ruff check` clean (zero errors)
-- [ ] `ruff format` clean (zero changes)
+- [ ] 692+ existing tests pass
+- [ ] 200+ new validation tests
+- [ ] 100% rule/model coverage
+- [ ] Integration/stress/chaos tests
+
+### 23.10 Code Quality
+
+- [ ] `ruff check` clean
+- [ ] `ruff format` clean
 - [ ] No circular dependencies
-- [ ] No domain layer leaks (validation doesn't import planner/executor internals)
-- [ ] All type annotations correct (mypy strict pass)
-
-### 20.10 Documentation
-
-- [ ] This architecture document complete and frozen
-- [ ] API documentation auto-generated from OpenAPI
-- [ ] Rule catalog documented with conditions and severity
-- [ ] Approval policy documented with escalation matrix
+- [ ] No domain leaks
+- [ ] Architecture doc frozen
 
 ---
 
-## Appendix A: Dependency Graph
+## 24. Validation History Intelligence
+
+### 24.1 Purpose
+
+The Validation History Intelligence system stores every validation result, tracks outcomes, and provides historical context for future validations. This enables the Learning Engine (Sprint 7) to improve validation accuracy over time.
+
+### 24.2 Responsibilities
+
+| Responsibility | Description |
+|---------------|-------------|
+| Store validation results | Every request and result stored permanently |
+| Track approval/rejection history | Who approved/rejected what, when |
+| Track validation duration | Average, p95, p99 latency |
+| Track false positives | Plan approved but execution failed |
+| Track false negatives | Plan rejected but would have succeeded |
+| Store recurring failures | Rules that fail repeatedly |
+| Maintain statistics | Success rate, approval rate, average duration |
+| Predict outcomes | Predict validation outcome based on history |
+
+### 24.3 False Positive/Negative Tracking
 
 ```
-                    ┌─────────────────┐
-                    │   Domain Layer   │
-                    │  (no deps)       │
-                    └────────┬────────┘
-                             │
-                    ┌────────▼────────┐
-                    │ Application Layer│
-                    │  (ports, svcs)   │
-                    └────────┬────────┘
-                             │
-              ┌──────────────┼──────────────┐
-              │              │              │
-     ┌────────▼───────┐ ┌───▼────┐ ┌──────▼──────┐
-     │  Infrastructure │ │  API   │ │  Tests      │
-     │  (repos, cache) │ │(routes)│ │  (unit/int) │
-     └────────────────┘ └────────┘ └─────────────┘
+False Positive Flow:
+1. Plan approved by Validation Engine
+2. Plan executed by Execution Engine
+3. Execution fails
+4. Learning Engine records false positive
+5. ValidationHistoryService updates record
+6. TrendAnalysisService updates failure trend
+7. Future similar plans receive warnings
+
+False Negative Flow:
+1. Plan rejected by Validation Engine
+2. User manually executes plan
+3. Execution succeeds
+4. Learning Engine records false negative
+5. ValidationHistoryService updates record
+6. TrendAnalysisService updates confidence trend
+7. Future similar plans receive higher confidence
 ```
 
-## Appendix B: Data Flow
+### 24.4 Learning Engine Integration
 
-```
-Planner                    Validation Engine                   Execution Engine
-   │                              │                                  │
-   │  PlanGenerated               │                                  │
-   │─────────────────────────────▶│                                  │
-   │                              │                                  │
-   │                              │  ┌─────────────────────┐        │
-   │                              │  │ 12-Stage Pipeline   │        │
-   │                              │  │                     │        │
-   │                              │  │ Stages 1-9:         │        │
-   │                              │  │   Assessments       │        │
-   │                              │  │                     │        │
-   │                              │  │ Stage 10:           │        │
-   │                              │  │   Rules → Blockers  │        │
-   │                              │  │                     │        │
-   │                              │  │ Stage 11:           │        │
-   │                              │  │   Policies → Blockers│       │
-   │                              │  │                     │        │
-   │                              │  │ Stage 12:           │        │
-   │                              │  │   Decision          │        │
-   │                              │  └─────────┬───────────┘        │
-   │                              │            │                    │
-   │                              │  ┌─────────▼───────────┐        │
-   │                              │  │ Persist Results     │        │
-   │                              │  │ Emit Events         │        │
-   │                              │  │ Grant Permission    │        │
-   │                              │  └─────────────────────┘        │
-   │                              │            │                    │
-   │  ValidationCompleted         │            │                    │
-   │◀─────────────────────────────│            │                    │
-   │                              │            │                    │
-   │                              │  ValidationPermissionGranted    │
-   │                              │────────────────────────────────▶│
-   │                              │            │                    │
-   │                              │            │  Check Permission  │
-   │                              │            │  Execute Plan      │
-   │                              │            │                    │
+```python
+# Learning Engine consumes validation history
+class LearningEngine:
+    async def learn_from_history(
+        self,
+        history: list[ValidationHistoryRecord],
+    ) -> LearningResult:
+        """Learn patterns from validation history."""
+        # Analyze false positives
+        # Analyze false negatives
+        # Identify recurring failures
+        # Update rule weights
+        # Improve confidence predictions
+        ...
 ```
 
-## Appendix C: Enum Reference
+### 24.5 Recurring Failure Detection
 
-| Enum | Values | Count |
-|------|--------|-------|
-| ValidationStatus | pending, in_progress, completed, failed, timed_out | 5 |
-| ValidationDecisionEnum | approved, rejected, conditional, pending_approval, expired | 5 |
-| ValidationSeverity | blocker, warning, info | 3 |
-| ValidationCategory | safety, dependency, compatibility, resource, policy, security, rollback, cost | 8 |
-| ApprovalLevel | auto, developer, maintainer, operations, administrator, emergency | 6 |
-| ApprovalStatus | pending, approved, rejected, escalated, expired | 5 |
-| ExecutionPermissionStatus | granted, denied, expired, revoked | 4 |
-| CascadeRisk | low, medium, high, critical | 4 |
-| RollbackComplexity | low, medium, high, impossible | 4 |
-| PolicyEnforcement | hard, soft | 2 |
-| PolicyType | approval, cost, maintenance, production, security, business | 6 |
-| BlockerType | rule_violation, policy_violation, approval_required, safety, resource, security | 6 |
-
-**Total enum values: 58**
-
-## Appendix D: Checklist Summary
-
-| Category | Item | Count |
-|----------|------|-------|
-| Domain Models | validation_request, validation_result, validation_decision, validation_rule, validation_policy, validation_evidence, validation_failure, validation_warning, approval_decision, execution_permission, execution_blocker, safety_assessment, compatibility_assessment, rollback_assessment, simulation_assessment, dependency_assessment, resource_assessment, security_assessment, cost_assessment | 19 |
-| Value Objects | confidence_score, risk_score, time_range, threshold_range, component_descriptor, environment_descriptor, version_constraint, resource_quota, maintenance_window | 9 |
-| Enums | 12 enum types, 58 total values | 12 |
-| Services | validation_service, rule_engine, policy_engine, approval_engine, dependency_analyzer, compatibility_analyzer, rollback_analyzer, security_analyzer, simulation_verifier, environment_analyzer, resource_analyzer, decision_engine, summary_generator | 13 |
-| Rules | SAFETY_001-008, DEPENDENCY_001-005, COMPAT_001-005, RESOURCE_001-005, POLICY_001-008, SECURITY_001-004, ROLLBACK_001-004 | 39 |
-| Database Tables | validation_requests, validation_results, validation_failures, validation_warnings, validation_evidence, approval_decisions, execution_permissions, audit_log | 8 |
-| API Endpoints | validate, get_result, get_by_plan, pending_approvals, approve, reject, check_permission, revoke_permission, list_rules, list_policies | 10 |
-| Events | requested, started, completed, failed, rule_triggered, blocker_detected, warning_generated, approval_required, approval_granted, approval_rejected, approval_escalated, permission_granted, permission_revoked, expired, audit_logged, metrics_recorded | 16 |
-| Tests | 150+ new tests across unit/integration/stress/chaos | 150+ |
+```python
+# Detect rules that fail repeatedly
+async def get_recurring_failures(
+    self,
+    *,
+    rule_code: str | None = None,
+    min_occurrences: int = 5,
+    time_window_days: int = 30,
+) -> list[RecurringFailure]:
+    """Get rules that fail repeatedly."""
+    ...
+```
 
 ---
 
-> **END OF DOCUMENT**
->
-> This document is frozen for implementation. Any changes require a formal architecture review.
+## 25. Explainable Validation
+
+### 25.1 Purpose
+
+Every validation result must include detailed explanations. This ensures transparency, auditability, and enables humans to understand why a decision was made.
+
+### 25.2 Explanation Components
+
+| Component | Description |
+|-----------|-------------|
+| Detailed reasons | Why the decision was made |
+| Failed rules | Which rules failed and why |
+| Warning rules | Which rules warned and why |
+| Confidence explanation | Why confidence is at this level |
+| Suggested fixes | How to fix the issues |
+| Strategy recommendation | Recommended planner strategy |
+| Dependency explanation | Dependency impact explanation |
+| Rollback explanation | Rollback feasibility explanation |
+| Evidence summary | Summary of evidence collected |
+
+### 25.3 Explanation Generation
+
+The `ExplainabilityService` generates explanations by:
+
+1. Collecting all assessment results
+2. Analyzing failed rules and their reasons
+3. Analyzing warnings and their implications
+4. Computing confidence explanation from confidence score
+5. Generating dependency explanation from dependency assessment
+6. Generating rollback explanation from rollback assessment
+7. Synthesizing suggested fixes from all failures
+8. Generating overall summary
+
+### 25.4 Example Explanation
+
+```json
+{
+  "summary": "Plan rejected due to safety concerns. Database restart detected during active migration.",
+  "detailed_reasons": [
+    "SAFETY_001: Database restart blocked during active migration",
+    "ROLLBACK_001: Rollback not available for database operations"
+  ],
+  "failed_rules_explanation": "The plan triggers SAFETY_001 because an active migration was detected on the target database. This rule prevents data corruption during schema changes.",
+  "warning_rules_explanation": "ROLLBACK_003 warns that rollback success rate is 75%, below the 80% threshold.",
+  "confidence_explanation": "Confidence is 0.4 (low) due to the presence of an active migration and limited rollback options.",
+  "dependency_explanation": "The plan affects 3 direct dependencies and 12 reverse dependencies. Cascade risk is MEDIUM.",
+  "rollback_explanation": "Rollback is available but not automatic. Estimated rollback time is 300 seconds. Rollback has not been tested for this specific operation.",
+  "suggested_fixes": [
+    "Wait for migration to complete before restarting database",
+    "Test rollback procedure in staging environment",
+    "Increase confidence score by adding simulation results"
+  ],
+  "strategy_recommendation": "Consider using a rolling restart strategy instead of a full restart to maintain availability during migration.",
+  "evidence_summary": "Evidence collected from: EnvironmentAnalyzer (migration status), DependencyAnalyzer (service graph), RollbackAnalyzer (rollback history)"
+}
+```
+
+---
+
+## 26. AI Validator Extension Point
+
+### 26.1 Purpose
+
+The AI Validator is an optional extension point that allows AI-assisted validation. This is **NOT implemented now** — only the architecture is defined.
+
+### 26.2 Pipeline Position
+
+```
+Stage 10: Rule Engine
+    │
+    ▼
+Stage 11: Policy Engine
+    │
+    ▼
+Stage 12: AI Validator (Optional)  ← NEW
+    │
+    ▼
+Stage 13: Decision Engine
+```
+
+### 26.3 Interface Definition
+
+```python
+class AIValidatorProtocol(Protocol):
+    """Protocol for AI-assisted validation."""
+
+    async def analyze(
+        self,
+        request: ValidationRequest,
+        assessments: dict[str, Any],
+        rule_results: tuple[list[ValidationFailure], list[ValidationWarning]],
+    ) -> AIValidationResult:
+        """Analyze the plan using AI models."""
+        ...
+
+    def get_confidence(self) -> ConfidenceScore:
+        """Get confidence in the AI analysis."""
+        ...
+
+    def get_recommendation(self) -> str:
+        """Get human-readable recommendation."""
+        ...
+
+
+class AIValidationResult(BaseModel):
+    """Result from AI validation."""
+    model_config = ConfigDict(frozen=True, use_enum_values=True)
+
+    recommendation: str                          # "approve", "reject", "conditional"
+    confidence: ConfidenceScore
+    reasoning: str                               # Why the AI recommends this
+    risk_factors: list[str] = []                 # Identified risk factors
+    suggested_modifications: list[str] = []      # Suggested plan modifications
+    similar_historical_cases: list[str] = []     # Similar past validations
+```
+
+### 26.4 Future Implementation
+
+When implemented, the AI Validator could use:
+- Machine learning models trained on validation history
+- Natural language processing for plan analysis
+- Pattern matching against known failure modes
+- Predictive analytics for risk assessment
+
+---
+
+## 27. Validation Cache
+
+### 24.1 Purpose
+
+The Validation Cache stores validation results for identical plans to avoid redundant computation.
+
+### 27.2 Cache Key Computation
+
+```python
+def compute_cache_key(
+    plan_json: dict[str, Any],
+    environment: str,
+    rules_version: str,
+    policies_version: str,
+) -> str:
+    """Compute SHA-256 cache key."""
+    key_data = f"{json.dumps(plan_json, sort_keys=True)}:{environment}:{rules_version}:{policies_version}"
+    return hashlib.sha256(key_data.encode()).hexdigest()
+```
+
+### 27.3 Cache Invalidation
+
+| Trigger | Action |
+|---------|--------|
+| Rule update | Invalidate entries affected by changed rules |
+| Policy update | Invalidate entries affected by changed policies |
+| TTL expiry | Auto-invalidate after 5 minutes |
+| Manual invalidation | API endpoint to clear cache |
+
+### 27.4 Cache Storage
+
+```python
+class ValidationCacheBackend(Protocol):
+    async def get(self, cache_key: str) -> ValidationCacheEntry | None: ...
+    async def put(self, entry: ValidationCacheEntry) -> None: ...
+    async def invalidate(self, cache_key: str) -> bool: ...
+    async def clear(self) -> int: ...
+    async def size(self) -> int: ...
+```
+
+### 27.5 Cache Configuration
+
+```python
+class CacheConfig(BaseModel):
+    ttl_seconds: int = 300                        # 5 minutes
+    max_entries: int = 10000                      # LRU eviction
+    enabled: bool = True
+    warm_on_startup: bool = False                 # Pre-populate cache
+```
+
+---
+
+## 28. Digital Signature
+
+### 28.1 Purpose
+
+Digital signatures ensure that approved plans cannot be tampered with before execution. The Execution Engine verifies signatures before executing.
+
+### 28.2 Signature Creation
+
+```python
+def create_signature(
+    plan_json: dict[str, Any],
+    decision: str,
+    timestamp: datetime,
+    approved_by: str,
+) -> ValidationSignature:
+    """Create a digital signature for an approved plan."""
+    # Compute hash
+    data = f"{json.dumps(plan_json, sort_keys=True)}:{decision}:{timestamp.isoformat()}"
+    signature_hash = hashlib.sha256(data.encode()).hexdigest()
+
+    return ValidationSignature(
+        signature_id=str(uuid.uuid4()),
+        result_id=result_id,
+        plan_id=plan_id,
+        signature_hash=signature_hash,
+        signed_at=timestamp,
+        signed_by=approved_by,
+        approval_metadata={"decision": decision},
+        verification_method="sha256",
+    )
+```
+
+### 28.3 Signature Verification
+
+```python
+def verify_signature(
+    signature: ValidationSignature,
+    plan_json: dict[str, Any],
+    decision: str,
+    timestamp: datetime,
+) -> bool:
+    """Verify a digital signature."""
+    # Recompute hash
+    data = f"{json.dumps(plan_json, sort_keys=True)}:{decision}:{timestamp.isoformat()}"
+    expected_hash = hashlib.sha256(data.encode()).hexdigest()
+
+    # Compare
+    return signature.signature_hash == expected_hash
+```
+
+### 28.4 Future Cryptographic Implementation
+
+Future enhancement: RSA or ECDSA signatures for stronger security.
+
+---
+
+## 29. Validation Trend Analysis
+
+### 29.1 Purpose
+
+Historical trend tracking enables the system to understand how validation metrics change over time.
+
+### 29.2 Trend Types
+
+| Trend Type | Description | Time Windows |
+|------------|-------------|--------------|
+| Risk trend | 7-day rolling average of risk scores | 7d, 30d, 90d |
+| Confidence trend | 7-day rolling average of confidence scores | 7d, 30d, 90d |
+| Failure trend | Failures per day | 7d, 30d, 90d |
+| Approval trend | Approvals vs rejections per day | 7d, 30d, 90d |
+| Latency trend | p50, p95, p99 validation duration | 7d, 30d, 90d |
+
+### 29.3 Trend Direction
+
+```python
+def compute_trend_direction(data_points: list[float]) -> str:
+    """Compute trend direction from data points."""
+    if len(data_points) < 2:
+        return "stable"
+
+    # Simple linear regression
+    x = list(range(len(data_points)))
+    y = data_points
+    slope = (len(x) * sum(x_i * y_i for x_i, y_i in zip(x, y)) - sum(x) * sum(y)) / \
+            (len(x) * sum(x_i ** 2 for x_i in x) - sum(x) ** 2)
+
+    if slope > 0.01:
+        return "improving"
+    elif slope < -0.01:
+        return "degrading"
+    else:
+        return "stable"
+```
+
+### 29.4 Consumer Integration
+
+| Consumer | Usage |
+|----------|-------|
+| Monitoring Engine | Display trend dashboards |
+| Learning Engine | Identify patterns, update rules |
+| Operations Team | Manual review of degrading trends |
+| Alerting System | Trigger alerts on degrading trends |
+
+---
+
+## 30. Generic Validation Framework
+
+### 30.1 Purpose
+
+The Validation Engine is designed to validate multiple types of plans, not just infrastructure repairs.
+
+### 30.2 Supported Plan Types
+
+| Plan Type | Description | Example |
+|-----------|-------------|---------|
+| `infrastructure_repair` | Infrastructure remediation | Restart service, scale deployment |
+| `deployment` | Application deployment | Deploy new version, rollback |
+| `automation` | Automated tasks | Scheduled maintenance, cleanup |
+| `financial` | Financial strategies | Portfolio rebalancing, trading |
+| `ai_workflow` | AI/ML workflows | Model training, inference |
+| `stock_trading` | Stock trading strategies | Buy/sell orders, hedging |
+| `custom` | Custom plan types | User-defined validation |
+
+### 30.3 Generic Terminology
+
+| Infrastructure Term | Generic Term |
+|--------------------|--------------|
+| Service | Component |
+| Restart | Execute |
+| Repair | Plan |
+| Incident | Event |
+| Deployment | Action |
+
+### 30.4 Plan-Type-Specific Rules
+
+Rules can be scoped to specific plan types:
+
+```python
+class ValidationRule(BaseModel):
+    plan_types: list[str] = []                   # Empty = all plan types
+    # If plan_types = ["infrastructure_repair"], rule only applies to infrastructure repairs
+```
+
+---
+
+## 31. Policy Packs
+
+### 31.1 Purpose
+
+Policy Packs group related policies for different contexts. Different environments use different packs.
+
+### 31.2 Pack Types
+
+| Pack Type | Description | Example Policies |
+|-----------|-------------|------------------|
+| `production` | Production environment | Maintenance window, approval requirements |
+| `development` | Development environment | Relaxed approval, auto-deploy |
+| `testing` | Testing environment | Test-only restrictions |
+| `infrastructure` | Infrastructure changes | Database, Redis, network policies |
+| `financial` | Financial operations | Budget limits, trading restrictions |
+| `personal_assistant` | Personal assistant | Calendar, email, task policies |
+| `experimental` | Experimental features | New feature validation |
+| `custom` | Custom packs | User-defined policies |
+
+### 31.3 Pack Selection
+
+```python
+def select_pack(
+    request: ValidationRequest,
+    available_packs: list[PolicyPack],
+) -> PolicyPack:
+    """Select the appropriate policy pack."""
+    # 1. Check for plan-type-specific pack
+    for pack in available_packs:
+        if pack.pack_type == request.plan_type:
+            return pack
+
+    # 2. Check for environment-specific pack
+    for pack in available_packs:
+        if request.environment in pack.applicable_environments:
+            return pack
+
+    # 3. Default to production pack
+    return next(p for p in available_packs if p.pack_type == "production")
+```
+
+### 31.4 Pack Loading
+
+```python
+class PolicyPackLoader:
+    async def load_pack(
+        self,
+        pack_id: str,
+    ) -> PolicyPack:
+        """Load a policy pack and its policies."""
+        pack = await self._repository.get_pack_by_id(pack_id)
+        policies = await self._load_policies(pack.policy_ids)
+        return pack, policies
+```
+
+---
+
+## 32. Validator Plugin System
+
+### 32.1 Purpose
+
+The Plugin System enables extensible validation with custom validators for different technologies and domains.
+
+### 32.2 Plugin Types
+
+| Plugin Type | Examples |
+|-------------|----------|
+| `infrastructure` | Docker, Linux, Windows |
+| `cloud` | AWS, Azure, Google Cloud |
+| `database` | PostgreSQL, MySQL, MongoDB |
+| `financial` | Stock Market, Trading APIs |
+| `calendar` | Google Calendar, Outlook |
+| `communication` | Email, Slack, Teams |
+| `custom` | Enterprise-specific validators |
+
+### 32.3 Plugin Interface
+
+```python
+class ValidatorPluginProtocol(Protocol):
+    """Protocol for validator plugins."""
+
+    plugin_id: str
+    name: str
+    version: str
+
+    async def initialize(self) -> None:
+        """Initialize the plugin."""
+        ...
+
+    async def get_rules(self) -> list[ValidationRule]:
+        """Get rules provided by this plugin."""
+        ...
+
+    async def get_analyzers(self) -> dict[str, Any]:
+        """Get analyzers provided by this plugin."""
+        ...
+
+    async def cleanup(self) -> None:
+        """Cleanup plugin resources."""
+        ...
+```
+
+### 32.4 Plugin Discovery
+
+Plugins are discovered from:
+1. Database registry (`uaes_validator_plugins` table)
+2. Plugin directory scanning
+3. Configuration file
+
+### 32.5 Plugin Registration
+
+```python
+class PluginManager:
+    async def register_plugin(
+        self,
+        plugin: ValidatorPlugin,
+    ) -> None:
+        """Register a new plugin."""
+        await self._repository.save_plugin(plugin)
+        await self._load_plugin(plugin.plugin_id)
+```
+
+### 32.6 Plugin Lifecycle
+
+```
+Discovery → Registration → Loading → Initialization → Ready → Cleanup
+```
+
+### 32.7 Plugin Dependency Injection
+
+Plugins receive dependencies via constructor injection:
+
+```python
+class MyPlugin:
+    def __init__(
+        self,
+        *,
+        rule_repository: RuleRepository,
+        event_publisher: EventPublisher,
+    ) -> None:
+        self._rule_repository = rule_repository
+        self._event_publisher = event_publisher
+```
+
+---
+
+## 33. Future Integration
+
+### 33.1 Sprint 6: Execution Engine
+
+The Execution Engine will:
+- Query `CheckPermission(plan_id)` before executing
+- Verify `ValidationSignature` before executing
+- Report execution outcomes back to ValidationHistoryService
+
+### 33.2 Sprint 7: Learning Engine
+
+The Learning Engine will:
+- Consume validation history and trends
+- Identify patterns in false positives/negatives
+- Update rule weights based on historical accuracy
+- Improve confidence predictions
+- Suggest new rules based on failure patterns
+
+### 33.3 Sprint 8: Autonomous Orchestrator
+
+The Autonomous Orchestrator will:
+- Use validation results to make autonomous decisions
+- Coordinate multiple validation pipelines
+- Manage validation priorities dynamically
+
+### 33.4 Knowledge Graph
+
+The Knowledge Graph will:
+- Store validation patterns and outcomes
+- Enable pattern-based validation
+- Support semantic search of validation history
+
+### 33.5 Memory System
+
+The Memory System will:
+- Store validation context for each plan
+- Recall similar validations for comparison
+- Provide contextual recommendations
+
+### 33.6 Stock Market Intelligence
+
+Future integration with stock market data for financial validation.
+
+### 33.7 Financial Intelligence
+
+Future integration with financial data for portfolio validation.
+
+### 33.8 AI Decision Engine
+
+Future integration with AI models for autonomous validation decisions.
+
+### 33.9 Self-Healing Infrastructure
+
+Future integration with self-healing systems for automatic remediation validation.
+
+---
+
+## Appendix A: UAES System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                    ULTRON AUTONOMOUS EXECUTION SYSTEM                       │
+│                                                                             │
+│  ┌──────────────┐     ┌──────────────┐     ┌──────────────┐                │
+│  │              │     │              │     │              │                │
+│  │  MONITORING  │────▶│  INCIDENT    │────▶│  ROOT CAUSE  │                │
+│  │              │     │  DETECTION   │     │  ANALYSIS    │                │
+│  └──────────────┘     └──────────────┘     └──────┬───────┘                │
+│         │                                          │                        │
+│         │ (health metrics)                         │ (root cause)           │
+│         │                                          ▼                        │
+│         │                                   ┌──────────────┐                │
+│         │                                   │              │                │
+│         │                                   │   PLANNER    │                │
+│         │                                   │              │                │
+│         │                                   └──────┬───────┘                │
+│         │                                          │                        │
+│         │                                          │ (repair plan)          │
+│         │                                          ▼                        │
+│         │                                   ┌──────────────┐                │
+│         │                                   │              │                │
+│         │◀──────────────────────────────────│  VALIDATION  │                │
+│         │ (health verification)             │  ENGINE      │                │
+│         │                                   │              │                │
+│         │                                   └──────┬───────┘                │
+│         │                                          │                        │
+│         │                                          │ (approved plan)        │
+│         │                                          ▼                        │
+│         │                                   ┌──────────────┐                │
+│         │                                   │              │                │
+│         │◀──────────────────────────────────│  EXECUTION   │                │
+│         │ (repair completion)               │  ENGINE      │                │
+│         │                                   │              │                │
+│         │                                   └──────┬───────┘                │
+│         │                                          │                        │
+│         │                                          │ (execution outcome)    │
+│         │                                          ▼                        │
+│         │                                   ┌──────────────┐                │
+│         └──────────────────────────────────▶│              │                │
+│              (learned improvements)         │  LEARNING    │                │
+│                                             │  ENGINE      │                │
+│                                             │              │                │
+│                                             └──────────────┘                │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Appendix B: Dependency Graph
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     API Layer (FastAPI)                      │
+│  Routes, Request/Response schemas, Dependencies             │
+│  Imports: application.services                              │
+├─────────────────────────────────────────────────────────────┤
+│                  Application Layer                          │
+│  Services, Pipeline, Ports (interfaces)                     │
+│  Imports: domain (models, value_objects, enums, events)     │
+├─────────────────────────────────────────────────────────────┤
+│                    Domain Layer                              │
+│  Models, Value Objects, Enums, Events                       │
+│  Imports: NOTHING (pure domain)                             │
+├─────────────────────────────────────────────────────────────┤
+│                 Infrastructure Layer                        │
+│  SQLAlchemy models, Repository implementations              │
+│  Event bus, Cache, Plugins, External adapters               │
+│  Imports: application.ports, domain (for types)             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Appendix C: Data Flow
+
+```
+                    ┌──────────────────────┐
+                    │   Validation Engine  │
+                    └──────────┬───────────┘
+                               │
+            ┌──────────────────┼──────────────────┐
+            │                  │                  │
+            ▼                  ▼                  ▼
+   ┌────────────────┐ ┌───────────────┐ ┌────────────────┐
+   │  Validation     │ │  Monitoring   │ │  Execution     │
+   │  History        │ │  Engine       │ │  Engine        │
+   └────────────────┘ └───────────────┘ └────────────────┘
+            │                  │                  │
+            ▼                  ▼                  ▼
+   HistoryRecorded      Metrics Recorded    Permission Checked
+   TrendComputed        Health Updated      Signature Verified
+   FalsePositiveTracked                     Execution Starts
+```
+
+---
+
+## Appendix D: Enum Reference
+
+| Enum | Values |
+|------|--------|
+| ValidationStatus | pending, in_progress, completed, failed, timed_out |
+| ValidationDecisionEnum | approved, rejected, conditional, pending_approval, needs_review, deferred, timed_out, escalated, expired, cancelled |
+| ValidationSeverity | blocker, warning, info |
+| ValidationCategory | safety, dependency, compatibility, resource, policy, security, rollback, cost |
+| ApprovalLevel | auto, developer, maintainer, operations, administrator, emergency |
+| ApprovalStatus | pending, approved, rejected, needs_review, deferred, timed_out, escalated, expired, cancelled |
+| ExecutionPermissionStatus | granted, denied, expired, revoked |
+| CascadeRisk | low, medium, high, critical |
+| RollbackComplexity | low, medium, high, impossible |
+| PolicyEnforcement | hard, soft |
+| PolicyType | approval, cost, maintenance, production, security, business |
+| BlockerType | rule_violation, policy_violation, approval_required, safety, resource, security |
+| PolicyPackType | production, development, testing, infrastructure, financial, personal_assistant, experimental, custom |
+| PluginType | infrastructure, cloud, database, financial, calendar, communication, custom |
+| TrendType | risk, confidence, failure, approval, latency |
+
+---
+
+## Appendix E: Checklist Summary
+
+| Category | Count |
+|----------|-------|
+| Domain Models | 26+ |
+| Value Objects | 9 |
+| Enums | 16 |
+| Services | 20+ |
+| Rules | 35+ |
+| DB Tables | 11 |
+| API Endpoints | 15 |
+| Events | 21 |
+| Tests | 200+ new |
+
+---
+
+**Status**: ARCHITECTURE REVIEW — Revised draft with improvements
+**Next**: Implementation review, then Sprint 5A implementation
