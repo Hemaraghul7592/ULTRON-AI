@@ -17,3 +17,5 @@ class OperationsRuntime:
     monitors: list[Monitor] = field(default_factory=list)
     health_aggregator: HealthAggregator | None = None
     monitoring_scheduler: MonitoringScheduler | None = None
+    incident_subscriber: object | None = None
+    investigation_publisher: object | None = None

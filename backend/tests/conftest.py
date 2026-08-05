@@ -27,6 +27,8 @@ async def setup_database():
     from app.core.database import close_db
 
     await close_db()
+    if hasattr(app.state, "uaes_runtime"):
+        delattr(app.state, "uaes_runtime")
 
 
 @pytest.fixture

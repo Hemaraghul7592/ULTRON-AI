@@ -26,6 +26,8 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.operations.api.router import router as operations_router
 from app.operations.core.event_bus import InProcessEventBus
 from app.operations.core.runtime import OperationsRuntime
+from app.operations.incidents.api.router import router as incidents_router
+from app.operations.incidents.infrastructure.db import models as _uaes_incident_models  # noqa: F401
 from app.operations.infrastructure.db import models as _uaes_models  # noqa: F401
 
 settings = get_settings()
@@ -110,6 +112,10 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     await setup_monitoring(application.state.uaes_runtime)
 
+    from app.operations.incidents.setup import setup_incident_investigation
+
+    await setup_incident_investigation(application.state.uaes_runtime)
+
     application.state.search_service = search_service
     application.state.file_service = file_service
     application.state.voice_service = voice_service
@@ -128,6 +134,10 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         and application.state.uaes_runtime.monitoring_scheduler
     ):
         await application.state.uaes_runtime.monitoring_scheduler.stop()
+    if hasattr(application.state, "uaes_runtime") and application.state.uaes_runtime.incident_subscriber:
+        application.state.uaes_runtime.incident_subscriber.stop(
+            application.state.uaes_runtime.event_bus
+        )
     if hasattr(application.state, "scheduler"):
         await application.state.scheduler.stop()
     if hasattr(application.state, "plugin_manager"):
@@ -169,6 +179,7 @@ app.include_router(google_auth_router, prefix="/api/v1")
 app.include_router(voice_router, prefix="/api/v1")
 app.include_router(tools_router, prefix="/api/v1")
 app.include_router(observability_router, prefix="/api/v1")
+app.include_router(incidents_router, prefix="/api/v1")
 app.include_router(operations_router, prefix="/api/v1")
 
 
