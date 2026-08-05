@@ -19,3 +19,5 @@ class OperationsRuntime:
     monitoring_scheduler: MonitoringScheduler | None = None
     incident_subscriber: object | None = None
     investigation_publisher: object | None = None
+    planner_subscriber: object | None = None
+    planner_publisher: object | None = None

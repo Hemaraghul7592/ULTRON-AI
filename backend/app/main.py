@@ -29,6 +29,8 @@ from app.operations.core.runtime import OperationsRuntime
 from app.operations.incidents.api.router import router as incidents_router
 from app.operations.incidents.infrastructure.db import models as _uaes_incident_models  # noqa: F401
 from app.operations.infrastructure.db import models as _uaes_models  # noqa: F401
+from app.operations.planner.api.router import router as planner_router
+from app.operations.planner.infrastructure.db import models as _uaes_planner_models  # noqa: F401
 
 settings = get_settings()
 _logger = get_logger(__name__)
@@ -116,6 +118,10 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
 
     await setup_incident_investigation(application.state.uaes_runtime)
 
+    from app.operations.planner.setup import setup_repair_planner
+
+    await setup_repair_planner(application.state.uaes_runtime)
+
     application.state.search_service = search_service
     application.state.file_service = file_service
     application.state.voice_service = voice_service
@@ -134,8 +140,18 @@ async def lifespan(application: FastAPI) -> AsyncGenerator[None, None]:
         and application.state.uaes_runtime.monitoring_scheduler
     ):
         await application.state.uaes_runtime.monitoring_scheduler.stop()
-    if hasattr(application.state, "uaes_runtime") and application.state.uaes_runtime.incident_subscriber:
+    if (
+        hasattr(application.state, "uaes_runtime")
+        and application.state.uaes_runtime.incident_subscriber
+    ):
         application.state.uaes_runtime.incident_subscriber.stop(
+            application.state.uaes_runtime.event_bus
+        )
+    if (
+        hasattr(application.state, "uaes_runtime")
+        and application.state.uaes_runtime.planner_subscriber
+    ):
+        application.state.uaes_runtime.planner_subscriber.stop(
             application.state.uaes_runtime.event_bus
         )
     if hasattr(application.state, "scheduler"):
@@ -180,6 +196,7 @@ app.include_router(voice_router, prefix="/api/v1")
 app.include_router(tools_router, prefix="/api/v1")
 app.include_router(observability_router, prefix="/api/v1")
 app.include_router(incidents_router, prefix="/api/v1")
+app.include_router(planner_router, prefix="/api/v1")
 app.include_router(operations_router, prefix="/api/v1")
 
 
